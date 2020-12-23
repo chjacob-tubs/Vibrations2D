@@ -1,0 +1,10 @@
+$cosmo
+  epsilon=   80.000
+  rsolv= 1.30
+$cosmo_atoms
+# radii in Angstrom units
+o  1                                                                           \
+   radius=  1.7200
+h  2-3                                                                         \
+   radius=  1.3000
+$cosmo_out file=out.ccf

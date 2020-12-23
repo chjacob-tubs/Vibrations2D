@@ -1,0 +1,3373 @@
+
+ **************************************************
+ *                                          
+ *  PyADF v0.9                              
+ *                                          
+ *  PyADF - A Scripting Framework for Multiscale Quantum Chemistry. 
+ *  Copyright (C) 2006-2014 by Christoph R. Jacob, S. Maya Beyhan,  
+ *  Rosa E. Bulo, Andre S. P. Gomes, Andreas Goetz, Michal Handzlik, 
+ *  Karin Kiewisch, Moritz Klammler, Jetze Sikkema, and Lucas Visscher 
+ * 
+ *     PyADF is free software: you can redistribute it and/or modify         
+ *     it under the terms of the GNU General Public License as published by  
+ *     the Free Software Foundation, either version 3 of the License, or     
+ *     (at your option) any later version. 
+ * 
+ *     PyADF is distributed in the hope that it will be useful,        
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of  
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the   
+ *     GNU General Public License for more details. 
+ * 
+ *     You should have received a copy of the GNU General Public License 
+ *     along with PyADF.  If not, see <http://www.gnu.org/licenses/>.    
+ * 
+ **************************************************
+
+ Directory of PyADF source:
+      /home/julia/pyadf
+
+ Directory of input file:
+      /scratch/julia/20201201-104511
+
+ Directory of output files:
+      /home/julia/skripte/tests/anharm/12
+
+ ----------------------------------------
+ PyADF input file:  Calculate_Potentials.pyadf
+
+# PyADF script to generate grid structures and calculate anharmonic
+# potentials
+import glob
+from VibTools.Constants import *
+import VibTools
+import Vibrations as vib
+import numpy as np
+### WHICH POTENTIALS?
+V1 = True
+V2 = True
+### PATH TO ENERGY FILES
+print 'Energy files will be stored in: '
+enpath = '/home/julia/skripte/tests/anharm/energies'
+print enpath
+### USED CORES; CHANGED AUTOMATICALLY WITH distribute_on_cores.py
+actcore = 12
+totcores = 12
+### PyADF results
+tmres = {}
+lastjob = 0
+### FUNCTIONS
+def run_single_point(mol,modes,points):
+    # First check if energy file exists
+    order = len(modes)
+    if order != len(points):
+        raise Exception('Number of modes should be equal number of grid points')
+    fname = 'v'
+    fname += str(order)+'_'
+    for i in modes:
+        fname += str(i) + '_'
+    for p in points:
+        fname += str(p) + '_'
+    fname = fname[:-1]+'.dat'
+    print 'Energy point: <modes> <grid points> ',modes,points
+    print ' Looking for file: %s' %(os.path.join(enpath,fname))
+    try:
+        with open(os.path.join(enpath,fname)) as f:
+            print ' -File %s found!' %(os.path.join(enpath,fname))
+            lines = f.readlines()
+            if len(lines) == 1:
+                print '  -the file contains one line'
+                print '  -and following data: ',lines[0].split()
+                if len(lines[0].split()) == 4:
+                    print '  *Everything seems to be ok, nothing to do'
+                else:
+                    raise Exception('The amount of data is wrong')
+            else:
+                raise Exception('Too few or too many lines')
+    except:
+        print ' !File not found or job not finished, running the job...'
+        settings = TurbomoleSinglePointSettings(verbose_level=2)
+        settings.set_basis_set('def2-SVP')
+        settings.set_ri(True)
+        settings.set_dft_functional('b-p')
+        settings.set_redundant_internal_coordinates(False)
+        settings.set_scfiterlimit(500)
+        settings.set_dft_grid('m4')
+#        settings.set_dispersion_correction('dft-d3')
+        #cosmofile = os.path.join(pyadfenv.outdir,'cosmoprepfile')
+        #settings.set_cosmosolv(cosmofile)
+        job = TurbomoleSinglePointJob(mol,method='dft',settings=settings)
+        global lastjob
+        try:
+            job.set_restart(lastjob)
+        except:
+            pass
+        tres = job.run()
+        lastjob = tres
+        dm = np.array(tres.get_dipole_vector())* au_in_Debye
+        en = tres.get_energy()
+        with open(os.path.join(enpath,fname),'w+') as f:
+            outline = str(en)+' '+str(dm[0])+' '+str(dm[1])+' '+str(dm[2])
+            f.write(outline)
+    print "****** DONE ***** "
+def localize_subset(modes,subset):
+    # method that takes normal modes
+    # and a range of modes, returns them
+    # localized + the cmat
+    tmpmodes = modes.get_subset(subset)
+    tmploc = VibTools.LocVib(tmpmodes, 'PM')
+    tmploc.localize()
+    tmploc.sort_by_residue()
+    tmploc.adjust_signs()
+    tmpcmat = tmploc.get_couplingmat(hessian=True)
+    return tmploc.locmodes.modes_mw, tmploc.locmodes.freqs, tmpcmat
+def localize_subsets(modes,subsets):
+    # method that takes normal modes and list of lists (beginin and end)
+    # of subsets and make one set of modes localized in subsets
+    # first get number of modes in total
+    total = 0
+    modes_mw = np.zeros((0, 3*modes.natoms))
+    freqs = np.zeros((0,))
+    for subset in subsets:
+        n = len(subset)
+        total += n
+    print 'Modes localized: %i, modes in total: %i' %(total, modes.nmodes)
+    if total > modes.nmodes:
+        raise Exception('Number of modes in the subsets is larger than the total number of modes')
+    else:
+        cmat = np.zeros((total, total))
+        actpos = 0 #actual position in the cmat matrix
+        for subset in subsets:
+            tmp = localize_subset(modes, subset)
+            modes_mw = np.concatenate((modes_mw, tmp[0]), axis = 0)
+            freqs = np.concatenate((freqs, tmp[1]), axis = 0)
+            cmat[actpos:actpos + tmp[2].shape[0],actpos:actpos + tmp[2].shape[0]] = tmp[2]
+            actpos = actpos + tmp[2].shape[0] 
+        localmodes = VibTools.VibModes(total, modes.mol)
+        localmodes.set_modes_mw(modes_mw)
+        localmodes.set_freqs(freqs)
+        return localmodes, cmat
+### end of function
+ngrid = 16
+amp = 14
+outname = os.path.join(pyadfenv.outdir,'snf.out')
+restartname = os.path.join(pyadfenv.outdir,'restart')
+coordfile = os.path.join(pyadfenv.outdir,'coord')
+res = VibTools.SNFResults(outname=outname,restartname=restartname,
+                     coordfile=coordfile)
+res.read()
+mol = res.mol
+modes = res.modes
+# mode list or subset list
+modelist = [[0,1,2]]
+print '\n\n'
+print '*** Localization: '
+localmodes,cmat = localize_subsets(modes,modelist)
+grid = vib.Grid(mol,localmodes)
+grid.generate_grids(ngrid,amp)
+nmodes = localmodes.nmodes
+counter = 0
+print 'Core: %i' %(actcore)
+if V1:
+    for i in range(nmodes):
+        for j in range(ngrid):
+            dest = counter%totcores + 1
+            if dest == actcore:
+                print ' *** Calculating point: ',i,',',j
+                mol = grid.get_pyadf_molecule([i],[j])
+                run_single_point(mol,[i],[j])
+            counter += 1
+if V2:
+    for i in range(nmodes):
+        for j in range(i+1,nmodes):
+            for k in range(ngrid):
+                for l in range(ngrid):
+                    dest = counter%totcores + 1
+                    if dest == actcore:
+                        print ' *** Calculating point: Mode=',i,' Point=',k,' Mode=',j,' Point=',l
+                        mol = grid.get_pyadf_molecule([i,j],[k,l])
+                        run_single_point(mol,[i,j],[k,l])
+                    counter += 1
+print
+print '*** Calculations done!'
+ ----------------------------------------
+
+ **************************************************
+ Executing PyADF input ...
+
+
+ ***************************************************************************
+ *
+ *  Vibrations v0.9
+ *
+ *  Vibrations - a Python Code for Anharmonic Theoretical Vibrational Spectroscopy
+ *  Copyright (C) 2014-2018 by Pawel T. Panek, and Christoph R. Jacob.
+ *
+ *     Vibrations is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     Vibrations is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with Vibrations.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In scientific publications using Vibrations please cite:
+ *    P. T. Panek, Ch. R. Jacob, ChemPhysChem 15 (2014) 3365.
+ *    P. T. Panek, Ch. R. Jacob, J. Chem. Phys. 144 (2016) 164111.
+ *
+ *  The most recent version of Vibrations is available at
+ *    http://www.christophjacob.eu/software
+ *
+ ***************************************************************************
+
+
+Energy files will be stored in: 
+/home/julia/skripte/tests/anharm/energies
+
+
+
+*** Localization: 
+Modes localized: 3, modes in total: 3
+ Normal mode localization: Cycle   1    p:    1.943   change:  0.6077874     1.93327 
+ Normal mode localization: Cycle   2    p:    2.222   change:  0.2786978     0.95556 
+ Normal mode localization: Cycle   3    p:    2.222   change:  0.0002973     0.02009 
+ Normal mode localization: Cycle   4    p:    2.222   change:  0.0000000     0.00002 
+Obtaining coupling matrix in [a.u.]
+Obtaining coupling matrix in [a.u.]
+Obtaining coupling matrix in [a.u.]
+Core: 12
+ *** Calculating point:  0 , 11
+Energy point: <modes> <grid points>  [0] [11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v1_0_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96315       -0.15259        0.01458    
+    2)        H       -2.84371       -0.12077       -0.70506    
+    3)        H       -3.57014       -0.91465        0.08584    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  0
+
+****** DONE ***** 
+ *** Calculating point:  1 , 7
+Energy point: <modes> <grid points>  [1] [7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v1_1_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 0.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96705       -0.15522        0.02858    
+    2)        H       -2.80101       -0.10418       -0.93113    
+    3)        H       -3.55091       -0.88948        0.08970    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  1
+
+****** DONE ***** 
+ *** Calculating point:  2 , 3
+Energy point: <modes> <grid points>  [2] [3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v1_2_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 1.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95460       -0.13555        0.05117    
+    2)        H       -2.99020       -0.35325       -0.97794    
+    3)        H       -3.55941       -0.95249       -0.22195    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  2
+
+****** DONE ***** 
+ *** Calculating point:  2 , 15
+Energy point: <modes> <grid points>  [2] [15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v1_2_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 2.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98447       -0.18382       -0.00958    
+    2)        H       -2.48400        0.31308       -0.85334    
+    3)        H       -3.59148       -0.85283        0.61755    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  3
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 0  Mode= 1  Point= 11
+Energy point: <modes> <grid points>  [0, 1] [0, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_0_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 3.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96270       -0.14498        0.05662    
+    2)        H       -2.70306       -0.06053       -1.41645    
+    3)        H       -3.71789       -1.09564        0.13011    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  4
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 1  Mode= 1  Point= 7
+Energy point: <modes> <grid points>  [0, 1] [1, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_1_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 4.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97197       -0.15720        0.05423    
+    2)        H       -2.72053       -0.07188       -1.35114    
+    3)        H       -3.55331       -0.89035        0.10275    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  5
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 2  Mode= 1  Point= 3
+Energy point: <modes> <grid points>  [0, 1] [2, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_2_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 5.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98124       -0.16942        0.05184    
+    2)        H       -2.73801       -0.08322       -1.28584    
+    3)        H       -3.38872       -0.68507        0.07538    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  6
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 2  Mode= 1  Point= 15
+Energy point: <modes> <grid points>  [0, 1] [2, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_2_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 6.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95116       -0.13184        0.04717    
+    2)        H       -2.72274       -0.06409       -1.28790    
+    3)        H       -3.88137       -1.30052        0.15146    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  7
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 3  Mode= 1  Point= 11
+Energy point: <modes> <grid points>  [0, 1] [3, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_3_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 7.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96043       -0.14406        0.04478    
+    2)        H       -2.74021       -0.07544       -1.22260    
+    3)        H       -3.71679       -1.09523        0.12409    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  8
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 4  Mode= 1  Point= 7
+Energy point: <modes> <grid points>  [0, 1] [4, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_4_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 8.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96970       -0.15628        0.04239    
+    2)        H       -2.75768       -0.08678       -1.15729    
+    3)        H       -3.55220       -0.88995        0.09672    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  9
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 5  Mode= 1  Point= 3
+Energy point: <modes> <grid points>  [0, 1] [5, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_5_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 9.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97897       -0.16850        0.04000    
+    2)        H       -2.77515       -0.09813       -1.09199    
+    3)        H       -3.38762       -0.68466        0.06936    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  10
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 5  Mode= 1  Point= 15
+Energy point: <modes> <grid points>  [0, 1] [5, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_5_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 10.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.94889       -0.13093        0.03534    
+    2)        H       -2.75988       -0.07900       -1.09405    
+    3)        H       -3.88026       -1.30011        0.14543    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  11
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 6  Mode= 1  Point= 11
+Energy point: <modes> <grid points>  [0, 1] [6, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_6_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 11.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95816       -0.14315        0.03295    
+    2)        H       -2.77735       -0.09035       -1.02874    
+    3)        H       -3.71568       -1.09483        0.11807    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  12
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 7  Mode= 1  Point= 7
+Energy point: <modes> <grid points>  [0, 1] [7, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_7_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 12.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96743       -0.15537        0.03056    
+    2)        H       -2.79482       -0.10169       -0.96344    
+    3)        H       -3.55109       -0.88954        0.09070    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  13
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 8  Mode= 1  Point= 3
+Energy point: <modes> <grid points>  [0, 1] [8, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_8_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 13.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97670       -0.16759        0.02817    
+    2)        H       -2.81229       -0.11304       -0.89813    
+    3)        H       -3.38651       -0.68426        0.06333    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  14
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 8  Mode= 1  Point= 15
+Energy point: <modes> <grid points>  [0, 1] [8, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_8_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 14.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.94662       -0.13002        0.02350    
+    2)        H       -2.79702       -0.09391       -0.90020    
+    3)        H       -3.87916       -1.29971        0.13941    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  15
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 9  Mode= 1  Point= 11
+Energy point: <modes> <grid points>  [0, 1] [9, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_9_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 15.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95589       -0.14224        0.02111    
+    2)        H       -2.81449       -0.10525       -0.83489    
+    3)        H       -3.71457       -1.09442        0.11204    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  16
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 10  Mode= 1  Point= 7
+Energy point: <modes> <grid points>  [0, 1] [10, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_10_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 16.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96516       -0.15446        0.01872    
+    2)        H       -2.83196       -0.11660       -0.76959    
+    3)        H       -3.54999       -0.88914        0.08468    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  17
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 11  Mode= 1  Point= 3
+Energy point: <modes> <grid points>  [0, 1] [11, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_11_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 17.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97443       -0.16668        0.01633    
+    2)        H       -2.84944       -0.12794       -0.70428    
+    3)        H       -3.38540       -0.68385        0.05731    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  18
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 11  Mode= 1  Point= 15
+Energy point: <modes> <grid points>  [0, 1] [11, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_11_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 18.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.94435       -0.12910        0.01167    
+    2)        H       -2.83416       -0.10882       -0.70635    
+    3)        H       -3.87805       -1.29930        0.13339    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  19
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 12  Mode= 1  Point= 11
+Energy point: <modes> <grid points>  [0, 1] [12, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_12_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 19.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95362       -0.14132        0.00928    
+    2)        H       -2.85164       -0.12016       -0.64104    
+    3)        H       -3.71346       -1.09402        0.10602    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  20
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 13  Mode= 1  Point= 7
+Energy point: <modes> <grid points>  [0, 1] [13, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_13_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 20.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96289       -0.15354        0.00689    
+    2)        H       -2.86911       -0.13151       -0.57573    
+    3)        H       -3.54888       -0.88873        0.07865    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  21
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 14  Mode= 1  Point= 3
+Energy point: <modes> <grid points>  [0, 1] [14, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_14_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 21.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97216       -0.16576        0.00450    
+    2)        H       -2.88658       -0.14285       -0.51043    
+    3)        H       -3.38429       -0.68345        0.05129    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  22
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 14  Mode= 1  Point= 15
+Energy point: <modes> <grid points>  [0, 1] [14, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_14_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 22.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.94208       -0.12819       -0.00017    
+    2)        H       -2.87131       -0.12372       -0.51249    
+    3)        H       -3.87694       -1.29890        0.12736    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  23
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 15  Mode= 1  Point= 11
+Energy point: <modes> <grid points>  [0, 1] [15, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_1_15_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 23.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95135       -0.14041       -0.00256    
+    2)        H       -2.88878       -0.13507       -0.44719    
+    3)        H       -3.71236       -1.09362        0.10000    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  24
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 0  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [0, 2] [0, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_0_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 24.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97023       -0.15393        0.06051    
+    2)        H       -2.72861       -0.09387       -1.42104    
+    3)        H       -3.57287       -0.92028        0.07295    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  25
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 1  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [0, 2] [1, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_1_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 25.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95952       -0.13753        0.07681    
+    2)        H       -2.90972       -0.32095       -1.39796    
+    3)        H       -3.56181       -0.95337       -0.20890    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  26
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 1  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [0, 2] [1, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_1_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 26.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98939       -0.18580        0.01606    
+    2)        H       -2.40352        0.34538       -1.27335    
+    3)        H       -3.59388       -0.85371        0.63061    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  27
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 2  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [0, 2] [2, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_2_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 27.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97868       -0.16940        0.03237    
+    2)        H       -2.58464        0.11830       -1.25027    
+    3)        H       -3.58282       -0.88679        0.34876    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  28
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 3  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [0, 2] [3, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_3_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 28.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96796       -0.15301        0.04867    
+    2)        H       -2.76575       -0.10878       -1.22719    
+    3)        H       -3.57176       -0.91988        0.06692    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  29
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 4  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [0, 2] [4, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_4_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 29.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95724       -0.13662        0.06498    
+    2)        H       -2.94687       -0.33586       -1.20410    
+    3)        H       -3.56070       -0.95296       -0.21492    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  30
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 4  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [0, 2] [4, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_4_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 30.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98712       -0.18488        0.00423    
+    2)        H       -2.44066        0.33047       -1.07950    
+    3)        H       -3.59277       -0.85331        0.62458    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  31
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 5  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [0, 2] [5, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_5_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 31.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97640       -0.16849        0.02053    
+    2)        H       -2.62178        0.10339       -1.05642    
+    3)        H       -3.58171       -0.88639        0.34274    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  32
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 6  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [0, 2] [6, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_6_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 32.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96569       -0.15210        0.03684    
+    2)        H       -2.80290       -0.12369       -1.03333    
+    3)        H       -3.57065       -0.91947        0.06090    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  33
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 7  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [0, 2] [7, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_7_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 33.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95497       -0.13570        0.05314    
+    2)        H       -2.98401       -0.35077       -1.01025    
+    3)        H       -3.55960       -0.95256       -0.22094    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  34
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 7  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [0, 2] [7, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_7_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 34.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98485       -0.18397       -0.00761    
+    2)        H       -2.47781        0.31556       -0.88565    
+    3)        H       -3.59166       -0.85290        0.61856    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  35
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 8  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [0, 2] [8, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_8_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 35.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97413       -0.16758        0.00870    
+    2)        H       -2.65892        0.08848       -0.86256    
+    3)        H       -3.58060       -0.88599        0.33672    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  36
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 9  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [0, 2] [9, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_9_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 36.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96342       -0.15118        0.02500    
+    2)        H       -2.84004       -0.13860       -0.83948    
+    3)        H       -3.56955       -0.91907        0.05488    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  37
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 10  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [0, 2] [10, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_10_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 37.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95270       -0.13479        0.04131    
+    2)        H       -3.02115       -0.36568       -0.81640    
+    3)        H       -3.55849       -0.95215       -0.22697    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  38
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 10  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [0, 2] [10, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_10_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 38.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98258       -0.18306       -0.01944    
+    2)        H       -2.51495        0.30066       -0.69180    
+    3)        H       -3.59056       -0.85250        0.61253    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  39
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 11  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [0, 2] [11, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_11_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 39.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97186       -0.16666       -0.00314    
+    2)        H       -2.69607        0.07358       -0.66871    
+    3)        H       -3.57950       -0.88558        0.33069    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  40
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 12  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [0, 2] [12, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_12_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 40.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96115       -0.15027        0.01317    
+    2)        H       -2.87718       -0.15350       -0.64563    
+    3)        H       -3.56844       -0.91867        0.04885    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  41
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 13  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [0, 2] [13, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_13_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 41.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95043       -0.13388        0.02947    
+    2)        H       -3.05830       -0.38058       -0.62255    
+    3)        H       -3.55738       -0.95175       -0.23299    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  42
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 13  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [0, 2] [13, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_13_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 42.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98031       -0.18214       -0.03128    
+    2)        H       -2.55209        0.28575       -0.49794    
+    3)        H       -3.58945       -0.85209        0.60651    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  43
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 14  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [0, 2] [14, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_14_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 43.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96959       -0.16575       -0.01497    
+    2)        H       -2.73321        0.05867       -0.47486    
+    3)        H       -3.57839       -0.88518        0.32467    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  44
+
+****** DONE ***** 
+ *** Calculating point: Mode= 0  Point= 15  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [0, 2] [15, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_0_2_15_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 44.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95888       -0.14936        0.00133    
+    2)        H       -2.91432       -0.16841       -0.45178    
+    3)        H       -3.56733       -0.91826        0.04283    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  45
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 0  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [1, 2] [0, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_0_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 45.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97340       -0.15904        0.05408    
+    2)        H       -2.99975       -0.36521       -0.97665    
+    3)        H       -3.25151       -0.56783       -0.26949    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  46
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 0  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [1, 2] [0, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_0_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 46.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -3.00327       -0.20730       -0.00666    
+    2)        H       -2.49354        0.30113       -0.85205    
+    3)        H       -3.28357       -0.46818        0.57001    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  47
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 1  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [1, 2] [1, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_1_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 47.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.99081       -0.18808        0.01320    
+    2)        H       -2.66100        0.08061       -0.89376    
+    3)        H       -3.31394       -0.55268        0.29651    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  48
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 2  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [1, 2] [2, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_2_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 48.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97834       -0.16886        0.03306    
+    2)        H       -2.82847       -0.13991       -0.93546    
+    3)        H       -3.34430       -0.63719        0.02302    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  49
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 3  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [1, 2] [3, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_3_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 49.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96588       -0.14964        0.05292    
+    2)        H       -2.99593       -0.36043       -0.97717    
+    3)        H       -3.37467       -0.72170       -0.25048    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  50
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 3  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [1, 2] [3, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_3_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 50.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.99575       -0.19791       -0.00783    
+    2)        H       -2.48972        0.30591       -0.85256    
+    3)        H       -3.40674       -0.62204        0.58903    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  51
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 4  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [1, 2] [4, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_4_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 51.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98329       -0.17869        0.01203    
+    2)        H       -2.65719        0.08539       -0.89427    
+    3)        H       -3.43710       -0.70655        0.31553    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  52
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 5  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [1, 2] [5, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_5_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 52.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97082       -0.15947        0.03189    
+    2)        H       -2.82465       -0.13513       -0.93598    
+    3)        H       -3.46747       -0.79105        0.04204    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  53
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 6  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [1, 2] [6, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_6_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 53.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95836       -0.14025        0.05175    
+    2)        H       -2.99211       -0.35564       -0.97768    
+    3)        H       -3.49783       -0.87556       -0.23146    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  54
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 6  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [1, 2] [6, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_6_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 54.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98823       -0.18851       -0.00899    
+    2)        H       -2.48591        0.31069       -0.85308    
+    3)        H       -3.52990       -0.77590        0.60805    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  55
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 7  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [1, 2] [7, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_7_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 55.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97577       -0.16929        0.01087    
+    2)        H       -2.65337        0.09017       -0.89479    
+    3)        H       -3.56026       -0.86041        0.33455    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  56
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 8  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [1, 2] [8, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_8_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 56.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96330       -0.15008        0.03073    
+    2)        H       -2.82083       -0.13035       -0.93649    
+    3)        H       -3.59063       -0.94492        0.06106    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  57
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 9  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [1, 2] [9, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_9_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 57.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95084       -0.13086        0.05059    
+    2)        H       -2.98829       -0.35086       -0.97820    
+    3)        H       -3.62099       -1.02942       -0.21244    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  58
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 9  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [1, 2] [9, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_9_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 58.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.98071       -0.17912       -0.01016    
+    2)        H       -2.48209        0.31547       -0.85360    
+    3)        H       -3.65306       -0.92977        0.62706    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  59
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 10  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [1, 2] [10, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_10_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 59.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96825       -0.15990        0.00970    
+    2)        H       -2.64955        0.09495       -0.89530    
+    3)        H       -3.68342       -1.01427        0.35357    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  60
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 11  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [1, 2] [11, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_11_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 60.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.95578       -0.14068        0.02956    
+    2)        H       -2.81701       -0.12556       -0.93701    
+    3)        H       -3.71379       -1.09878        0.08008    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  61
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 12  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [1, 2] [12, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_12_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 61.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.94332       -0.12146        0.04942    
+    2)        H       -2.98448       -0.34608       -0.97872    
+    3)        H       -3.74415       -1.18328       -0.19342    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  62
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 12  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [1, 2] [12, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_12_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 62.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.97319       -0.16973       -0.01133    
+    2)        H       -2.47827        0.32025       -0.85411    
+    3)        H       -3.77622       -1.08363        0.64608    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  63
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 13  Mode= 2  Point= 11
+Energy point: <modes> <grid points>  [1, 2] [13, 11]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_13_11.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 63.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96073       -0.15051        0.00853    
+    2)        H       -2.64573        0.09973       -0.89582    
+    3)        H       -3.80659       -1.16813        0.37259    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  64
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 14  Mode= 2  Point= 7
+Energy point: <modes> <grid points>  [1, 2] [14, 7]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_14_7.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 64.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.94826       -0.13129        0.02840    
+    2)        H       -2.81320       -0.12078       -0.93753    
+    3)        H       -3.83695       -1.25264        0.09909    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  65
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 15  Mode= 2  Point= 3
+Energy point: <modes> <grid points>  [1, 2] [15, 3]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_15_3.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 65.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.93580       -0.11207        0.04826    
+    2)        H       -2.98066       -0.34130       -0.97923    
+    3)        H       -3.86732       -1.33715       -0.17440    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  66
+
+****** DONE ***** 
+ *** Calculating point: Mode= 1  Point= 15  Mode= 2  Point= 15
+Energy point: <modes> <grid points>  [1, 2] [15, 15]
+ Looking for file: /home/julia/skripte/tests/anharm/energies/v2_1_2_15_15.dat
+ !File not found or job not finished, running the job...
+ --------------------------------------------------
+ Running Turbomole single point job
+ (Restarted using `mos' from job 66.)
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96567       -0.16033       -0.01249    
+    2)        H       -2.47445        0.32503       -0.85463    
+    3)        H       -3.89938       -1.23749        0.66510    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201201-104511.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  67
+
+****** DONE ***** 
+
+*** Calculations done!
+ **************************************************
+ Finished Execution of PyADF input

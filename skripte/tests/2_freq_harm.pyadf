@@ -1,0 +1,84 @@
+import numpy
+import os
+import openbabel
+
+import VibTools
+
+molname = 'water'
+os.environ['PARNODES'] = '11'
+
+pyadfenv.options['save_results'] = True
+myfiles.import_resultsdir(os.path.join(pyadfenv.outdir, 'pyadf_results_geoopt'))
+_verbose_level = 5
+
+
+settings = TurbomoleGeometryOptimizationSettings(verbose_level=_verbose_level)
+
+# default settings: RI-DFT/BP
+settings.set_basis_set('def2-SVP')
+settings.set_ri(True)
+settings.set_dft_functional('b-p')
+settings.set_redundant_internal_coordinates(False)
+settings.set_scfiterlimit('5000')
+settings.set_max_iterations('5000')
+settings.set_dft_grid('m4')
+
+
+# COSMO
+'''
+The cosmosolv paramater merges the cosmoprepfile  
+and  the turbomole control file.    One needs to 
+have a working cosmoprepfile first. This is just 
+a workaround and needs to be implemented. 
+
+'''
+#cosmofile = os.path.join(pyadfenv.outdir,'cosmoprepfile')
+#settings.set_cosmosolv(cosmofile)
+
+
+# DEFINE INTERNAL COORDINATES
+'''
+Use this option in order to use the idef_list to fix atom positions.
+
+'''
+#settings.set_define_internal_coordinates(True) # only use if you want to use idef_list to fix atom positions
+#idef_list = mol.get_backbone_torsions()
+#settings.set_add_internal_coordinates(idef_list)
+
+
+mol = molecule (os.path.join(pyadfenv.outdir, '%s.xyz' %(molname)))
+#mol.set_charge(0)
+
+
+# DEUTERIUM
+'''
+The use_deuterium function needs a list of the hydrogen atoms that are supposed to be set as deuterium atoms. 
+In order to determine the hydrogens that are bound to hetero atoms (not carbon), get_hetero_hydrogen_list() is used.
+
+'''
+#settings.set_use_deuterium(True)
+#settings.set_hydrogen_list(mol.get_hetero_hydrogen_list())
+
+
+tm_res = TurbomoleGeometryOptimizationJob(mol, method='dft', settings=settings).run()
+
+opt_mol = tm_res.get_molecule()
+opt_mol.write(os.path.join(pyadfenv.outdir, '%s.xyz' %(molname)))
+
+opt_energy = tm_res.get_energy()
+print "Final Total Energy: ", opt_energy
+
+opt_grad   = tm_res.get_gradient_vector()
+print "Final Max Gradient: ", numpy.max(opt_grad)
+
+print "List of hydrogen atom that are set as deuterium: ", settings.hydrogen_list
+
+snf_results = SNFJob(tm_res).run()
+
+wavenumbers = snf_results.get_wave_numbers()
+print "SNF wavenumbers: ", wavenumbers
+intensities = snf_results.get_ints()
+print "    intensities: ", intensities
+
+numpy.savetxt(os.path.join(pyadfenv.outdir,'freqs.txt'), wavenumbers)
+numpy.savetxt(os.path.join(pyadfenv.outdir,'inten.txt'), intensities)

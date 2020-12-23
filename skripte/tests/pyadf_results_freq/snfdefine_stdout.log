@@ -1,0 +1,208 @@
+
+  *************************************************************
+  *                                                           *
+  *                         SNFDEFINE                         *
+  *                                                           *
+  *    DEVELOPMENT VERSION FOR RESONANCE ROA CALCULATIONS     *
+  *       Florian Krausbeck, June 2015, ETH Zurich            *
+  *                                                           *
+  *                   VERSION: SNF V 5.0.2                    *
+  *                                                           *
+  *                 Copyright (C) 1999 -- 2011                *
+  *                                                           *
+  *    Carmen Herrmann, Bernd A. Hess, Christoph R. Jacob,    *
+  *     Carsten Kind, Sandra Luber, Johannes Neugebauer,      *
+  *       Markus Reiher, Stephan Schenk, Thomas Weymuth       *
+  *                                                           *
+  *              Laboratory of Physical Chemistry             *
+  *                         ETH Zurich                        *
+  *                                                           *
+  *      This program comes with ABSOLUTELY NO WARRANTY.      *
+  *      This is free software: you can redistribute it       *
+  *      and/or modify it under the terms of the GNU          *
+  *      General Public License.                              *
+  *                                                           *
+  *************************************************************
+
+
+
+  If you want to read default-data from another snf_control file,
+  then enter its location/name or otherwise hit >return< 
+
+
+  Which program would you like to use:
+    tm [<control>]        : TURBOMOLE [control-file with input settings]
+    dalton                : DALTON
+    g98                   : GAUSSIAN98
+    g03                   : GAUSSIAN03
+    g09                   : GAUSSIAN09
+    adf                   : ADF
+    molp                  : MOLPRO
+    nwc                   : NWCHEM
+    &                     : go back to control file selection
+    >return<              : quit menu and accept default settings
+    Default: tm control
+
+
+  Symmetry     : c1 
+  No. of atoms :   3
+
+
+ Molecule of snf run
+ -------------------
+
+   No El  AN             m               x               y               z
+    1 O    8     15.994915     -5.60454689     -0.29035976      0.05364957
+    2 H    1      1.007825     -5.29194226     -0.19535734     -1.75974375
+    3 H    1      1.007825     -6.74903640     -1.72932537      0.17549160
+
+
+  If you want to enter one of the following menus
+  then type the corresponding command.
+
+    iso      : isotope menu
+    num      : numerical derivative menu
+    spe      : spectrum settings menu
+    the      : thermodynamics menu
+
+    desy     : determine molecular symmetry
+    p        : print molecule information
+    &        : go back to program selection
+    >return< : quit this menu
+
+
+
+
+  Intensities only menu
+  Read in selected normal modes and calculate IR-intensities
+    int    on  : switch on Intensites only calculation
+                 (Current setting: no intensities only calculation)
+    d            : default settings
+                   (read and select all modes from g98.out)
+    &            : go back to last menu
+    >return<     : quit menu
+
+
+  Raman intensities menu
+
+   CAUTION: Calculation of Raman intensities
+            is very time-consuming!
+
+  You may choose one of the following commands:
+    raman  on  : switch on Raman intensity calculation
+                 (Current setting: no Raman calculation)
+    d          : default settings
+    &          : go back to last menu
+    >return<   : quit menu
+
+
+  Vibrational Raman Optical Activity (VROA) menu
+
+    vroa   on  : switch on VROA calculation
+                 (Current setting: no VROA calculation)
+    d          : default settings
+    &          : go back to last menu
+    >return<   : quit menu
+
+
+  Output options and DCINPUT menu
+
+  You may choose one of the following commands:
+    iat    on  : switch on information about symmetry redundant atoms
+    idt    on  : switch on information about symmetry redundant distortions
+    hess_m on  : switch on output of mass-weighted cartesian hessian (units are Hartree mol/(Bohr^2 g)
+    hess   on  : switch on output of cartesian hessian
+    sumdeg off : switch off sum intensities for degenerate modes
+    gau    off : switch off gaussian fake output
+    tmco   on  : switch on turbomole fake output
+    mopac  on  : switch on mopac fake output
+    xmol   on  : switch on output of xmol XYZ input file
+    bak        : create backup copy of original mos file
+    all        : show all options
+    &          : go back to last menu
+    >return<   : quit menu
+
+
+ ***********************************************************
+ *** WARNING! from module get_energy                     *** 
+ *** Reading total energy from file './job.last' failed. *** 
+ *** Total energy will be set to zero.                   *** 
+ ***********************************************************
+
+
+ *********************************************************
+ *** WARNING! from module get_spin                     *** 
+ *** Reading total spin from file './job.last' failed. *** 
+ *** Total spin will be set to zero.                   *** 
+ *********************************************************
+
+
+ Information about symmetry redundant distortions
+ ----------------------------------------------
+   Total number of distortions
+   for non-redundant atoms            :   18
+   Number of non-redundant distortions:   18
+
+   List of non-redundant distortions:
+      1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16
+     17  18
+
+   dist No. | atom | coord. | rel. nonred. dist. | symmetry op.
+   ---------|------|--------|--------------------|-------------
+         1  |    1 |     +x |                  1 |          1
+         2  |    1 |     -x |                  2 |          1
+         3  |    1 |     +y |                  3 |          1
+         4  |    1 |     -y |                  4 |          1
+         5  |    1 |     +z |                  5 |          1
+         6  |    1 |     -z |                  6 |          1
+         7  |    2 |     +x |                  7 |          1
+         8  |    2 |     -x |                  8 |          1
+         9  |    2 |     +y |                  9 |          1
+        10  |    2 |     -y |                 10 |          1
+        11  |    2 |     +z |                 11 |          1
+        12  |    2 |     -z |                 12 |          1
+        13  |    3 |     +x |                 13 |          1
+        14  |    3 |     -x |                 14 |          1
+        15  |    3 |     +y |                 15 |          1
+        16  |    3 |     -y |                 16 |          1
+        17  |    3 |     +z |                 17 |          1
+        18  |    3 |     -z |                 18 |          1
+
+
+  Warning: $scfconv = 6
+  We strongly recommend $scfconv > 7!
+
+    Enter $scfconv-value to be used in this calculation
+    or press return to set default value ($scfconv = 8).
+
+** bfile: creating backup control.bak of control
+
+  Created new restart file : restart
+
+    0.00 % of all calculations have already been done
+ (or are redundant because of the molecular symmetry).
+
+  Created new snf control file : ./snf_control
+
+ ====================================
+ ==== CREATING SNFDC INPUT FILES ====
+ ====================================
+
+ ... creating file DCINPUT (using script mkdcinput)
+** mkdcinput: creating new DCINPUT file ...
+** mkdcinput: ... done
+
+ Contents of DCINPUT: 
+
+MYDIR /scratch/julia/20201127-144806/jobtempdir
+PREFIX TMPjulia%
+TMPDIR /scratch
+LOGDIR /scratch
+
+ =============================================
+ === change the parameters in DCINPUT      ===
+ === according to your needs if necessary  ===
+ === (press <return> to continue)          ===
+ =============================================
+
+  good luck...

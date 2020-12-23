@@ -1,0 +1,127 @@
+
+ **************************************************
+ *                                          
+ *  PyADF v0.9                              
+ *                                          
+ *  PyADF - A Scripting Framework for Multiscale Quantum Chemistry. 
+ *  Copyright (C) 2006-2014 by Christoph R. Jacob, S. Maya Beyhan,  
+ *  Rosa E. Bulo, Andre S. P. Gomes, Andreas Goetz, Michal Handzlik, 
+ *  Karin Kiewisch, Moritz Klammler, Jetze Sikkema, and Lucas Visscher 
+ * 
+ *     PyADF is free software: you can redistribute it and/or modify         
+ *     it under the terms of the GNU General Public License as published by  
+ *     the Free Software Foundation, either version 3 of the License, or     
+ *     (at your option) any later version. 
+ * 
+ *     PyADF is distributed in the hope that it will be useful,        
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of  
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the   
+ *     GNU General Public License for more details. 
+ * 
+ *     You should have received a copy of the GNU General Public License 
+ *     along with PyADF.  If not, see <http://www.gnu.org/licenses/>.    
+ * 
+ **************************************************
+
+ Directory of PyADF source:
+      /home/julia/pyadf
+
+ Directory of input file:
+      /home/julia/skripte/tests/anharm
+
+ Directory of output files:
+      /home/julia/skripte/tests/anharm
+
+ ----------------------------------------
+ PyADF input file:  E0.pyadf
+
+# PyADF script to generate grid structures and calculate anharmonic
+# potentials
+#import glob
+from VibTools.Constants import *
+#import VibTools
+#import vibrations as vib
+import numpy as np
+### WHICH POTENTIALS?
+V1 = True
+V2 = True
+### PATH TO ENERGY FILES
+print 'Energy files will be stored in: '
+enpath = os.path.join(pyadfenv.outdir,'energies')
+print enpath
+print
+print
+print 'Calculating the reference energy E0'
+print
+mol = molecule(os.path.join(pyadfenv.outdir,'coord'),inputformat='tmol')
+settings = TurbomoleSinglePointSettings(verbose_level=2)
+settings.set_basis_set('def2-SVP')
+settings.set_ri(True)
+settings.set_dft_functional('b-p')
+settings.set_redundant_internal_coordinates(False)
+#settings.set_dispersion_correction('dft-d3')
+settings.set_scfiterlimit('500')
+settings.set_dft_grid('m4')
+#cosmofile = os.path.join(pyadfenv.outdir,'cosmoprepfile')
+#settings.set_cosmosolv(cosmofile)
+job = TurbomoleSinglePointJob(mol,method='dft',settings=settings)
+E0res = job.run()
+dm = np.array(E0res.get_dipole_vector())* au_in_Debye
+en = E0res.get_energy()
+fname = 'E0.dat'
+with open(os.path.join(enpath,fname),'w+') as f:
+    outline = str(en)+' '+str(dm[0])+' '+str(dm[1])+' '+str(dm[2])
+    f.write(outline)
+ ----------------------------------------
+
+ **************************************************
+ Executing PyADF input ...
+
+Energy files will be stored in: 
+/home/julia/skripte/tests/anharm/energies
+
+
+Calculating the reference energy E0
+
+ --------------------------------------------------
+ Running Turbomole single point job
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96580       -0.15365        0.02839    
+    2)        H       -2.80038       -0.10338       -0.93122    
+    3)        H       -3.57144       -0.91512        0.09287    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 False
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 500
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.23084.out
+
+ Running main job ...
+ Done with Turbomole single point job
+
+ Results file id is  0
+
+ **************************************************
+ Finished Execution of PyADF input

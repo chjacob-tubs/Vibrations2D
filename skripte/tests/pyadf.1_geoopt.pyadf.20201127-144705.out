@@ -1,0 +1,167 @@
+
+ **************************************************
+ *                                          
+ *  PyADF v0.9                              
+ *                                          
+ *  PyADF - A Scripting Framework for Multiscale Quantum Chemistry. 
+ *  Copyright (C) 2006-2014 by Christoph R. Jacob, S. Maya Beyhan,  
+ *  Rosa E. Bulo, Andre S. P. Gomes, Andreas Goetz, Michal Handzlik, 
+ *  Karin Kiewisch, Moritz Klammler, Jetze Sikkema, and Lucas Visscher 
+ * 
+ *     PyADF is free software: you can redistribute it and/or modify         
+ *     it under the terms of the GNU General Public License as published by  
+ *     the Free Software Foundation, either version 3 of the License, or     
+ *     (at your option) any later version. 
+ * 
+ *     PyADF is distributed in the hope that it will be useful,        
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of  
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the   
+ *     GNU General Public License for more details. 
+ * 
+ *     You should have received a copy of the GNU General Public License 
+ *     along with PyADF.  If not, see <http://www.gnu.org/licenses/>.    
+ * 
+ **************************************************
+
+ Directory of PyADF source:
+      /home/julia/pyadf
+
+ Directory of input file:
+      /scratch/julia/20201127-144705
+
+ Directory of output files:
+      /home/julia/skripte/tests
+
+ ----------------------------------------
+ PyADF input file:  1_geoopt.pyadf
+
+import numpy
+import os
+import openbabel
+import VibTools
+molname = 'water'
+os.environ['PARNODES'] = '11'
+pyadfenv.options['save_results'] = True
+_verbose_level = 5
+settings = TurbomoleGeometryOptimizationSettings(verbose_level=_verbose_level)
+# default settings: RI-DFT/BP
+settings.set_basis_set('def2-SVP')
+settings.set_ri(True)
+settings.set_dft_functional('b-p')
+settings.set_redundant_internal_coordinates(True)
+settings.set_scfiterlimit('5000')
+settings.set_max_iterations('5000')
+settings.set_dft_grid('m4')
+# COSMO
+'''
+The cosmosolv paramater merges the cosmoprepfile  
+and  the turbomole control file.    One needs to 
+have a working cosmoprepfile first. This is just 
+a workaround and needs to be implemented. 
+'''
+#cosmofile = os.path.join(pyadfenv.outdir,'cosmoprepfile')
+#settings.set_cosmosolv(cosmofile)
+# DEFINE INTERNAL COORDINATES
+'''
+Use this option in order to use the idef_list to fix atom positions.
+'''
+#settings.set_define_internal_coordinates(True) # only use if you want to use idef_list to fix atom positions
+#idef_list = mol.get_backbone_torsions()
+#settings.set_add_internal_coordinates(idef_list)
+mol = molecule (os.path.join(pyadfenv.outdir, '%s.xyz' %(molname)))
+#mol.set_charge(0)
+tm_res = TurbomoleGeometryOptimizationJob(mol, method='dft', settings=settings).run()
+opt_mol = tm_res.get_molecule()
+opt_mol.write(os.path.join(pyadfenv.outdir, '%s_opt.xyz' %(molname)))
+opt_energy = tm_res.get_energy()
+print "Final Total Energy: ", opt_energy
+opt_grad   = tm_res.get_gradient_vector()
+print "Final Max Gradient: ", numpy.max(opt_grad)
+ ----------------------------------------
+
+ **************************************************
+ Executing PyADF input ...
+
+ --------------------------------------------------
+ Running Turbomole geometry optimization job
+
+  MOLECULE:
+
+  Cartesian coordinates: 
+    1)        O       -2.96463       -0.15176        0.03079    
+    2)        H       -2.80179       -0.10520       -0.93132    
+    3)        H       -3.57119       -0.91519        0.09057    
+
+  charge: 0
+
+  SETTINGS:
+
+  a) Method:                                    dft
+  b) DFT Functional:                            b-p
+  c) Dispersion correction:                     None
+  d) DFT integration grid:                      m4
+  e) Use RI approximation:                      True
+  f) Memory for RI:                             2000 MB
+  g) Basis set:                                 def2-SVP
+  h) Guess initial occupation by:               eht
+  i) Use red. int. coordinates:                 True
+  j) SCF convergence criterion scfconv:         default
+  k) Limit of the number of the SCF iterations: 5000
+  l) Max. cart. grad. norm:                     10^-4 a.u.
+  m) Max. iteration cycles:                     5000
+
+
+  EXTRAS:
+
+  There are no extras.
+
+ --------------------------------------------------
+
+   Output will be written to :  alloutput.20201127-144705.out
+
+ Running main job ...
+Successfully started  a `define' subprocess. 
+checking output: `define' claimes to have ended normally.
+checking output: File `control' exists.
+checking output: File `control' looks fine at a first glance. (I've been checking for these variables: ['title', 'coord', 'atoms', 'basis', 'end'].)
+checking output: File `coord' exists.
+checking output: File `coord' looks fine at a first glance. (I've been checking for these variables: ['coord', 'end', 'redundant'].)
+checking output: File `basis' exists.
+checking output: File `basis' looks fine at a first glance. (I've been checking for these variables: ['basis', 'end'].)
+checking output: File `mos' exists.
+checking output: File `mos' looks fine at a first glance. (I've been checking for these variables: ['scfmo', 'end'].)
+checking output: File `auxbasis' exists.
+checking output: File `auxbasis' looks fine at a first glance. (I've been checking for these variables: ['jbas', 'end'].)
+checking output: Found different `turbomole' version (expecting 6.3.x). Check output if everything still works.
+checking output: `define' claims to have added 3 atoms as expected.
+checking output: `define' still seems to accept `ired' as input.
+checking output: `define' says nothing about user-defined bonds, this should be okay in versions >6.3.x.
+checking output: `define' is concerned about basis sets for 3 atoms as expected.
+checking output: `define' still seems to accept `b' as input to assign atomic basis sets.
+checking output: At least, `define' didn't  complain about using `def2-SVP' as basis set for all atoms.
+checking output: `define'  says, he write basis sets to `basis' as I expected him to.
+checking output: `define' still seems to accept `eht' as input to select EHT for initial guess.
+checking output: `define' asked for the charge as I expected.
+checking output: `define' says, he found an initial guess for the occupation.
+checking output: `define' was asking me to accept the occupation just as expected.
+checking output: `define' still seems to  accept `dft' as input.
+checking output: `define' still seems to accept `on' (for DFT) as input.
+checking output: `define' still seems to accept `func' (to select the DFT functional as input.)
+checking output: `define' still seems to accept `grid' (to select the DFT Grid as input.)
+checking output: `define' still seems to accept `ri' as input.
+checking output: `define' still seems to accept `on' (for RI) as input.
+checking output: `define' still seems to accept `m' (for RI) as input.
+checking output: `define' confirmed using 2000 MB for RI as expected.
+checking output: I found the familiar `**** define : all done ****' statement.
+`define' successfully quit on exit status 0.
+I've checked `define's output and it looked fine. This is certainly no gurantee that it really did the right thing. If I were able to check this, I needn't even call it.
+ Done with Turbomole geometry optimization job
+
+ Results file id is  0
+
+Final Total Energy:  -76.3635821761
+Final Max Gradient:  3.0427616195317e-05
+ **************************************************
+ Finished Execution of PyADF input
+ Results were saved to:  pyadf_results.20201127-144705
+

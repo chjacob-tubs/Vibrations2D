@@ -1,0 +1,60 @@
+$snf_control
+$title
+snf calculation
+$progno          1
+$calcno          2
+$cstep           0.010
+$numderiv          1
+$symmetry c1 
+$rptype (ractivi)
+$vroaptype (default)
+$peaktype gauss  
+$hessian_mat none     
+$dipol_mat none     
+$pol_mat none     
+$pol_vel_mat none     
+$gtenlao_mat none     
+$gtenao_mat none     
+$aten_mat none     
+$restart restart
+$minfreq     200.00
+$maxfreq    3500.00
+$width        20.00
+$freqscale           1.000000000000
+$npoint     2000
+$temp        298.15
+$theta       90.000
+$press    101325.00
+$print_gaussian on
+$print_tm off
+$print_mopac off
+$print_mopxmol off
+$print_xmol off
+$print_symmetry off
+$print_irred_at off
+$print_irred_dist off
+$print_cioslowski off
+$print_force off
+$print_hessian off
+$print_hessian_m off
+$print_dip off
+$maxsym on
+$sumdeg on
+$print_pol off
+$print_gaten off
+$print_rcs off
+$print_vroa off
+$Atensor_0 off
+$resroa on
+$print_vcd off
+$print_transrot on
+$print_zpe on
+$print_thermo on
+$ramanew          0
+$vroaew          0
+$total electronic energy         0.0000000000
+$total spin         0.0000000000
+$nummodes   0
+$lastqmatom   0
+$tmpdirclean
+$end

@@ -1,0 +1,482 @@
+ starting snfdc log ...
+  memmgr| memory management with memmgr
+  memmgr| (C) 1997 Bernd Artur Hess
+  memmgr| $Id: memmgr.r,v 1.3 2002/01/30 19:44:57 nbauer Exp $        
+  memmgr| *c : check on
+  memmgr| *t : trace on
+  memmgr| free              1 L=    50000000 next:           0
+  memmgr|           0 words currently allocated,             0 max use.
+ nodeini| nnode=          12
+ nodeini| info=           0
+ nodeini| running on nitrogen12
+ nodeini| info=           0
+ nodeini| master node is nitrogen12                              
+        |           11  node(s) in virtual machine
+  memmgr| sadmch          44 WD at         1 L=        44 array-adr =         5
+  sadmch| new host at offset           5
+        | hostname: 0001                                    
+        | architecture:         
+ nodeini| virtual node 0001                                    
+  memmgr| sadmch          44 WD at        45 L=        44 array-adr =        49
+  sadmch| new host at offset          49
+        | hostname: 0002                                    
+        | architecture:         
+ nodeini| virtual node 0002                                    
+  memmgr| sadmch          44 WD at        89 L=        44 array-adr =        93
+  sadmch| new host at offset          93
+        | hostname: 0003                                    
+        | architecture:         
+ nodeini| virtual node 0003                                    
+  memmgr| sadmch          44 WD at       133 L=        44 array-adr =       137
+  sadmch| new host at offset         137
+        | hostname: 0004                                    
+        | architecture:         
+ nodeini| virtual node 0004                                    
+  memmgr| sadmch          44 WD at       177 L=        44 array-adr =       181
+  sadmch| new host at offset         181
+        | hostname: 0005                                    
+        | architecture:         
+ nodeini| virtual node 0005                                    
+  memmgr| sadmch          44 WD at       221 L=        44 array-adr =       225
+  sadmch| new host at offset         225
+        | hostname: 0006                                    
+        | architecture:         
+ nodeini| virtual node 0006                                    
+  memmgr| sadmch          44 WD at       265 L=        44 array-adr =       269
+  sadmch| new host at offset         269
+        | hostname: 0007                                    
+        | architecture:         
+ nodeini| virtual node 0007                                    
+  memmgr| sadmch          44 WD at       309 L=        44 array-adr =       313
+  sadmch| new host at offset         313
+        | hostname: 0008                                    
+        | architecture:         
+ nodeini| virtual node 0008                                    
+  memmgr| sadmch          44 WD at       353 L=        44 array-adr =       357
+  sadmch| new host at offset         357
+        | hostname: 0009                                    
+        | architecture:         
+ nodeini| virtual node 0009                                    
+  memmgr| sadmch          44 WD at       397 L=        44 array-adr =       401
+  sadmch| new host at offset         401
+        | hostname: 0010                                    
+        | architecture:         
+ nodeini| virtual node 0010                                    
+  memmgr| sadmch          44 WD at       441 L=        44 array-adr =       445
+  sadmch| new host at offset         445
+        | hostname: 0011                                    
+        | architecture:         
+ nodeini| virtual node 0011                                    
+ nodeini| ###### dumping nodes in virtual machine ######
+        | SADMCH structure at offset:            5
+        | hostname: 0001                                    
+        | architecture:         
+        | next:           49
+        | time:            0
+        | tmsg:            0
+        | tid:             1
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:            1
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:           49
+        | hostname: 0002                                    
+        | architecture:         
+        | next:           93
+        | time:            0
+        | tmsg:            0
+        | tid:             2
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:            2
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:           93
+        | hostname: 0003                                    
+        | architecture:         
+        | next:          137
+        | time:            0
+        | tmsg:            0
+        | tid:             3
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:            3
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:          137
+        | hostname: 0004                                    
+        | architecture:         
+        | next:          181
+        | time:            0
+        | tmsg:            0
+        | tid:             4
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:            4
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:          181
+        | hostname: 0005                                    
+        | architecture:         
+        | next:          225
+        | time:            0
+        | tmsg:            0
+        | tid:             5
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:            5
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:          225
+        | hostname: 0006                                    
+        | architecture:         
+        | next:          269
+        | time:            0
+        | tmsg:            0
+        | tid:             6
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:            6
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:          269
+        | hostname: 0007                                    
+        | architecture:         
+        | next:          313
+        | time:            0
+        | tmsg:            0
+        | tid:             7
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:            7
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:          313
+        | hostname: 0008                                    
+        | architecture:         
+        | next:          357
+        | time:            0
+        | tmsg:            0
+        | tid:             8
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:            8
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:          357
+        | hostname: 0009                                    
+        | architecture:         
+        | next:          401
+        | time:            0
+        | tmsg:            0
+        | tid:             9
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:            9
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:          401
+        | hostname: 0010                                    
+        | architecture:         
+        | next:          445
+        | time:            0
+        | tmsg:            0
+        | tid:            10
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:           10
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+        | SADMCH structure at offset:          445
+        | hostname: 0011                                    
+        | architecture:         
+        | next:            0
+        | time:            0
+        | tmsg:            0
+        | tid:            11
+        | tpid:            0
+        | trc:             0
+        | usag:            0
+        | nodf:            3
+        | stpa:            0
+        | stpb:            0
+        | numb:           11
+        | cmd:             0
+        | res:             0
+        | last:            0
+        | mxlo:            0
+        | load:            0
+  memmgr| ilab            10 WD at       485 L=        10 array-adr =       489
+  memmgr| co              24 DW at       495 L=        24 array-adr =       250
+  memmgr| dipol          114 DW at       519 L=       114 array-adr =       262
+  memmgr| polar         2886 DW at       633 L=      2886 array-adr =       319
+  memmgr| polarvel      2886 DW at      3519 L=      2886 array-adr =      1762
+  memmgr| gtenlao       3246 DW at      6405 L=      3246 array-adr =      3205
+  memmgr| gtenao        3246 DW at      9651 L=      3246 array-adr =      4828
+  memmgr| aten          9726 DW at     12897 L=      9726 array-adr =      6451
+  memmgr| grad           330 DW at     22623 L=       330 array-adr =     11314
+  memmgr| istepfl         24 WD at     22953 L=        24 array-adr =     22957
+  memmgr| nvmach          42 DW at     22977 L=        42 array-adr =     11491
+  memmgr| polarim       2886 DW at     23019 L=      2886 array-adr =     11512
+  memmgr| gtenim        3246 DW at     25905 L=      3246 array-adr =     12955
+  memmgr| atenim        9726 DW at     29151 L=      9726 array-adr =     14578
+  memmgr| AAT             60 DW at     38877 L=        60 array-adr =     19441
+  master| calling spawn()
+   spawn| spawning snfdc process #           1  on tid0001
+   spawn| sending data to tid            1
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid            1
+   spawn| id            1  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #           2  on tid0002
+   spawn| sending data to tid            2
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid            2
+   spawn| id            2  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #           3  on tid0003
+   spawn| sending data to tid            3
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid            3
+   spawn| id            3  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #           4  on tid0004
+   spawn| sending data to tid            4
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid            4
+   spawn| id            4  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #           5  on tid0005
+   spawn| sending data to tid            5
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid            5
+   spawn| id            5  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #           6  on tid0006
+   spawn| sending data to tid            6
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid            6
+   spawn| id            6  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #           7  on tid0007
+   spawn| sending data to tid            7
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid            7
+   spawn| id            7  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #           8  on tid0008
+   spawn| sending data to tid            8
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid            8
+   spawn| id            8  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #           9  on tid0009
+   spawn| sending data to tid            9
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid            9
+   spawn| id            9  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #          10  on tid0010
+   spawn| sending data to tid           10
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid           10
+   spawn| id           10  iready       111111  restart_version          420
+  master| calling spawn()
+   spawn| spawning snfdc process #          11  on tid0011
+   spawn| sending data to tid           11
+   spawn| input files will be copied using scp
+   spawn| waiting for answer from tid           11
+   spawn| id           11  iready       111111  restart_version          420
+  master| <restart> read
+  memmgr| g               24 DW at     38937 L=        24 array-adr =     19471
+  master| calling parstuff()
+ parstuff| sleeptime is:            5 seconds
+   ssend| sending step to tid            1
+   ssend| step sent to tid            1
+   ssend| sending step to tid            2
+   ssend| step sent to tid            2
+   ssend| sending step to tid            3
+   ssend| step sent to tid            3
+   ssend| sending step to tid            4
+   ssend| step sent to tid            4
+   ssend| sending step to tid            5
+   ssend| step sent to tid            5
+   ssend| sending step to tid            6
+   ssend| step sent to tid            6
+   ssend| sending step to tid            7
+   ssend| step sent to tid            7
+   ssend| sending step to tid            8
+   ssend| step sent to tid            8
+   ssend| sending step to tid            9
+   ssend| step sent to tid            9
+   ssend| sending step to tid           10
+   ssend| step sent to tid           10
+   ssend| sending step to tid           11
+   ssend| step sent to tid           11
+  getres| receiving results from tid            8
+   ssend| nitrogen expected to finish at           14
+        | nitrogen expected to finish at   1606484919
+        | so wait for nitrogen
+   ssend| sending step to tid            8
+   ssend| step sent to tid            8
+  getres| receiving results from tid            2
+   ssend| nitrogen expected to finish at           14
+        | nitrogen expected to finish at   1606484919
+        | so wait for nitrogen
+   ssend| sending step to tid            2
+   ssend| step sent to tid            2
+  getres| receiving results from tid            4
+   ssend| nitrogen expected to finish at           14
+        | nitrogen expected to finish at   1606484919
+        | so wait for nitrogen
+   ssend| sending step to tid            4
+   ssend| step sent to tid            4
+  getres| receiving results from tid            6
+   ssend| nitrogen expected to finish at           14
+        | nitrogen expected to finish at   1606484919
+        | so wait for nitrogen
+   ssend| sending step to tid            6
+   ssend| step sent to tid            6
+  getres| receiving results from tid           10
+   ssend| nitrogen expected to finish at           16
+        | nitrogen expected to finish at   1606484921
+        | so wait for nitrogen
+   ssend| sending step to tid           10
+   ssend| step sent to tid           10
+  getres| receiving results from tid            7
+   ssend| nitrogen expected to finish at           16
+        | nitrogen expected to finish at   1606484921
+        | so wait for nitrogen
+   ssend| sending step to tid            7
+   ssend| step sent to tid            7
+  getres| receiving results from tid            9
+  getres| receiving results from tid            3
+   ssend| nitrogen expected to finish at           16
+        | nitrogen expected to finish at   1606484921
+        | so wait for nitrogen
+   ssend| sending step to tid            9
+   ssend| step sent to tid            9
+  getres| receiving results from tid           11
+  getres| receiving results from tid            1
+ parstuff| removing idle tid            3
+ parstuff| removing idle tid           11
+ parstuff| removing idle tid            1
+  getres| receiving results from tid            5
+ parstuff| removing idle tid            5
+  getres| receiving results from tid            7
+  getres| node:            7  hostname: nitrogen used:            1  seconds
+ parstuff| removing idle tid            7
+  getres| receiving results from tid            9
+  getres| node:            9  hostname: nitrogen used:            1  seconds
+ parstuff| removing idle tid            9
+  getres| receiving results from tid            2
+  getres| node:            2  hostname: nitrogen used:            2  seconds
+ parstuff| removing idle tid            2
+  getres| receiving results from tid            8
+  getres| node:            8  hostname: nitrogen used:            2  seconds
+ parstuff| removing idle tid            8
+  getres| receiving results from tid            6
+  getres| node:            6  hostname: nitrogen used:            2  seconds
+ parstuff| removing idle tid            6
+  getres| receiving results from tid           10
+  getres| node:           10  hostname: nitrogen used:            2  seconds
+ parstuff| removing idle tid           10
+  getres| receiving results from tid            4
+  getres| node:            4  hostname: nitrogen used:            2  seconds
+  memmgr| g               24 words allocated as DW now free at     38937
+  memgbc|      38937@ [        24] and      38961@ fused.
+  memmgr| dipol          114 words allocated as DW now free at       519
+  memmgr| polar         2886 words allocated as DW now free at       633
+  memgbc|        519@ [       114] and        633@ fused.
+  memmgr| polarvel      2886 words allocated as DW now free at      3519
+  memgbc|        519@ [      3000] and       3519@ fused.
+  memmgr| gtenlao       3246 words allocated as DW now free at      6405
+  memgbc|        519@ [      5886] and       6405@ fused.
+  memmgr| gtenao        3246 words allocated as DW now free at      9651
+  memgbc|        519@ [      9132] and       9651@ fused.
+  memmgr| aten          9726 words allocated as DW now free at     12897
+  memgbc|        519@ [     12378] and      12897@ fused.
+  memmgr| grad           330 words allocated as DW now free at     22623
+  memgbc|        519@ [     22104] and      22623@ fused.
+  memmgr| istepfl         24 words allocated as WD now free at     22953
+  memgbc|        519@ [     22434] and      22953@ fused.
+  memmgr| AAT             60 words allocated as DW now free at     38877
+  memgbc|      38877@ [        60] and      38937@ fused.
+  memmgr| polarim       2886 words allocated as DW now free at     23019
+  memmgr| gtenim        3246 words allocated as DW now free at     25905
+  memgbc|      23019@ [      2886] and      25905@ fused.
+  memmgr| atenim        9726 words allocated as DW now free at     29151
+  memgbc|      23019@ [      6132] and      29151@ fused.
+  memgbc|      23019@ [     15858] and      38877@ fused.
+ shutdown| sending finish signal to tid            4

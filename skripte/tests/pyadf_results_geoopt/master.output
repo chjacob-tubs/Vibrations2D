@@ -1,0 +1,19 @@
+
+ ridftserver (nitrogen12) : TURBOMOLE V7.1 ( 20661 ) 10 Jun 2016 at 09:11:07
+ Copyright (C) 2016 TURBOMOLE GmbH, Karlsruhe
+
+
+    2020-11-27 14:47:18.956 
+
+   ***************************************************************************
+$operating system unix                                                          
+   ***************************************************************************
+ ! Initialization MPI         :           11  tasks intended
+ total turnaround time of ridftserver     0.47 sec
+ cpu elapsed by ridftserver process       0.02 sec 
+
+   ***  ridft server : all done  ***
+
+
+    2020-11-27 14:47:19.425 
+

@@ -1,0 +1,675 @@
+
+ define (nitrogen12) : TURBOMOLE V7.1 ( 20673 ) 20 Jun 2016 at 11:11:04
+ Copyright (C) 2016 TURBOMOLE GmbH, Karlsruhe
+
+
+    2020-11-27 14:47:07.033 
+
+             OPERATING SYSTEM = unix
+                    HOST NAME = nitrogen12
+   STANDARD BASIS SET LIBRARY = /home/soft/turbomole/7.1/basen/
+  ALTERNATE BASIS SET LIBRARY = /home/soft/turbomole/7.1/basold/
+ LIBRARY FOR RI-J  BASIS SETS = /home/soft/turbomole/7.1/jbasen/
+ LIBRARY FOR RI-JK BASIS SETS = /home/soft/turbomole/7.1/jkbasen/
+ LIBRARY FOR RIMP2/RICC2 SETS = /home/soft/turbomole/7.1/cbasen/
+ LIBRARY FOR RIR12 BASIS SETS = /home/soft/turbomole/7.1/cabasen/
+ LIBRARY FOR OEP   BASIS SETS = /home/soft/turbomole/7.1/xbasen/
+            STRUCTURE LIBRARY = /home/soft/turbomole/7.1/structures/
+
+ 
+ ***********************************************************
+ *                                                         *
+ *                       D E F I N E                       *
+ *                                                         *
+ *         TURBOMOLE'S  INTERACTIVE  INPUT  PROGRAM        *
+ *                                                         *
+ *  Quantum Chemistry Group       University of Karlsruhe  *
+ *                                                         *
+ ***********************************************************
+ 
+
+ DATA WILL BE WRITTEN TO THE NEW FILE control
+
+ IF YOU WANT TO READ DEFAULT-DATA FROM ANOTHER control-TYPE FILE,
+ THEN ENTER ITS LOCATION/NAME OR OTHERWISE HIT >return<.
+
+ 
+ INPUT TITLE OR 
+ ENTER & TO REPEAT DEFINITION OF DEFAULT INPUT FILE 
+
+ SPECIFICATION OF MOLECULAR GEOMETRY ( #ATOMS=0     SYMMETRY=c1  )
+ YOU MAY USE ONE OF THE FOLLOWING COMMANDS : 
+ sy <group> <eps> : DEFINE MOLECULAR SYMMETRY (default for eps=3d-1)
+ desy <eps>       : DETERMINE MOLECULAR SYMMETRY AND ADJUST 
+                     COORDINATES (default for eps=1d-6)
+ susy             : ADJUST COORDINATES FOR SUBGROUPS
+ ai               : ADD ATOMIC COORDINATES INTERACTIVELY
+ a <file>         : ADD ATOMIC COORDINATES FROM FILE <file>
+ aa <file>        : ADD ATOMIC COORDINATES IN ANGSTROEM UNITS FROM FILE <file>
+ sub              : SUBSTITUTE AN ATOM BY A GROUP OF ATOMS
+ i                : INTERNAL COORDINATE MENU 
+ ired             : REDUNDANT INTERNAL COORDINATES
+ red_info         : DISPLAY REDUNDANT INTERNAL COORDINATES
+ ff               : UFF-FORCEFIELD CALCULATION
+ m                : MANIPULATE GEOMETRY
+ frag             : Define Fragments for BSSE calculation
+ w <file>         : WRITE MOLECULAR COORDINATES TO FILE <file> 
+ r <file>         : RELOAD ATOMIC AND INTERNAL COORDINATES FROM FILE <file>
+ name             : CHANGE ATOMIC IDENTIFIERS 
+ del              : DELETE ATOMS 
+ dis              : DISPLAY MOLECULAR GEOMETRY 
+ banal            : CARRY OUT BOND ANALYSIS 
+ *                : TERMINATE MOLECULAR GEOMETRY SPECIFICATION 
+                     AND WRITE GEOMETRY DATA TO CONTROL FILE 
+
+ IF YOU APPEND A QUESTION MARK TO ANY COMMAND AN EXPLANATION
+ OF THAT COMMAND MAY BE GIVEN 
+
+
+ CARTESIAN COORDINATES FOR   3 ATOMS HAVE SUCCESSFULLY 
+ BEEN ADDED. 
+
+ keyword $intdef  missing in file <coord>
+
+ DEFINITIONS OF INTERNAL COORDINATES HAVE  N O T  BEEN READ. 
+
+ keyword $user-defined bonds missing in file <coord>
+
+ SPECIFICATION OF BOND TOPOLOGY HAS  N O T  BEEN READ. 
+
+ SPECIFICATION OF MOLECULAR GEOMETRY ( #ATOMS=3     SYMMETRY=c1  )
+ YOU MAY USE ONE OF THE FOLLOWING COMMANDS : 
+ sy <group> <eps> : DEFINE MOLECULAR SYMMETRY (default for eps=3d-1)
+ desy <eps>       : DETERMINE MOLECULAR SYMMETRY AND ADJUST 
+                     COORDINATES (default for eps=1d-6)
+ susy             : ADJUST COORDINATES FOR SUBGROUPS
+ ai               : ADD ATOMIC COORDINATES INTERACTIVELY
+ a <file>         : ADD ATOMIC COORDINATES FROM FILE <file>
+ aa <file>        : ADD ATOMIC COORDINATES IN ANGSTROEM UNITS FROM FILE <file>
+ sub              : SUBSTITUTE AN ATOM BY A GROUP OF ATOMS
+ i                : INTERNAL COORDINATE MENU 
+ ired             : REDUNDANT INTERNAL COORDINATES
+ red_info         : DISPLAY REDUNDANT INTERNAL COORDINATES
+ ff               : UFF-FORCEFIELD CALCULATION
+ m                : MANIPULATE GEOMETRY
+ frag             : Define Fragments for BSSE calculation
+ w <file>         : WRITE MOLECULAR COORDINATES TO FILE <file> 
+ r <file>         : RELOAD ATOMIC AND INTERNAL COORDINATES FROM FILE <file>
+ name             : CHANGE ATOMIC IDENTIFIERS 
+ del              : DELETE ATOMS 
+ dis              : DISPLAY MOLECULAR GEOMETRY 
+ banal            : CARRY OUT BOND ANALYSIS 
+ *                : TERMINATE MOLECULAR GEOMETRY SPECIFICATION 
+                     AND WRITE GEOMETRY DATA TO CONTROL FILE 
+
+ IF YOU APPEND A QUESTION MARK TO ANY COMMAND AN EXPLANATION
+ OF THAT COMMAND MAY BE GIVEN 
+
+     GEOIRED: NBDIM       3  NDEGR:       3
+      Lowest Eigenvalue of BmBt is:          0.7531973999
+     GEOSPY: ATTENTION! 
+     natural internals not linearly independent? 
+       Decoupling with "globtry"=   0.999999999900000     
+      Lowest Eigenvalue of projected BBt           0.7531973999 No:     3
+      Quotient of Eigenvalues           1.0000000000
+     OCCUPATION OF BLOCKS:    3    0    0    0    0
+
+ SPECIFICATION OF MOLECULAR GEOMETRY ( #ATOMS=3     SYMMETRY=c1  )
+ YOU MAY USE ONE OF THE FOLLOWING COMMANDS : 
+ sy <group> <eps> : DEFINE MOLECULAR SYMMETRY (default for eps=3d-1)
+ desy <eps>       : DETERMINE MOLECULAR SYMMETRY AND ADJUST 
+                     COORDINATES (default for eps=1d-6)
+ susy             : ADJUST COORDINATES FOR SUBGROUPS
+ ai               : ADD ATOMIC COORDINATES INTERACTIVELY
+ a <file>         : ADD ATOMIC COORDINATES FROM FILE <file>
+ aa <file>        : ADD ATOMIC COORDINATES IN ANGSTROEM UNITS FROM FILE <file>
+ sub              : SUBSTITUTE AN ATOM BY A GROUP OF ATOMS
+ i                : INTERNAL COORDINATE MENU 
+ ired             : REDUNDANT INTERNAL COORDINATES
+ red_info         : DISPLAY REDUNDANT INTERNAL COORDINATES
+ ff               : UFF-FORCEFIELD CALCULATION
+ m                : MANIPULATE GEOMETRY
+ frag             : Define Fragments for BSSE calculation
+ w <file>         : WRITE MOLECULAR COORDINATES TO FILE <file> 
+ r <file>         : RELOAD ATOMIC AND INTERNAL COORDINATES FROM FILE <file>
+ name             : CHANGE ATOMIC IDENTIFIERS 
+ del              : DELETE ATOMS 
+ dis              : DISPLAY MOLECULAR GEOMETRY 
+ banal            : CARRY OUT BOND ANALYSIS 
+ *                : TERMINATE MOLECULAR GEOMETRY SPECIFICATION 
+                     AND WRITE GEOMETRY DATA TO CONTROL FILE 
+
+ IF YOU APPEND A QUESTION MARK TO ANY COMMAND AN EXPLANATION
+ OF THAT COMMAND MAY BE GIVEN 
+
+
+ GEOMETRY DATA WILL BE WRITTEN TO FILE coord
+
+
+ SUPPLYING BASIS SETS TO    3 ATOMS 
+ #                                                                       
+ #                       BASIS SET LIBRARY FOR OXYGEN                    
+ #            ECPs, HONDO-BASIS SETS FROM basen AND                      
+ #     FULLY OPTIMIZED BASIS SETS FROM newbas MERGED 02/6/93             
+ #                                                                       
+ #         abbreviation hondo refers to the version 7.0 of HONDO         
+ #                                                                       
+ #                                                                       
+ ########################################################################
+ #       HF limit : E(3P) = -74.809398 a.u. (C. Froese Fischer, 1977)    
+ ########################################################################
+ #       Roothaan parameters for O(3P) in symmetry I:                    
+ #        a = 15/16      b = 9/8                                         
+ ########################################################################
+ #                                                                       
+ o def-SV(P)                                                             
+ o def2-SVP                                                              
+ o dhf-SVP                                                               
+ o dhf-SVP-2c                                                            
+ o def2-SV(P)                                                            
+ o dhf-SV(P)                                                             
+ o dhf-SV(P)-2c                                                          
+ # o (7s4p1d)/[3s2p1d] {511/31/1}                                        
+ # ROHF(equiv) energy is -74.71374601625 a.u.  (virial theorem = 2.000000
+ # UHF(noneq)  energy is -74.72010092377 a.u.  (virial theorem = 2.000106
+ #                                                                       
+ #                    BASIS SET LIBRARY FOR HYDROGEN                     
+ #            ECPs, HONDO-BASIS SETS FROM basen AND                      
+ #     FULLY OPTIMIZED BASIS SETS FROM newbas MERGED 02/6/93             
+ #                                                                       
+ #         abbreviation hondo refers to the version 7.0 of HONDO         
+ #                                                                       
+ ########################################################################
+ #       HF limit : E(2S) = -0.5 a.u.                                    
+ ########################################################################
+ #       Roothaan parameters for H(2S):                                  
+ #        a = 0      b = 0                                               
+ ########################################################################
+ #                                                                       
+ h def-SV(P)                                                             
+ h def2-SV(P)                                                            
+ h dhf-SV(P)                                                             
+ h dhf-SV(P)-2c                                                          
+ # HF(equiv) energy is -0.49927840571 a.u.  (virial theorem = 2.000000001
+ # (4s)/[2s] {31}                                                        
+ # H. Horn, Aug. 91                                                      
+ 
+ ==============================================================================
+ NOTE: Improved basis sets are available for H-Rn ("def2-bases").
+ For further information type "bi".
+ ==============================================================================
+
+ ATOMIC ATTRIBUTE DEFINITION MENU  ( #atoms=3     #bas=3     #ecp=0     )
+
+ b    : ASSIGN ATOMIC BASIS SETS 
+ bb   : b RESTRICTED TO BASIS SET LIBRARY 
+ bl   : LIST ATOMIC BASIS SETS ASSIGNED
+ bm   : MODIFY DEFINITION OF ATOMIC BASIS SET
+ bp   : SWITCH BETWEEN 5d/7f AND 6d/10f
+ lib  : SELECT BASIS SET LIBRARY
+ ecp  : ASSIGN EFFECTIVE CORE POTENTIALS 
+ ecpb : ecp RESTRICTED TO BASIS SET LIBRARY 
+ ecpi : GENERAL INFORMATION ABOUT EFFECTIVE CORE POTENTIALS
+ ecpl : LIST EFFECTIVE CORE POTENTIALS ASSIGNED
+ ecprm: REMOVE EFFECTIVE CORE POTENTIAL(S)
+ c    : ASSIGN NUCLEAR CHARGES (IF DIFFERENT FROM DEFAULTS) 
+ cem  : ASSIGN NUCLEAR CHARGES FOR EMBEDDING 
+ m    : ASSIGN ATOMIC MASSES (IF DIFFERENT FROM DEFAULTS) 
+ dis  : DISPLAY MOLECULAR GEOMETRY 
+ dat  : DISPLAY ATOMIC ATTRIBUTES YET ESTABLISHED 
+ h    : EXPLANATION OF ATTRIBUTE DEFINITION SYNTAX 
+ *    : TERMINATE THIS SECTION AND WRITE DATA OR DATA REFERENCES TO control
+ GOBACK=& (TO GEOMETRY MENU !)
+
+
+ ENTER A SET OF ATOMS TO WHICH YOU WANT TO ASSIGN BASIS SETS
+ ( ATOMIC SET : all none <index list> <identifier> ) 
+ TO OUTPUT ATOMIC SET SYNTAX ENTER A QUESTION MARK  ? 
+ E.G.  all dz            (DZ BASIS FOR ALL ATOMS)
+       all sto-3g hondo  (SCALED STO-3G)
+       1,2,4-6 dzp       (DZP BASIS FOR ATOMS 1,2,4,5,6)
+       "c" tz            (TZ BASIS FOR ALL CARBON ATOMS)
+ ANY DISPLAY COMMAND  dis  MAY BE ENTERED OR YOU MAY 
+ HIT >return< TO QUIT (GOING BACK TO MAIN MENU) 
+
+
+ SUPPLYING BASIS SETS TO    3 ATOMS 
+ #                                                                       
+ #                       BASIS SET LIBRARY FOR OXYGEN                    
+ #            ECPs, HONDO-BASIS SETS FROM basen AND                      
+ #     FULLY OPTIMIZED BASIS SETS FROM newbas MERGED 02/6/93             
+ #                                                                       
+ #         abbreviation hondo refers to the version 7.0 of HONDO         
+ #                                                                       
+ #                                                                       
+ ########################################################################
+ #       HF limit : E(3P) = -74.809398 a.u. (C. Froese Fischer, 1977)    
+ ########################################################################
+ #       Roothaan parameters for O(3P) in symmetry I:                    
+ #        a = 15/16      b = 9/8                                         
+ ########################################################################
+ #                                                                       
+ o def2-SVP                                                              
+ o dhf-SVP                                                               
+ o dhf-SVP-2c                                                            
+ o def2-SV(P)                                                            
+ o dhf-SV(P)                                                             
+ o dhf-SV(P)-2c                                                          
+ # o (7s4p1d)/[3s2p1d] {511/31/1}                                        
+ # ROHF(equiv) energy is -74.71374601625 a.u.  (virial theorem = 2.000000
+ # UHF(noneq)  energy is -74.72010092377 a.u.  (virial theorem = 2.000106
+ #                                                                       
+ #                    BASIS SET LIBRARY FOR HYDROGEN                     
+ #            ECPs, HONDO-BASIS SETS FROM basen AND                      
+ #     FULLY OPTIMIZED BASIS SETS FROM newbas MERGED 02/6/93             
+ #                                                                       
+ #         abbreviation hondo refers to the version 7.0 of HONDO         
+ #                                                                       
+ ########################################################################
+ #       HF limit : E(2S) = -0.5 a.u.                                    
+ ########################################################################
+ #       Roothaan parameters for H(2S):                                  
+ #        a = 0      b = 0                                               
+ ########################################################################
+ #                                                                       
+ h def2-SVP                                                              
+ h dhf-SVP                                                               
+ h dhf-SVP-2c                                                            
+ # HF(equiv) energy is -0.49927840571 a.u.  (virial theorem = 2.000000001
+ # (4s1p)/[2s1p] {31/1}                                                  
+
+ ATOMIC ATTRIBUTE DEFINITION MENU  ( #atoms=3     #bas=3     #ecp=0     )
+
+ b    : ASSIGN ATOMIC BASIS SETS 
+ bb   : b RESTRICTED TO BASIS SET LIBRARY 
+ bl   : LIST ATOMIC BASIS SETS ASSIGNED
+ bm   : MODIFY DEFINITION OF ATOMIC BASIS SET
+ bp   : SWITCH BETWEEN 5d/7f AND 6d/10f
+ lib  : SELECT BASIS SET LIBRARY
+ ecp  : ASSIGN EFFECTIVE CORE POTENTIALS 
+ ecpb : ecp RESTRICTED TO BASIS SET LIBRARY 
+ ecpi : GENERAL INFORMATION ABOUT EFFECTIVE CORE POTENTIALS
+ ecpl : LIST EFFECTIVE CORE POTENTIALS ASSIGNED
+ ecprm: REMOVE EFFECTIVE CORE POTENTIAL(S)
+ c    : ASSIGN NUCLEAR CHARGES (IF DIFFERENT FROM DEFAULTS) 
+ cem  : ASSIGN NUCLEAR CHARGES FOR EMBEDDING 
+ m    : ASSIGN ATOMIC MASSES (IF DIFFERENT FROM DEFAULTS) 
+ dis  : DISPLAY MOLECULAR GEOMETRY 
+ dat  : DISPLAY ATOMIC ATTRIBUTES YET ESTABLISHED 
+ h    : EXPLANATION OF ATTRIBUTE DEFINITION SYNTAX 
+ *    : TERMINATE THIS SECTION AND WRITE DATA OR DATA REFERENCES TO control
+ GOBACK=& (TO GEOMETRY MENU !)
+
+
+ BASIS SETS WILL BE WRITTEN TO FILE basis BY DEFAULT
+
+
+              ATOMIC COORDINATES              ATOM SHELLS CHARGE PSEUDO MASS
+    -5.60233876   -0.28678484    0.05818467    o      6      8.     0 15.999
+    -5.29461576   -0.19879919   -1.75993973    h      3      1.     0  1.008
+    -6.74857104   -1.72945845    0.17115250    h      3      1.     0  1.008
+ 
+
+ we will work with the  1s 3p 5d
+
+ there are 1 real representations :   a   
+
+ OCCUPATION NUMBER & MOLECULAR ORBITAL DEFINITION MENU 
+
+ CHOOSE COMMAND 
+ infsao     : OUTPUT SAO INFORMATION 
+ atb        : Switch for writing MOs in ASCII or binary format
+ eht        : PROVIDE MOS && OCCUPATION NUMBERS FROM EXTENDED HUECKEL GUESS 
+ use <file> : SUPPLY MO INFORMATION USING DATA FROM <file> 
+ man        : MANUAL SPECIFICATION OF OCCUPATION NUMBERS 
+ hcore      : HAMILTON CORE GUESS FOR MOS
+ flip       : FLIP SPIN OF A SELECTED ATOM
+ &          : MOVE BACK TO THE ATOMIC ATTRIBUTES MENU
+ THE COMMANDS  use  OR  eht  OR  *  OR q(uit) TERMINATE THIS MENU !!! 
+ FOR EXPLANATIONS APPEND A QUESTION MARK (?) TO ANY COMMAND 
+
+
+ PROVIDING EHT AOS FOR THE FOLLOWING SET OF ATOMS :
+     1 o       
+ for the   8 electrons of the actual atom you have
+ to provide at least basis functions for the AO's :   2s  1p  0d  0f
+
+
+ reading orbital data 3P(DZ)  from file /home/soft/turbomole/7.1/basen/o
+
+ PROVIDING EHT AOS FOR THE FOLLOWING SET OF ATOMS :
+     2 h            3 h       
+ for the   1 electrons of the actual atom you have
+ to provide at least basis functions for the AO's :   1s  0p  0d  0f
+
+
+ reading orbital data 2S(DZ)  from file /home/soft/turbomole/7.1/basen/h
+
+    sao summary :
+   irrep      number of sao's referring to
+                old basis    new basis
+    a               7           24
+
+ EFFECTIVE NUMBER OF NON-VANISHING CARTESIAN 
+ OVERLAP MATRIX ELEMENTS   :     528
+
+
+ DO YOU WANT THE DEFAULT PARAMETERS FOR THE EXTENDED HUECKEL CALCULATION ? 
+ DEFAULT=y   HELP=? 
+
+
+ ENTER THE MOLECULAR CHARGE  (DEFAULT=0) 
+
+
+ NUMBER OF ELECTRONS IN YOUR MOLECULE IS   10
+
+
+ AUTOMATIC OCCUPATION NUMBER ASSIGNMENT ESTABLISHED !
+ FOUND CLOSED SHELL SYSTEM !
+ HOMO/LUMO-SEPARATION :  0.854125
+ ORBITAL  SYMMETRY      ENERGY     DEFAULT 
+ (SHELL)    TYPE                 OCCUPATION 
+     2     2a          -1.25855      2
+     3     3a          -0.68217      2
+     4     4a          -0.63951      2
+     5     5a          -0.62277      2
+     6     6a           0.23136      0
+     7     7a           0.52008      0
+
+ DO YOU ACCEPT THIS OCCUPATION ?  DEFAULT=y 
+
+
+ projection quality sqrt{sum[1-<i|i>]}/korb irrep a    :  0.58D-02
+
+ PROVIDING  'derivative'  DEFAULT PARAMETERS ...
+
+ PROVIDING FORCE RELAXATION DEFAULT PARAMETERS ...
+
+    mo occupation :
+   irrep   mo's   occupied
+    a       24        5
+ 
+ number of basis functions   :           24
+ number of occupied orbitals :            5
+ 
+
+ GENERAL MENU : SELECT YOUR TOPIC 
+ scf    : SELECT NON-DEFAULT SCF PARAMETER 
+ mp2    : OPTIONS AND DATA GROUPS FOR rimp2 and mpgrad
+ cc     : OPTIONS AND DATA GROUPS FOR ricc2
+ ex     : EXCITED STATE AND RESPONSE OPTIONS
+ prop   : SELECT TOOLS FOR SCF-ORBITAL ANALYSIS 
+ drv    : SELECT NON-DEFAULT INPUT PARAMETER FOR EVALUATION
+          OF ANALYTICAL ENERGY DERIVATIVES 
+          (GRADIENTS, FORCE CONSTANTS) 
+ rex    : SELECT OPTIONS FOR GEOMETRY UPDATES USING RELAX
+ stp    : SELECT NON-DEFAULT STRUCTURE OPTIMIZATION PARAMETER
+ e      : DEFINE EXTERNAL ELECTROSTATIC FIELD 
+ dft    : DFT Parameters 
+ ri     : RI Parameters 
+ rijk   : RI-JK-HF Parameters 
+ rirpa  : RIRPA Parameters 
+ senex  : seminumeric exchange parameters 
+ hybno  : hybrid Noga/Diag parameters
+ dsp    : DFT dispersion correction
+ trunc  : USE TRUNCATED AUXBASIS DURING ITERATIONS 
+ marij  : MULTIPOLE ACCELERATED RI-J 
+ dis    : DISPLAY MOLECULAR GEOMETRY 
+ list   : LIST OF CONTROL FILE 
+ &      : GO BACK TO OCCUPATION/ORBITAL ASSIGNMENT MENU
+
+ * or q : END OF DEFINE SESSION 
+
+
+
+STATUS OF DFT_OPTIONS:
+ DFT is NOT used
+   functional b-p
+     gridsize m3
+
+ ENTER DFT-OPTION TO BE MODIFIED 
+
+ func    : TO CHANGE TYPE OF FUNCTIONAL 
+ grid    : TO CHANGE GRIDSIZE 
+  on:   TO SWITCH ON  DFT 
+ Just <ENTER>, q or '*' terminate this menu.
+
+
+STATUS OF DFT_OPTIONS:
+ DFT is used
+   functional b-p
+     gridsize m3
+
+ ENTER DFT-OPTION TO BE MODIFIED 
+
+ func    : TO CHANGE TYPE OF FUNCTIONAL 
+ grid    : TO CHANGE GRIDSIZE 
+  off:  TO SWITCH OFF DFT 
+ Just <ENTER>, q or '*' terminate this menu.
+
+
+STATUS OF DFT_OPTIONS:
+ DFT is used
+   functional b-p
+     gridsize m3
+
+ ENTER DFT-OPTION TO BE MODIFIED 
+
+ func    : TO CHANGE TYPE OF FUNCTIONAL 
+ grid    : TO CHANGE GRIDSIZE 
+  off:  TO SWITCH OFF DFT 
+ Just <ENTER>, q or '*' terminate this menu.
+
+
+STATUS OF DFT_OPTIONS:
+ DFT is used
+   functional b-p
+     gridsize m4
+
+ ENTER DFT-OPTION TO BE MODIFIED 
+
+ func    : TO CHANGE TYPE OF FUNCTIONAL 
+ grid    : TO CHANGE GRIDSIZE 
+  off:  TO SWITCH OFF DFT 
+ Just <ENTER>, q or '*' terminate this menu.
+
+ GENERAL MENU : SELECT YOUR TOPIC 
+ scf    : SELECT NON-DEFAULT SCF PARAMETER 
+ mp2    : OPTIONS AND DATA GROUPS FOR rimp2 and mpgrad
+ cc     : OPTIONS AND DATA GROUPS FOR ricc2
+ ex     : EXCITED STATE AND RESPONSE OPTIONS
+ prop   : SELECT TOOLS FOR SCF-ORBITAL ANALYSIS 
+ drv    : SELECT NON-DEFAULT INPUT PARAMETER FOR EVALUATION
+          OF ANALYTICAL ENERGY DERIVATIVES 
+          (GRADIENTS, FORCE CONSTANTS) 
+ rex    : SELECT OPTIONS FOR GEOMETRY UPDATES USING RELAX
+ stp    : SELECT NON-DEFAULT STRUCTURE OPTIMIZATION PARAMETER
+ e      : DEFINE EXTERNAL ELECTROSTATIC FIELD 
+ dft    : DFT Parameters 
+ ri     : RI Parameters 
+ rijk   : RI-JK-HF Parameters 
+ rirpa  : RIRPA Parameters 
+ senex  : seminumeric exchange parameters 
+ hybno  : hybrid Noga/Diag parameters
+ dsp    : DFT dispersion correction
+ trunc  : USE TRUNCATED AUXBASIS DURING ITERATIONS 
+ marij  : MULTIPOLE ACCELERATED RI-J 
+ dis    : DISPLAY MOLECULAR GEOMETRY 
+ list   : LIST OF CONTROL FILE 
+ &      : GO BACK TO OCCUPATION/ORBITAL ASSIGNMENT MENU
+
+ * or q : END OF DEFINE SESSION 
+
+
+
+STATUS OF RI-OPTIONS:
+    RI IS NOT USED
+    Memory for RI:           500 Mb
+    Filename for auxbasis: auxbasis
+
+ ENTER RI-OPTION TO BE MODIFIED 
+      m: CHANGE MEMORY FOR RI 
+      f: CHANGE FILENAME 
+   jbas: ASSIGN AUXILIARY RI-J BASIS SETS
+     on: TO SWITCH ON  RI 
+ Use <ENTER>, q, end, or '*' to leave this menu
+
+ NO DEFINITION OF BASIS SETS ($jbas) IN control
+  TRY TO OBTAIN BASIS SETS FROM LIBRARY !
+
+ keyword $jbas  missing in file <control>
+
+ #                                                                       
+ #AUXILIARY BASIS SET FOR O                                              
+ #                                                                       
+ #                                                                       
+ o def2-SVP                                                              
+ o dhf-SVP                                                               
+ o def2-TZVP                                                             
+ o dhf-TZVP                                                              
+ o def2-TZVPP                                                            
+ o dhf-TZVPP                                                             
+ o def2-QZVP                                                             
+ o dhf-QZVP                                                              
+ o def2-QZVPP                                                            
+ o dhf-QZVPP                                                             
+ o dhf-SV(P)-2c                                                          
+ o dhf-SVP-2c                                                            
+ o dhf-TZVP-2c                                                           
+ o dhf-TZVPP-2c                                                          
+ o dhf-QZVP-2c                                                           
+ o dhf-QZVPP-2c                                                          
+ o 6-31G*                                                                
+ o 6-31G**                                                               
+ o cc-pVDZ                                                               
+ o cc-pVTZ                                                               
+ o cc-pVQZ                                                               
+ o cc-pV5Z                                                               
+ o aug-cc-pVDZ                                                           
+ o aug-cc-pVTZ                                                           
+ o aug-cc-pVQZ                                                           
+ o aug-cc-pV5Z                                                           
+ o d-aug-cc-pVDZ                                                         
+ o d-aug-cc-pVTZ                                                         
+ o d-aug-cc-pVQZ                                                         
+ o d-aug-cc-pV5Z                                                         
+ # o     (12s5p4d2f1g) / [6s4p3d1f1g]     {711111/2111/211/2/1}          
+ #errors def2-TZVP uH/atom: OF2 43.9, H2O 43.0, H2O2 52.3                
+ # F. Weigend 11/2005; Phys. Chem. Chem. Phys. 8: 1057 (2006)            
+
+ keyword $jbas  missing in file <control>
+
+ #                                                                       
+ #AUXILIARY BASIS SET FOR H                                              
+ #                                                                       
+ #                                                                       
+ h def2-SVP                                                              
+ h dhf-SVP                                                               
+ h def2-TZVP                                                             
+ h dhf-TZVP                                                              
+ h def2-TZVPP                                                            
+ h dhf-TZVPP                                                             
+ h def2-QZVP                                                             
+ h dhf-QZVP                                                              
+ h def2-QZVPP                                                            
+ h dhf-QZVPP                                                             
+ h dhf-SV(P)-2c                                                          
+ h dhf-SVP-2c                                                            
+ h dhf-TZVP-2c                                                           
+ h dhf-TZVPP-2c                                                          
+ h dhf-QZVP-2c                                                           
+ h dhf-QZVPP-2c                                                          
+ h 6-31G*                                                                
+ h 6-31G**                                                               
+ h cc-pVDZ                                                               
+ h cc-pVTZ                                                               
+ h cc-pVQZ                                                               
+ h cc-pV5Z                                                               
+ h aug-cc-pVDZ                                                           
+ h aug-cc-pVTZ                                                           
+ h aug-cc-pVQZ                                                           
+ h aug-cc-pV5Z                                                           
+ h d-aug-cc-pVDZ                                                         
+ h d-aug-cc-pVTZ                                                         
+ h d-aug-cc-pVQZ                                                         
+ h d-aug-cc-pV5Z                                                         
+ # h     (5s2p1d) / [3s1p1d]     {311/2/1}                               
+ #errors def2-TZVP uH/atom: H2 53.2, H2CO3 30.3, H2O 43.0, H2O2 52.3     
+ # F. Weigend 11/2005; Phys. Chem. Chem. Phys. 8: 1057 (2006)            
+
+
+STATUS OF RI-OPTIONS:
+    RI IS USED
+    Memory for RI:           500 Mb
+    Filename for auxbasis: auxbasis
+
+ ENTER RI-OPTION TO BE MODIFIED 
+      m: CHANGE MEMORY FOR RI 
+      f: CHANGE FILENAME 
+   jbas: ASSIGN AUXILIARY RI-J BASIS SETS
+    off: TO SWITCH OFF RI 
+ Use <ENTER>, q, end, or '*' to leave this menu
+
+
+STATUS OF RI-OPTIONS:
+    RI IS USED
+    Memory for RI:          2000 Mb
+    Filename for auxbasis: auxbasis
+
+ ENTER RI-OPTION TO BE MODIFIED 
+      m: CHANGE MEMORY FOR RI 
+      f: CHANGE FILENAME 
+   jbas: ASSIGN AUXILIARY RI-J BASIS SETS
+    off: TO SWITCH OFF RI 
+ Use <ENTER>, q, end, or '*' to leave this menu
+
+ GENERAL MENU : SELECT YOUR TOPIC 
+ scf    : SELECT NON-DEFAULT SCF PARAMETER 
+ mp2    : OPTIONS AND DATA GROUPS FOR rimp2 and mpgrad
+ cc     : OPTIONS AND DATA GROUPS FOR ricc2
+ ex     : EXCITED STATE AND RESPONSE OPTIONS
+ prop   : SELECT TOOLS FOR SCF-ORBITAL ANALYSIS 
+ drv    : SELECT NON-DEFAULT INPUT PARAMETER FOR EVALUATION
+          OF ANALYTICAL ENERGY DERIVATIVES 
+          (GRADIENTS, FORCE CONSTANTS) 
+ rex    : SELECT OPTIONS FOR GEOMETRY UPDATES USING RELAX
+ stp    : SELECT NON-DEFAULT STRUCTURE OPTIMIZATION PARAMETER
+ e      : DEFINE EXTERNAL ELECTROSTATIC FIELD 
+ dft    : DFT Parameters 
+ ri     : RI Parameters 
+ rijk   : RI-JK-HF Parameters 
+ rirpa  : RIRPA Parameters 
+ senex  : seminumeric exchange parameters 
+ hybno  : hybrid Noga/Diag parameters
+ dsp    : DFT dispersion correction
+ trunc  : USE TRUNCATED AUXBASIS DURING ITERATIONS 
+ marij  : MULTIPOLE ACCELERATED RI-J 
+ dis    : DISPLAY MOLECULAR GEOMETRY 
+ list   : LIST OF CONTROL FILE 
+ &      : GO BACK TO OCCUPATION/ORBITAL ASSIGNMENT MENU
+
+ * or q : END OF DEFINE SESSION 
+
+ 
+ ***********************************************************
+ *                                                         *
+ *                       e n d   o f                       *
+ *                       D E F I N E                       *
+ *                                                         *
+ *         TURBOMOLE'S  INTERACTIVE  INPUT  PROGRAM        *
+ *                                                         *
+ *  Quantum Chemistry Group       University of Karlsruhe  *
+ *                                                         *
+ ***********************************************************
+
+
+    ------------------------------------------------------------------------
+         total  cpu-time :   0.07 seconds
+         total wall-time :   0.09 seconds
+    ------------------------------------------------------------------------
+
+   ****  define : all done  ****
+
+
+    2020-11-27 14:47:07.118 
+
