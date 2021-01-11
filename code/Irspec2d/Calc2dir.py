@@ -26,7 +26,7 @@ class calc2dir():
         
     def calc_nmodes(self):
         '''
-        Add text.
+        Returns the number of modes.
         
         '''
         return len(self.intmat)

@@ -4,7 +4,7 @@ from Irspec2d import Calc2dir
 
 class spectrum():
     '''
-    Add text.
+    This class generates data for plotting or plotts the spectra.
 
     '''
     def __init__(self, freqmat, intmat):
@@ -27,14 +27,14 @@ class spectrum():
     
     def set_xmin(self):
         '''
-        Add text.
+        Returns the first energy level. This is not the ground state (would be zero). 
         
         '''
         return self.freqs[1]
     
     def set_xmax(self):
         '''
-        Add text.
+        Returns the highest first excited state energy level. 
         
         '''
         return self.freqs[int(self.noscill)]
@@ -79,7 +79,8 @@ class spectrum():
     
     def calc_lorentz_spectrum2d(self,lorentzmin,lorentzmax,dim):
         '''
-        Add text.
+        Adds up the Lorentz functions for all processes and returns
+        the values on an xx,yy grid. 
         
         '''
         
@@ -115,7 +116,7 @@ class spectrum():
     
     def plot_2dspectrum_dots(self,xmin,xmax,ble_x,ble_y,ble_i,exc_x,exc_y,exc_i,emi_x,emi_y,emi_i):
         '''
-        Add text.
+        Example plot of the positions for the different processes. 
         
         '''
         fig = plt.figure(figsize=(15,15))
