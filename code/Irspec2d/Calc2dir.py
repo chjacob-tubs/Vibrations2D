@@ -8,7 +8,7 @@ class calc2dir():
     
     def __init__(self, freqmat, intmat, verbose=False):
         '''
-        Add text.
+        Add text. 
         
         '''
         self.intmat = intmat
@@ -118,38 +118,18 @@ class calc2dir():
 
         for i in range(len(self.intmat)):
             if self.intmat[0][i] != 0 and i<=self.noscill:
-
-                x_coor = self.freqs[i]-self.freqs[0]
+                
                 y_coor = self.freqs[i]-self.freqs[0]
-                ble_x.append(x_coor)
-                ble_y.append(y_coor)
                 ble_inten = self.intmat[0][i]
-                ble_i.append(ble_inten)
-                if self.verbose == True: print('Bleaching from energy level 0 to',i,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
+                
+                for j in range(len(self.intmat)):
+                    if self.intmat[0][j] != 0 and j<=self.noscill:
+                        x_coor = self.freqs[j]-self.freqs[0]
+                        ble_x.append(x_coor)
+                        ble_y.append(y_coor)
+                        ble_i.append(ble_inten)
+                        if self.verbose == True: print('Bleaching from energy level 0 to',i,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
 
-                x_coor = self.freqs[i]-self.freqs[0]
-                y_coor = self.freqs[i+1]-self.freqs[0]
-                ble_x.append(x_coor)
-                ble_y.append(y_coor)
-                ble_inten = self.intmat[0][i+1]
-                ble_i.append(ble_inten)
-                if self.verbose == True: print('Bleaching from energy level 0 to',i+1,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
-
-                x_coor = self.freqs[i+1]-self.freqs[0]
-                y_coor = self.freqs[i]-self.freqs[0]
-                ble_x.append(x_coor)
-                ble_y.append(y_coor)
-                ble_inten = self.intmat[0][i]
-                ble_i.append(ble_inten)
-                if self.verbose == True: print('Bleaching from energy level 0 to',i,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
-
-                x_coor = self.freqs[i+1]-self.freqs[0]
-                y_coor = self.freqs[i+1]-self.freqs[0]
-                ble_x.append(x_coor)
-                ble_y.append(y_coor)
-                ble_inten = self.intmat[0][i+1]
-                ble_i.append(ble_inten)
-                if self.verbose == True: print('Bleaching from energy level 0 to',i+1,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
         return ble_x, ble_y, ble_i
                       
     def calc_all_2d_process(self):
