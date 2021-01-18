@@ -105,13 +105,13 @@ class spectrum():
          using the contourf plot)
 
         '''
-        print(np.asarray(z).min(),np.asarray(z).max())
+        #print(np.asarray(z).min(),np.asarray(z).max())
         if abs(np.asarray(z).max()) > abs(np.asarray(z).min()):
             z_val = abs(np.asarray(z).max())
-            print('chose max: ', z_val)
+            #print('chose max: ', z_val)
         if abs(np.asarray(z).max()) < abs(np.asarray(z).min()):
             z_val = abs(np.asarray(z).min())
-            print('chose min ', z_val)
+            #print('chose min: ', z_val)
         return z_val
     
     def plot_2dspectrum_dots(self,xmin,xmax,ble_x,ble_y,ble_i,exc_x,exc_y,exc_i,emi_x,emi_y,emi_i):
