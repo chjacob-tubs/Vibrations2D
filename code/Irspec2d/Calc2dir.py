@@ -1,27 +1,25 @@
 import numpy as np
 
-class calc2dir():
+class basics():
     '''
-    This class is supposed to evaluate 2D IR spectra.
+    This class includes all basic functions that are needed for the calculation of 2D IR spectra.
     
     '''
     
-    def __init__(self, freqmat, intmat, verbose=False):
+    def __init__(self, freqmat, intmat):
         '''
         Add text. 
         
         '''
         self.intmat = intmat
         self.freqmat = freqmat
-        self.verbose = verbose
-        self.freqs = self.freqmat[0]
         self.nmodes = self.calc_nmodes()
         self.noscill = self.calc_num_oscill()
         
-        if self.check_symmetric(abs(self.intmat)) == False:
-            print('Intensity matrix is not symmetrical. Please check!')
-        if self.check_symmetric(abs(self.freqmat)) == False:
-            print('Intensity matrix is not symmetrical. Please check!')
+        if self.check_symmetry(self.intmat) == False:
+            print('Intensity matrix is not (skew-)symmetrical. Please check!')
+        if self.check_symmetry(self.freqmat) == False:
+            print('Intensity matrix is not (skew-)symmetrical. Please check!')
         
         
     def calc_nmodes(self):
@@ -29,13 +27,15 @@ class calc2dir():
         Returns the number of modes.
         
         '''
-        return len(self.intmat)
+        if len(self.intmat) == len(self.freqmat):
+            return len(self.intmat)
     
     def calc_num_oscill(self):
         '''
         Calculates the number of oscillators n_oscill based on a 
         given number of modes n_modes. This is based on the assumption 
-        that there are n_modes = 1 + 2n_oscill + (n_oscill*(n_oscill-1))/2 
+        that there are 
+           n_modes = 1 + 2n_oscill + (n_oscill*(n_oscill-1))/2 
         modes. There is one ground state (0) plus n first excited states 
         plus n second excited states plus (n_oscill*(n_oscill-1))/2 combination 
         states. 
@@ -43,15 +43,30 @@ class calc2dir():
         '''
         return (-3. + np.sqrt(8.*self.nmodes +1.) ) /2. 
     
-    def check_symmetric(self, a, tol=1e-5):
+    def check_symmetry(self, a, tol=1e-5):
         '''
-        Checks if a given matrix a is symmetric.
+        Checks if a given matrix a is symmetric or skew-symmetric.
         Returns True/False.
 
         '''
-        return np.all(np.abs(a-a.T) < tol)
+        return np.all(np.abs(abs(a)-abs(a).T) < tol)
     
-    def calc_excitation(self):
+
+
+
+class calc2dir(basics):
+    '''
+    This class is supposed to evaluate 2D IR spectra in a simple approach.
+    
+    '''
+    
+    def __init__(self, freqmat, intmat, verbose_all=False):
+        
+        super().__init__(freqmat, intmat)
+        self.freqs = self.freqmat[0]
+        self.verbose_all = verbose_all
+    
+    def calc_excitation(self,verbose=False):
         '''
         Takes the energy levels and the intensity matrix in order to find 
         the excited state absorption processes that occur in an 2D IR
@@ -75,10 +90,10 @@ class calc2dir():
                         exc_x.append(x_coor)
                         exc_i.append(exc_inten)
 
-                        if self.verbose == True: print('Excitation from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',exc_inten)
-        return exc_x, exc_y, exc_i
+                        if self.verbose_all == True or verbose == True : print('Excitation from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',exc_inten)
+        return (exc_x, exc_y, exc_i)
     
-    def calc_stimulatedemission(self):
+    def calc_stimulatedemission(self,verbose=False):
         '''
         Takes the energy levels and the intensity matrix in order to find
         the stimulated emission processes that occur in an 2D IR experiment.
@@ -102,10 +117,10 @@ class calc2dir():
                     emi_x.append(x_coor)
                     emi_i.append(emi_inten)
 
-                    if self.verbose == True: print('Stimulated emission from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',emi_inten)
-        return emi_x, emi_y, emi_i
+                    if self.verbose_all == True or verbose == True : print('Stimulated emission from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',emi_inten)
+        return (emi_x, emi_y, emi_i)
 
-    def calc_bleaching(self):
+    def calc_bleaching(self,verbose=False):
         '''
         Takes the energy levels and the intensity matrix in order to find
         the bleaching processes that occur in an 2D IR experiment.
@@ -128,18 +143,15 @@ class calc2dir():
                         ble_x.append(x_coor)
                         ble_y.append(y_coor)
                         ble_i.append(ble_inten)
-                        if self.verbose == True: print('Bleaching from energy level 0 to',i,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
+                        if self.verbose_all == True or verbose == True : print('Bleaching from energy level 0 to',i,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
 
-        return ble_x, ble_y, ble_i
+        return (ble_x, ble_y, ble_i)
                       
-    def calc_all_2d_process(self):
+    def calc_all_2d_process(self,verbose=False):
         '''
         Calculates all processes that can occur within a
         2D IR experiment from the energy levels and the
         intensity matrix. 
 
         '''
-        exc_x, exc_y, exc_i = self.calc_excitation()
-        emi_x, emi_y, emi_i = self.calc_stimulatedemission()
-        ble_x, ble_y, ble_i = self.calc_bleaching()
-        return exc_x, exc_y, exc_i, emi_x, emi_y, emi_i, ble_x, ble_y, ble_i
+        return self.calc_excitation(verbose=verbose), self.calc_stimulatedemission(verbose=verbose), self.calc_bleaching(verbose=verbose)
