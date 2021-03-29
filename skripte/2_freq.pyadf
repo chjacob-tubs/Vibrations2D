@@ -32,8 +32,8 @@ have a working cosmoprepfile first. This is just
 a workaround and needs to be implemented. 
 
 '''
-cosmofile = os.path.join(pyadfenv.outdir,'cosmoprepfile')
-settings.set_cosmosolv(cosmofile)
+#cosmofile = os.path.join(pyadfenv.outdir,'cosmoprepfile')
+#settings.set_cosmosolv(cosmofile)
 
 
 # DEFINE INTERNAL COORDINATES
@@ -58,6 +58,7 @@ In order to determine the hydrogens that are bound to hetero atoms (not carbon),
 '''
 #settings.set_use_deuterium(True)
 #settings.set_hydrogen_list(mol.get_hetero_hydrogen_list())
+het_h_list = mol.get_hetero_hydrogen_list()
 
 
 tm_res = TurbomoleGeometryOptimizationJob(mol, method='dft', settings=settings).run()
@@ -73,11 +74,11 @@ print "Final Max Gradient: ", numpy.max(opt_grad)
 
 print "List of hydrogen atom that are set as deuterium: ", settings.hydrogen_list
 
-snf_results = SNFJob(tm_res).run()
+snf_results = SNFJob(tm_res,deuterium=het_h_list).run()
 
 wavenumbers = snf_results.get_wave_numbers()
 print "SNF wavenumbers: ", wavenumbers
-intensities = snf_results.get_ints()
+intensities = snf_results.get_ir_ints()
 print "    intensities: ", intensities
 
 numpy.savetxt(os.path.join(pyadfenv.outdir,'freqs.txt'), wavenumbers)
