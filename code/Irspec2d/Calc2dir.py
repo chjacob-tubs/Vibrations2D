@@ -28,7 +28,7 @@ class basics():
         
         '''
         if len(self.intmat) == len(self.freqmat):
-            return len(self.intmat)
+            return int(len(self.intmat))
     
     def calc_num_oscill(self):
         '''
@@ -39,9 +39,27 @@ class basics():
         modes. There is one ground state (0) plus n first excited states 
         plus n second excited states plus (n_oscill*(n_oscill-1))/2 combination 
         states. 
+        This leads to 
+           n_oscill = 1/2 * (-3 + sqrt(8*n_modes - 1)).
+        
+        
+        If there are 
+           n_modes = 2n_oscill + (n_oscill*(n_oscill-1))/2
+        modes, then 
+           n_oscill = 1/2 * (-3 + sqrt(8*n_modes + 9)).
 
         '''
-        return (-3. + np.sqrt(8.*self.nmodes +1.) ) /2. 
+        noscill = (-3. + np.sqrt(8.*self.nmodes +1.) ) /2.
+        if self.nmodes == 0: print('There are no modes, because nmodes=0.')
+        if noscill-int(noscill)==0:
+            return int(noscill)
+        else:
+            new_noscill = (-3. + np.sqrt(8.*self.nmodes +9.) ) /2.
+            if new_noscill-int(new_noscill)==0:
+                return int(new_noscill)
+            else:
+                print("Number of Oscillators couldn't be evaluated.")
+        
     
     def check_symmetry(self, a, tol=1e-5):
         '''
