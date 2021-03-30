@@ -16,7 +16,7 @@ class basics():
         self.freqmat = freqmat
         self.transmat = self.read_transmat(transmat)
         self.nmodes = self.calc_nmodes()
-        self.noscill = self.calc_num_oscill()
+        self.noscill = self.calc_num_oscill(self.nmodes)
         self.intfactor = 2.5066413842056297 # factor to calculate integral absorption coefficient having  [cm-1]  and  [Debye] ; see Vibrations/Misc.py code
         
         if self.check_symmetry(self.transmat) == False:
@@ -33,7 +33,7 @@ class basics():
         if len(self.transmat) == len(self.freqmat):
             return int(len(self.freqmat))
     
-    def calc_num_oscill(self):
+    def calc_num_oscill(self,nmodes):
         '''
         Calculates the number of oscillators n_oscill based on a 
         given number of modes n_modes. This is based on the assumption 
@@ -52,12 +52,12 @@ class basics():
            n_oscill = 1/2 * (-3 + sqrt(8*n_modes + 9)).
 
         '''
-        noscill = (-3. + np.sqrt(8.*self.nmodes +1.) ) /2.
-        if self.nmodes == 0: print('There are no modes, because nmodes=0.')
+        noscill = (-3. + np.sqrt(8.*nmodes +1.) ) /2.
+        if nmodes == 0: print('There are no modes, because nmodes=0.')
         if noscill-int(noscill)==0:
             return int(noscill)
         else:
-            new_noscill = (-3. + np.sqrt(8.*self.nmodes +9.) ) /2.
+            new_noscill = (-3. + np.sqrt(8.*nmodes +9.) ) /2.
             if new_noscill-int(new_noscill)==0:
                 return int(new_noscill)
             else:
@@ -103,7 +103,7 @@ class basics():
 
 
 
-class calc2dir(basics):
+class calc_2dirsimple(basics):
     '''
     This class is supposed to evaluate 2D IR spectra in a simple approach.
     
@@ -205,3 +205,19 @@ class calc2dir(basics):
 
         '''
         return self.calc_excitation(verbose=verbose), self.calc_stimulatedemission(verbose=verbose), self.calc_bleaching(verbose=verbose)
+    
+
+
+class calc_2dirtimedomain(basics):
+    '''
+    This class is supposed to evaluate 2D IR spectra within a time domain approach.
+    
+    '''
+    
+    def __init__(self, freqmat, transmat, verbose_all=False):
+        
+        super().__init__(freqmat, transmat)
+        self.freqs = self.freqmat[0]
+        self.verbose_all = verbose_all
+        
+    
