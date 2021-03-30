@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import linalg as LA
 
 class basics():
     '''
@@ -6,20 +7,22 @@ class basics():
     
     '''
     
-    def __init__(self, freqmat, intmat):
+    def __init__(self, freqmat, transmat):
         '''
         Add text. 
         
         '''
-        self.intmat = intmat
+        
         self.freqmat = freqmat
+        self.transmat = self.read_transmat(transmat)
         self.nmodes = self.calc_nmodes()
         self.noscill = self.calc_num_oscill()
+        self.intfactor = 2.5066413842056297 # factor to calculate integral absorption coefficient having  [cm-1]  and  [Debye] ; see Vibrations/Misc.py code
         
-        if self.check_symmetry(self.intmat) == False:
-            print('Intensity matrix is not (skew-)symmetrical. Please check!')
+        if self.check_symmetry(self.transmat) == False:
+            print('Transition dipole moment matrix is not (skew-)symmetrical. Please check!')
         if self.check_symmetry(self.freqmat) == False:
-            print('Intensity matrix is not (skew-)symmetrical. Please check!')
+            print('Frequency matrix is not (skew-)symmetrical. Please check!')
         
         
     def calc_nmodes(self):
@@ -27,8 +30,8 @@ class basics():
         Returns the number of modes.
         
         '''
-        if len(self.intmat) == len(self.freqmat):
-            return int(len(self.intmat))
+        if len(self.transmat) == len(self.freqmat):
+            return int(len(self.freqmat))
     
     def calc_num_oscill(self):
         '''
@@ -65,9 +68,37 @@ class basics():
         '''
         Checks if a given matrix a is symmetric or skew-symmetric.
         Returns True/False.
+        
+        If the matrix is three-dimensional, as in case of the 
+        transition dipole moment matrix, the function transposes 
+        the matrix with respect to the axes. This leads to 
+        leaving the single vectors as vectors. 
 
         '''
-        return np.all(np.abs(abs(a)-abs(a).T) < tol)
+        if len(a.shape)==2:
+            return np.all(np.abs(abs(a)-abs(a).T) < tol)
+        if len(a.shape)==3:
+            return np.all(np.abs(abs(a)-np.transpose(abs(a),(1,0,2))) < tol)
+    
+    def read_transmat(self,oldtransmat):
+        '''
+        The transition dipole moment matrix that is obtained by VIBRATIONS calculations
+        has the shape (n,n,1,3). In order to use it in the following calculations it is
+        reduced to the shape (n,n,3). 
+        
+        '''
+        return np.reshape(oldtransmat,(len(oldtransmat),len(oldtransmat),3))
+    
+    def calc_trans2int(self):
+        '''
+        Calculates the intensity matrix from the given transition dipole moment matrix and the given frequeny matrix.
+        
+        '''
+        intenmat = np.zeros_like(self.freqmat)
+        for i in range(len(intenmat)):
+            for j in range(len(intenmat)):
+                intenmat[i][j]= (LA.norm(self.transmat[i][j]))**2 * self.intfactor * self.freqmat[i][j]
+        return intenmat
     
 
 
@@ -78,11 +109,12 @@ class calc2dir(basics):
     
     '''
     
-    def __init__(self, freqmat, intmat, verbose_all=False):
+    def __init__(self, freqmat, transmat, verbose_all=False):
         
-        super().__init__(freqmat, intmat)
+        super().__init__(freqmat, transmat)
         self.freqs = self.freqmat[0]
         self.verbose_all = verbose_all
+        self.intmat = self.calc_trans2int()
     
     def calc_excitation(self,verbose=False):
         '''
