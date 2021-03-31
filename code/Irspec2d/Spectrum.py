@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Irspec2d import Calc2dir
 
 class spectrum():
     '''
