@@ -153,3 +153,23 @@ class spectrum():
         z = np.zeros((dim,dim))
         z += exc_z - ble_z - emi_z
         return x,y,z
+    
+    def set_line_spacing(self,maximum,number):
+        '''
+        maximum: Maximum value of the plotted array
+        number: Number of plotted contour lines for the positive/negative values
+        returns: a list of new values at which the lines are plotted
+
+        '''
+        firstvalue = maximum/number
+        negspace = np.linspace(-maximum,-firstvalue,number)
+        posspace = np.linspace(firstvalue,maximum,number)
+        return np.concatenate((negspace,posspace))
+    
+    def n2s(self,number):
+        '''
+        Add text.
+        '''
+        if str(number).find('.') != -1: string = str(number)[0:str(number).find('.')]+'_'+str(number)[str(number).find('.')+1:]
+        else : string = str(number)
+        return string
