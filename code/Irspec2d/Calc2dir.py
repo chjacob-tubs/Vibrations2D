@@ -32,6 +32,8 @@ class basics():
         '''
         if len(self.transmat) == len(self.freqmat):
             return int(len(self.freqmat))
+        else:
+            raise ValueError('The matrices containing the frequencies and the transition dipole moments do not have the same length.')
         
     def calc_nmodesexc(self):
         '''
@@ -69,7 +71,7 @@ class basics():
             if new_noscill-int(new_noscill)==0:
                 return int(new_noscill)
             else:
-                print("Number of Oscillators couldn't be evaluated.")
+                raise ValueError("Number of Oscillators couldn't be evaluated.")
         
     
     def check_symmetry(self, a, tol=1e-5):
@@ -87,6 +89,8 @@ class basics():
             return np.all(np.abs(abs(a)-abs(a).T) < tol)
         if len(a.shape)==3:
             return np.all(np.abs(abs(a)-np.transpose(abs(a),(1,0,2))) < tol)
+        else:
+            raise ValueError('The shape of the given matrix is not implemented in the check_symmetry function.')
     
     def read_transmat(self,oldtransmat):
         '''
@@ -213,7 +217,11 @@ class calc_2dirsimple(basics):
 
         '''
         return self.calc_excitation(verbose=verbose), self.calc_stimulatedemission(verbose=verbose), self.calc_bleaching(verbose=verbose)
-    
+
+
+
+
+
 
 
 class calc_2dirtimedomain(basics):
@@ -303,21 +311,29 @@ class calc_2dirtimedomain(basics):
         return round(sum(value)/len(value))
     
     def set_omega_off(self):
+        '''
+        Sets the omega_off value that is used to center the peaks, in order for better computation of the fourier transforms.
+        
+        '''
         return self.calc_omega_off(self.freqs[1:self.noscill+1])
     
     def set_omega_initial(self):
         '''
-        Add text.
+        There are n_oscill first excited states. 
+        The first state in the frequency matrix is zero.
+        Therefore, the states 1 to n_oscill are the initial frequency values.
         
         '''
         return self.freqs[1:self.noscill+1]
     
     def set_omega(self):
         '''
-        Add text.
+        In the frequency matrix, the first state is 0. 
+        The states 1 to n_oscill are the first excited states.
+        The states after state n_oscill are the second excited states.
         
         '''
-        omega_init = self.freqs[1:self.noscill+1]
+        omega_init = self.set_omega_initital()
         omega2_init = self.freqs[self.noscill+1:]
         
         omega_off_value = self.set_omega_off()
@@ -334,13 +350,18 @@ class calc_2dirtimedomain(basics):
     
     def set_mu(self):
         '''
-        Add text.
+        This returns the seperated transition matrices for the first and second excited states.
         
         '''
         return self.transmat[0][1:self.noscill+1] , self.calc_secondexcitation()
     
     def calc_diagrams(self,verbose=False):
+        '''
+        This computes the diagrams R_1 to R_6.
+        R_1, R_2 and R_3 are rephasing diagrams and R_4, R_5 and R_6 are non-rephasing diagrams.
+        It also computes angles for different (ZZZZ, ZZXX) polarization functions.
         
+        '''        
         R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_)
         R2 = np.zeros_like(R1,dtype=np.complex_)
         R3 = np.zeros_like(R1,dtype=np.complex_)
@@ -436,7 +457,7 @@ class calc_2dirtimedomain(basics):
     
     def calc_axes(self):
         '''
-        Add text.
+        Calculates the time axis into a frequency axis.
         
         '''
         ticks = []
