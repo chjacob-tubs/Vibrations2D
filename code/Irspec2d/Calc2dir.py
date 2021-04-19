@@ -339,27 +339,6 @@ class calc_2dirtimedomain(basics):
         '''
         return self.transmat[0][1:self.noscill+1] , self.calc_secondexcitation()
     
-    def diagrams(self,oI,oJ,T1,T3):
-        '''
-        Add text.
-        
-        '''
-        R1 = np.exp(   1j*oJ*self.unitconvfactor*T1 - 1j*oI*self.unitconvfactor*T3 + 1j*(oJ-oI)*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-        R2 = np.exp(   1j*oJ*self.unitconvfactor*T1 - 1j*oI*self.unitconvfactor*T3 - (T1+T3)/self.T2)
-        R4 = np.exp( - 1j*oJ*self.unitconvfactor*T1 - 1j*oI*self.unitconvfactor*T3 + 1j*(oJ-oI)*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-        R5 = np.exp( - 1j*oJ*self.unitconvfactor*T1 - 1j*oI*self.unitconvfactor*T3 - (T1+T3)/self.T2)
-        
-        return R1, R2, R4, R5
-
-    def diagrams_exc(self,oI,oJ,o2K,T1,T3):
-        '''
-        Add text.
-        
-        '''
-        R3 = np.exp(   1j*oJ*self.unitconvfactor*T1 - 1j*(o2K-oJ)*self.unitconvfactor*T3 + 1j*(oJ-oI)*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-        R6 = np.exp( - 1j*oJ*self.unitconvfactor*T1 - 1j*(o2K-oI)*self.unitconvfactor*T3 - 1j*(oJ-oI)*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-        return R3, R6
-    
     def calc_diagrams(self,verbose=False):
         
         R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_)
@@ -395,11 +374,10 @@ class calc_2dirtimedomain(basics):
 
                 for jj,T3 in enumerate(t):
                     for ii,T1 in enumerate(t):
-                        R1_,R2_,R4_,R5_ = self.diagrams(omega[i],omega[j],T1,T3)
-                        R1[ii][jj] -= factor * R1_
-                        R2[ii][jj] -= factor * R2_
-                        R4[ii][jj] -= factor * R4_
-                        R5[ii][jj] -= factor * R5_
+                        R1[ii][jj] -= factor * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
+                        R2[ii][jj] -= factor * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
+                        R4[ii][jj] -= factor * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
+                        R5[ii][jj] -= factor * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
 
                 for k in range(self.nmodesexc):
 
@@ -449,9 +427,8 @@ class calc_2dirtimedomain(basics):
 
                     for jj,T3 in enumerate(t):
                         for ii,T1 in enumerate(t):
-                            R3_,R6_ = self.diagrams_exc(omega[i],omega[j],omega2[k],T1,T3)
-                            R3[ii][jj] += factor2 * R3_
-                            R6[ii][jj] += factor2 * R6_
+                            R3[ii][jj] += factor2 * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*(omega2[k]-omega[j])*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
+                            R6[ii][jj] += factor2 * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*(omega2[k]-omega[i])*self.unitconvfactor*T3 - 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
 
                 if self.verbose_all or verbose : print()
 
