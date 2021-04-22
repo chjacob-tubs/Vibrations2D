@@ -127,6 +127,15 @@ class calc_2dirsimple(basics):
         self.freqs = self.freqmat[0]
         self.verbose_all = verbose_all
         self.intmat = self.calc_trans2int()
+        
+    def set_initial_freqs(self):
+        '''
+        There are n_oscill first excited states. 
+        The first state in the frequency matrix is zero.
+        Therefore, the states 1 to n_oscill are the initial frequency values.
+        
+        '''
+        return self.freqmat[0][1:self.noscill+1]
     
     def calc_excitation(self,verbose=False):
         '''
@@ -152,7 +161,7 @@ class calc_2dirsimple(basics):
                         exc_x.append(x_coor)
                         exc_i.append(exc_inten)
 
-                        if verbose_all or verbose : print('Excitation from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',exc_inten)
+                        if self.verbose_all or verbose : print('Excitation from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',exc_inten)
         return (exc_x, exc_y, exc_i)
     
     def calc_stimulatedemission(self,verbose=False):
@@ -179,7 +188,7 @@ class calc_2dirsimple(basics):
                     emi_x.append(x_coor)
                     emi_i.append(emi_inten)
 
-                    if verbose_all or verbose : print('Stimulated emission from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',emi_inten)
+                    if self.verbose_all or verbose : print('Stimulated emission from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',emi_inten)
         return (emi_x, emi_y, emi_i)
 
     def calc_bleaching(self,verbose=False):
@@ -205,7 +214,7 @@ class calc_2dirsimple(basics):
                         ble_x.append(x_coor)
                         ble_y.append(y_coor)
                         ble_i.append(ble_inten)
-                        if verbose_all or verbose : print('Bleaching from energy level 0 to',i,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
+                        if self.verbose_all or verbose : print('Bleaching from energy level 0 to',i,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
 
         return (ble_x, ble_y, ble_i)
                       
@@ -333,7 +342,7 @@ class calc_2dirtimedomain(basics):
         The states after state n_oscill are the second excited states.
         
         '''
-        omega_init = self.set_omega_initital()
+        omega_init = self.set_omega_initial()
         omega2_init = self.freqs[self.noscill+1:]
         
         omega_off_value = self.set_omega_off()
