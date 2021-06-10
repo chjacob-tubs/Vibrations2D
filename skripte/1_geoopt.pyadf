@@ -15,7 +15,7 @@ settings = TurbomoleGeometryOptimizationSettings(verbose_level=_verbose_level)
 
 # default settings: RI-DFT/BP
 settings.set_basis_set('def2-SVP')
-settings.set_ri(True)
+settings.set_ri(True) # True for bp, False for b3lyp
 settings.set_dft_functional('b-p')
 settings.set_redundant_internal_coordinates(True)
 settings.set_scfiterlimit('5000')

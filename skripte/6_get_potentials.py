@@ -5,7 +5,7 @@ from glob import glob
 
 nmodes = 3
 ngrid = 16
-shouldbe = nmodes * ngrid
+firstfile = nmodes * ngrid
 
 with open('energies/E0.dat') as f:
     lines = f.readlines()
@@ -24,7 +24,7 @@ d0 = np.array([dmx,dmy,dmz])
 v1 = np.zeros((nmodes,ngrid))
 dm1 = np.zeros((nmodes,ngrid,3))
 
-was = 0
+firstcount = 0
 for fname in glob('./energies/v1*.dat'):
 
     f = open(fname,'r')
@@ -44,9 +44,9 @@ for fname in glob('./energies/v1*.dat'):
     dm1[mode,gp,0] = dmx - d0[0]
     dm1[mode,gp,1] = dmy - d0[1]
     dm1[mode,gp,2] = dmz - d0[2]
-    was +=1
+    firstcount +=1
 
-print '%i files found, should be %i' %(was,shouldbe)
+print '%i files found, should be %i' %(firstcount,firstfile)
 print 'Saving potential to file'
 np.save('V1_g16.npy',v1)
 np.save('Dm1_g16.npy',dm1)
@@ -54,8 +54,8 @@ np.save('Dm1_g16.npy',dm1)
 v2 = np.zeros((nmodes,nmodes,ngrid,ngrid))
 dm2 = np.zeros((nmodes,nmodes,ngrid,ngrid,3))
 
-was = 0
-shouldbe = nmodes*(nmodes-1)/2 * ngrid**2
+secondcount = 0
+secondfile = nmodes*(nmodes-1)/2 * ngrid**2
 for fname in glob('energies/v2*.dat'):
 
     f = open(fname,'r')
@@ -83,9 +83,14 @@ for fname in glob('energies/v2*.dat'):
     dm2[moder,model,gpr,gpl,1] = dmy - dm1[model,gpl,1] - dm1[moder,gpr,1] - d0[1]
     dm2[moder,model,gpr,gpl,2] = dmz - dm1[model,gpl,2] - dm1[moder,gpr,2] - d0[2]
     f.close()
-    was += 1
+    secondcount += 1
 
-print '%i files found, should be %i' %(was,shouldbe)
+
+print '%i files found, should be %i' %(secondcount,secondfile)
 print 'Saving potentials to file'
+print '*********'
+print 'V1 potentials', firstcount, firstfile
+print 'V2 potentials', secondcount, secondfile
+print '*********'
 np.save('V2_g16.npy',v2)
 np.save('Dm2_g16.npy',dm2)
