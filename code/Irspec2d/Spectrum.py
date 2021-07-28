@@ -96,6 +96,8 @@ class spectrum():
     def calc_lorentz(self,ints,x,x0,y,y0):
         '''
         Returns a value for a 2D lorentzian function.
+        The coordinates of the peaks are x0 and y0, with the corresponding intensities (ints).
+        x and y are the linspaces along the calculation (data points).
 
         '''
         return (ints)/(2*np.pi) * 1/( ((x-x0)**2 + (y-y0)**2 + 100 ) )
@@ -168,8 +170,9 @@ class spectrum():
     
     def n2s(self,number):
         '''
-        Add text.
+        Takes a number with a decimal point and changes it to an underscore. 
         '''
-        if str(number).find('.') != -1: string = str(number)[0:str(number).find('.')]+'_'+str(number)[str(number).find('.')+1:]
-        else : string = str(number)
-        return string
+        if str(number).find('.') != -1 : 
+            return str(number)[0:str(number).find('.')]+'_'+str(number)[str(number).find('.')+1:]
+        else : 
+            return str(number)

@@ -18,12 +18,12 @@ def localize_subset(modes,subset):
     # localized + the cmat
     tmpmodes = modes.get_subset(subset)
     tmploc = LocVib.LocVib(tmpmodes, 'PM')
-    tmploc.localize()
+    transmat = tmploc.localize()
     tmploc.sort_by_residue()
     tmploc.adjust_signs()
-    tmpcmat = tmploc.get_couplingmat(hessian=True) # if hessian=False, returns [cm-1] otherwise returns [hartree]
+    tmpcmat = tmploc.get_couplingmat(hessian=False) #if hessian=False, returns [cm-1] otherwise returns [hartree]
 
-    return tmploc.locmodes.modes_mw, tmploc.locmodes.freqs, tmpcmat
+    return tmploc.locmodes.modes_mw, tmploc.locmodes.freqs, tmpcmat, transmat
 
 def localize_subsets(modes,subsets):
     # method that takes normal modes and list of lists (beginin and end)
@@ -52,6 +52,10 @@ def localize_subsets(modes,subsets):
             freqs = np.concatenate((freqs, tmp[1]), axis = 0)
             cmat[actpos:actpos + tmp[2].shape[0],actpos:actpos + tmp[2].shape[0]] = tmp[2]
             actpos = actpos + tmp[2].shape[0] 
+            
+            print('test')
+            print(tmp)
+            
         localmodes = LocVib.VibModes(total, modes.mol)
         localmodes.set_modes_mw(modes_mw)
         localmodes.set_freqs(freqs)
@@ -64,7 +68,8 @@ def localize_subsets(modes,subsets):
 # Read in normal modes from SNF results
 # using LocVib (LocVib package)
 
-path = os.path.join(os.getcwd(),'potentials')
+#path = os.path.join(os.getcwd(),'potentials')
+path = '/home/julia/testsystems/DKP/def2svp_b3lyp_V1V2_CO'
 
 res = LocVib.SNFResults(outname=os.path.join(path,'snf.out'),
                         restartname=os.path.join(path,'restart'),
@@ -73,7 +78,7 @@ res.read()
 
 # Now localize modes in separate subsets
 
-subsets = [[23,24,25]]
+subsets = [[28,29]]
 localmodes,cmat = localize_subsets(res.modes,subsets)
 
 # Use normal modes:
@@ -142,10 +147,16 @@ transm, inten, freqs = VCI.calculate_transition_matrix([dm1],[dm2])
 #for i in inten:
 #    print i
 
+
+print vib.Misc.fancy_box('Coupling Matrix')
+print cmat
+
+
 #np.savetxt('transmat.txt',transm)
+np.save('transmat.npy', transm)
 np.savetxt('intenmat.txt',inten)
 np.savetxt('freqsmat.txt',freqs)
-
+np.savetxt('couplmat.txt',cmat)
 
 
 #intensities = np.zeros(len(transm))
