@@ -143,9 +143,12 @@ transm, inten, freqs = VCI.calculate_transition_matrix([dm1],[dm2])
 #    print i
 
 #np.savetxt('transmat.txt',transm)
-np.savetxt('intenmat.txt',inten)
-np.savetxt('freqsmat.txt',freqs)
+#np.savetxt('intenmat.txt',inten)
+#np.savetxt('freqsmat.txt',freqs)
 
+np.save('VCI_intensities.npy',inten)
+np.save('VCI_frequencies.npy',freqs)
+np.save('VCI_dipolemoments.npy',transm)
 
 
 #intensities = np.zeros(len(transm))

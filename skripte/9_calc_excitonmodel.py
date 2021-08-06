@@ -78,20 +78,12 @@ localmodes,cmat = localize_subsets(res.modes,subsets)
 print "\n cmat \n",cmat
 
 dipoles = res.get_tensor_deriv_nm('dipole', modes=localmodes)
-print "\n dipoles local modes: \n",dipoles
+#print "\n dipoles local modes: \n",dipoles
 dipoles_norm = res.get_tensor_deriv_nm('dipole', modes=res.modes)
-print "\n dipoles normal modes: \n 28: ",dipoles_norm[28],'\n 29: ',dipoles_norm[29],'\n \n',dipoles_norm
+#print "\n dipoles normal modes: \n 28: ",dipoles_norm[28],'\n 29: ',dipoles_norm[29],'\n \n',dipoles_norm
 
 
-np.save('cmat_lm.npy', cmat)
-np.save('dipoles_lm.npy', dipoles)
-np.save('dipoles_nm.npy', dipoles_norm)
+np.save('Exciton_cmat_lm.npy', cmat)
+np.save('Exciton_dipolemoments_lm.npy', dipoles)
+np.save('Exciton_dipolemoments_nm.npy', dipoles_norm)
 
-
-'''
-print
-print "********************"
-print "results from snf: "
-print "1826.74 789.730440"
-print "1830.40   7.523794"
-'''

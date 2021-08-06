@@ -132,10 +132,12 @@ VCI.print_results(which=8, maxfreq=8000)
 #transm0 = VCI.calculate_transition_moments([dm1],[dm2])
 transm, inten, freqs = VCI.calculate_transition_matrix([dm1h])
 
-np.savetxt('intenmatharm.txt',inten)
-np.savetxt('freqsmatharm.txt',freqs)
+#np.savetxt('intenmatharm.txt',inten)
+#np.savetxt('freqsmatharm.txt',freqs)
 
-
+np.save('VCI_intensities_harm.npy',inten)
+np.save('VCI_frequencies_harm.npy',freqs)
+np.save('VCI_dipolemoments_harm.npy',transm)
 
 
 
