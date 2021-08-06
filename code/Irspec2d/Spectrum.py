@@ -130,6 +130,8 @@ class spectrum():
         if abs(np.asarray(z).max()) < abs(np.asarray(z).min()):
             z_val = abs(np.asarray(z).min())
             if self.verbose_all == True or verbose == True : print('chose min: ', z_val)
+                
+        
         
         return z_val
     

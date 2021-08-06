@@ -67,7 +67,7 @@ class BuildExcitonModel():
         wavenumbers = self.build_wavenumbers()
         indices = self.build_indices()
 
-        for i in range(self.noscill) :
+        for i in range(self.nmodes) :
 
             if i<self.noscill : # evaluates the first sum term
                 
@@ -76,7 +76,7 @@ class BuildExcitonModel():
             if i>self.noscill-1 and i<self.noscill+self.combinations : # evaluates the second double sum term
                 
                 hamilt.append(['b'+str(indices[i-self.noscill][0])+str(indices[i-self.noscill][1]), \
-                                 indices[i-self.nmodes][0],indices[i-self.nmodes][1]]) # beta_ij b^dagger_i b_j
+                                 indices[i-self.noscill][0],indices[i-self.noscill][1]]) # beta_ij b^dagger_i b_j
                 
                 hamilt.append(['b'+str(indices[i-self.noscill][0])+str(indices[i-self.noscill][1]), \
                                  indices[i-self.noscill][1],indices[i-self.noscill][0]]) # beta_ij b^dagger_j b_i

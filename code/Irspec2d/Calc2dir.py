@@ -30,8 +30,8 @@ class basics():
         Returns the number of modes.
         
         '''
-        if len(self.transmat) == len(self.freqmat):
-            return int(len(self.freqmat))
+        if len(self.transmat) == len(self.freqmat[0]):
+            return int(len(self.freqmat[0]))
         else:
             raise ValueError('The matrices containing the frequencies and the transition dipole moments do not have the same length.')
         
@@ -99,7 +99,10 @@ class basics():
         reduced to the shape (n,n,3). 
         
         '''
-        return np.reshape(oldtransmat,(len(oldtransmat),len(oldtransmat),3))
+        if len(np.asarray(oldtransmat).shape) == 4:
+            return np.reshape(oldtransmat,(len(oldtransmat),len(oldtransmat),3))
+        if len(np.asarray(oldtransmat).shape) == 3:
+            return oldtransmat
     
     def calc_trans2int(self):
         '''
