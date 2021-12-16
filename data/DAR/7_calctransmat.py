@@ -74,7 +74,8 @@ res.read()
 
 # Now localize modes in separate subsets
 
-subsets = [[28,29]]
+subsets = np.load(os.path.join(path,'subsets.npy'))
+#subsets = [[23,24,25]]
 localmodes,cmat = localize_subsets(res.modes,subsets)
 
 # Use normal modes:
