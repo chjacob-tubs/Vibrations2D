@@ -13,9 +13,9 @@ runner = sys.argv[2]
 
 endir = 'energies'
 
-print 'Cores: ', nodes
-print 'Runner:', runner
-print 'Energies stored to: ', endir
+print ('Cores: ', nodes)
+print ('Runner:', runner)
+print ('Energies stored to: ', endir)
 
 #os.mkdir(endir)
 os.chdir(endir)
@@ -29,6 +29,7 @@ for i in range(nodes):
     shutil.copy('restart', dirname)
     shutil.copy('snf.out', dirname)
     shutil.copy('coord', dirname)
+    shutil.copy('subsets.npy', dirname)
     if os.path.isfile('cosmoprepfile'):
         shutil.copy('cosmoprepfile', dirname)
     os.chdir(dirname)

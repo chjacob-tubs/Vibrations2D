@@ -64,7 +64,8 @@ def localize_subsets(modes,subsets):
 # Read in normal modes from SNF results
 # using LocVib (LocVib package)
 
-path = os.path.join(os.getcwd(),'potentials')
+#path = os.path.join(os.getcwd(),'potentials')
+path = '/home/julia/testsystems/DAR/def2tzvp_b3lyp_V1V2_CO/'
 
 res = LocVib.SNFResults(outname=os.path.join(path,'snf.out'),
                         restartname=os.path.join(path,'restart'),
@@ -73,7 +74,8 @@ res.read()
 
 # Now localize modes in separate subsets
 
-subsets = [[23,24,25]]
+subsets = np.load(os.path.join(path,'subsets.npy'))
+#subsets = [[23,24,25]]
 localmodes,cmat = localize_subsets(res.modes,subsets)
 
 # Use normal modes:

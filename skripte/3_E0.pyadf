@@ -12,10 +12,16 @@ import numpy as np
 V1 = True
 V2 = True
 
+### WHICH SUBSETS?
+subsets = [[28,29]]
+np.save(os.path.join(pyadfenv.outdir,'subsets.npy'), subsets)
+
 ### PATH TO ENERGY FILES
 
 print 'Energy files will be stored in: '
 enpath = os.path.join(pyadfenv.outdir,'energies')
+if not os.path.exists(enpath):
+    os.makedirs(enpath)
 print enpath
 
 print
@@ -28,15 +34,15 @@ mol = molecule(os.path.join(pyadfenv.outdir,'coord'),inputformat='tmol')
 settings = TurbomoleSinglePointSettings(verbose_level=2)
 
 settings.set_basis_set('def2-SVP')
-settings.set_ri(True)
-settings.set_dft_functional('b-p')
+settings.set_ri(False) # True for bp, False for b3lyp
+settings.set_dft_functional('b3-lyp')
 settings.set_redundant_internal_coordinates(False)
 #settings.set_dispersion_correction('dft-d3')
 settings.set_scfiterlimit('500')
 settings.set_dft_grid('m4')
 
-cosmofile = os.path.join(pyadfenv.outdir,'cosmoprepfile')
-settings.set_cosmosolv(cosmofile)
+#cosmofile = os.path.join(pyadfenv.outdir,'cosmoprepfile')
+#settings.set_cosmosolv(cosmofile)
 
 
 job = TurbomoleSinglePointJob(mol,method='dft',settings=settings)

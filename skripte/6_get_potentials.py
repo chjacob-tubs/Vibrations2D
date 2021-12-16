@@ -3,7 +3,19 @@
 import numpy as np
 from glob import glob
 
-nmodes = 3
+def countelements(subset):
+    counter = 0
+    for i in subset:
+        if isinstance(i,int):
+            counter += 1
+        else:
+            for j in i:
+                counter += 1
+    return counter
+
+subsets = np.load('subsets.npy')
+nmodes = countelements(subsets)
+#nmodes = 3
 ngrid = 16
 firstfile = nmodes * ngrid
 

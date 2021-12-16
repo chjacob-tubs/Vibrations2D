@@ -63,7 +63,7 @@ def localize_subsets(modes,subsets):
 # using LocVib (LocVib package)
 
 #path = os.path.join(os.getcwd(),'potentials')
-path = '/home/julia/testsystems/DKP/def2svp_b3lyp_V1V2_CO'
+path = '/home/julia/testsystems/DKP/def2tzvp_b3lyp_V1V2_CO'
 
 res = LocVib.SNFResults(outname=os.path.join(path,'snf.out'),
                         restartname=os.path.join(path,'restart'),
@@ -72,7 +72,8 @@ res.read()
 
 # Now localize modes in separate subsets
 
-subsets = [[28,29]]
+subsets = np.load(os.path.join(path,'subsets.npy'))
+#subsets = [[28,29]]
 localmodes,cmat = localize_subsets(res.modes,subsets)
 
 print "\n cmat \n",cmat
@@ -86,4 +87,3 @@ dipoles_norm = res.get_tensor_deriv_nm('dipole', modes=res.modes)
 np.save('Exciton_cmat_lm.npy', cmat)
 np.save('Exciton_dipolemoments_lm.npy', dipoles)
 np.save('Exciton_dipolemoments_nm.npy', dipoles_norm)
-
