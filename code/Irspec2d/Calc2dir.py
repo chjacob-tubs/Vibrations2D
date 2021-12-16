@@ -72,6 +72,19 @@ class basics():
                 return int(new_noscill)
             else:
                 raise ValueError("Number of Oscillators couldn't be evaluated.")
+    
+    
+    def read_transmat(self,oldtransmat):
+        '''
+        The transition dipole moment matrix that is obtained by VIBRATIONS calculations
+        has the shape (n,n,1,3). In order to use it in the following calculations it is
+        reduced to the shape (n,n,3). 
+        
+        '''
+        if len(np.asarray(oldtransmat).shape) == 4:
+            return np.reshape(oldtransmat,(len(oldtransmat),len(oldtransmat),3))
+        if len(np.asarray(oldtransmat).shape) == 3:
+            return oldtransmat
         
     
     def check_symmetry(self, a, tol=1e-5):
@@ -91,18 +104,6 @@ class basics():
             return np.all(np.abs(abs(a)-np.transpose(abs(a),(1,0,2))) < tol)
         else:
             raise ValueError('The shape of the given matrix is not implemented in the check_symmetry function.')
-    
-    def read_transmat(self,oldtransmat):
-        '''
-        The transition dipole moment matrix that is obtained by VIBRATIONS calculations
-        has the shape (n,n,1,3). In order to use it in the following calculations it is
-        reduced to the shape (n,n,3). 
-        
-        '''
-        if len(np.asarray(oldtransmat).shape) == 4:
-            return np.reshape(oldtransmat,(len(oldtransmat),len(oldtransmat),3))
-        if len(np.asarray(oldtransmat).shape) == 3:
-            return oldtransmat
     
     def calc_trans2int(self):
         '''
