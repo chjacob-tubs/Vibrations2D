@@ -24,15 +24,9 @@ settings.set_dft_grid('m4')
 settings.set_convergence_criterion(5)
 
 # COSMO
-'''
-The cosmosolv paramater merges the cosmoprepfile  
-and  the turbomole control file.    One needs to 
-have a working cosmoprepfile first. This is just 
-a workaround and needs to be implemented. 
-
-'''
-#cosmofile = os.path.join(pyadfenv.outdir,'cosmoprepfile')
-#settings.set_cosmosolv(cosmofile)
+#settings.set_cosmo(True)
+#settings.set_cosmo_epsilon(77.49)
+#settings.set_cosmo_rsolv(1.93)
 
 
 # DEFINE INTERNAL COORDINATES
@@ -56,7 +50,7 @@ opt_mol = tm_res.get_molecule()
 opt_mol.write(os.path.join(pyadfenv.outdir, '%s_opt.xyz' %(molname)))
 
 opt_energy = tm_res.get_energy()
-print "Final Total Energy: ", opt_energy
+print("Final Total Energy: ", opt_energy)
 
 opt_grad   = tm_res.get_gradient_vector()
-print "Final Max Gradient: ", numpy.max(opt_grad)
+print("Final Max Gradient: ", numpy.max(opt_grad))

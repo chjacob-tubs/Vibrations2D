@@ -35,7 +35,7 @@ def localize_subsets(modes,subsets):
         total += n
 
 
-    print 'Modes localized: %i, modes in total: %i' %(total, modes.nmodes)
+    print('Modes localized: %i, modes in total: %i' %(total, modes.nmodes))
 
     if total > modes.nmodes:
         raise Exception('Number of modes in the subsets is larger than the total number of modes')
@@ -76,7 +76,7 @@ subsets = np.load(os.path.join(path,'subsets.npy'))
 #subsets = [[28,29]]
 localmodes,cmat = localize_subsets(res.modes,subsets)
 
-print "\n cmat \n",cmat
+print("\n cmat \n",cmat)
 
 dipoles = res.get_tensor_deriv_nm('dipole', modes=localmodes)
 #print "\n dipoles local modes: \n",dipoles

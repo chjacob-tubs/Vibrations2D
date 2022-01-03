@@ -18,16 +18,16 @@ np.save(os.path.join(pyadfenv.outdir,'subsets.npy'), subsets)
 
 ### PATH TO ENERGY FILES
 
-print 'Energy files will be stored in: '
+print('Energy files will be stored in: ')
 enpath = os.path.join(pyadfenv.outdir,'energies')
 if not os.path.exists(enpath):
     os.makedirs(enpath)
-print enpath
+print(enpath)
 
-print
-print
-print 'Calculating the reference energy E0'
-print
+print()
+print()
+print('Calculating the reference energy E0')
+print()
 
 
 mol = molecule(os.path.join(pyadfenv.outdir,'coord'),inputformat='tmol')

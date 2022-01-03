@@ -6,10 +6,10 @@ from matplotlib import pyplot
 import pickle
 import os
 
-print vib.Misc.fancy_box('Example 3:')
-print 'Localization of modes of water, harmonic L-VCI-S'
-print 'provides initial normal modes\' frequencies and intensities'
-print 
+print(vib.Misc.fancy_box('Example 3:'))
+print('Localization of modes of water, harmonic L-VCI-S')
+print('provides initial normal modes\' frequencies and intensities')
+print() 
 # Functions below are used to localize modes in subsets
 
 def localize_subset(modes,subset):
@@ -39,7 +39,7 @@ def localize_subsets(modes,subsets):
         total += n
 
 
-    print 'Modes localized: %i, modes in total: %i' %(total, modes.nmodes)
+    print('Modes localized: %i, modes in total: %i' %(total, modes.nmodes))
 
     if total > modes.nmodes:
         raise Exception('Number of modes in the subsets is larger than the total number of modes')
@@ -188,6 +188,6 @@ np.save('VCI_dipolemoments.npy',transm)
 
 #pyplot.show()
 
-print 
-print 
-print vib.Misc.fancy_box('http://www.christophjacob.eu')
+print() 
+print() 
+print(vib.Misc.fancy_box('http://www.christophjacob.eu'))
