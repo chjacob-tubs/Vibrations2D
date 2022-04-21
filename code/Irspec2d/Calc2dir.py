@@ -292,6 +292,7 @@ class calc_2dirtimedomain(basics):
         else : 
             self.t2 = 0
             if verbose_all or verbose : print('Set the population time t2 to',self.t2,'ps (default value).')
+        
         if 'pol' in params :
             implementedpolarizations = ['ZZZZ','ZZXX']
             if params.get('pol') in implementedpolarizations:

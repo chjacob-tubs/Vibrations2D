@@ -123,10 +123,12 @@ class BuildExcitonModel():
         states = self.calc_states()
         hamilt = self.build_hamiltonianfunction()
 
-        for i, rstate in enumerate(states) : # loop over all the states in order to evaluate the matrix elements: < state | H | state >
+        # loop over all the states in order to evaluate the matrix elements: < state | H | state >
+        for i, rstate in enumerate(states) : 
             values = []
 
-            for j, operator in enumerate(hamilt) : # loop over all elements in H, in order to evaluate: H | state >
+            # loop over all elements in H, in order to evaluate: H | state >
+            for j, operator in enumerate(hamilt) : 
                 if rstate[operator[2]-1] != 0 :
 
                     creation = operator[2]-1
