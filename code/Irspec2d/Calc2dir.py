@@ -268,24 +268,21 @@ class calc_2dirtimedomain(basics):
         else : 
             self.n_t = 128
             if verbose_all or verbose : print('Set the number of time points n_t to',self.n_t,'(default value).')
-        if 'n_zp' in params : 
-            self.n_zp = params.get('n_zp')
-            if verbose_all or verbose : print('Set the zeropadded length n_zp to',str(self.n_zp)+'.')
-        else : 
-            self.n_zp = 2*self.n_t
-            if verbose_all or verbose : print('Set the zeropadded length n_zp to',self.n_zp,'(default value).')
+        
         if 'dt' in params : 
             self.dt = params.get('dt')
             if verbose_all or verbose : print('Set the time step length dt to',self.dt,'ps.')
         else : 
             self.dt = 0.25
             if verbose_all or verbose : print('Set the time step length dt to',self.dt,'ps (default value).')
+        
         if 'T2' in params : 
             self.T2 = params.get('T2')
             if verbose_all or verbose : print('Set the dephasing time T2 to',self.T2,'ps.')
         else : 
             self.T2 = 2
             if verbose_all or verbose : print('Set the zeropadded length T2 to',self.T2,'ps (default value).')
+        
         if 't2' in params : 
             self.t2 = params.get('t2')
             if verbose_all or verbose : print('Set the population time t2 to',self.t2,'ps.')
@@ -294,21 +291,26 @@ class calc_2dirtimedomain(basics):
             if verbose_all or verbose : print('Set the population time t2 to',self.t2,'ps (default value).')
         
         if 'pol' in params :
-            implementedpolarizations = ['ZZZZ','ZZXX']
-            if params.get('pol') in implementedpolarizations:
-                self.polarization = params.get('pol')
-                if verbose_all or verbose : print('Set the polarization to',str(self.polarization)+'.')
-            else:
-                raise Exception('Could not set '+str(params.get('pol'))+' polarization condition. Please chose from '+str(implementedpolarizations)+'.')
+            self.polarization = params.get('pol')
+            if verbose_all or verbose : print('Set the polarization to',self.polarization,'.')
         else : 
             self.polarization = 'ZZZZ'
             if verbose_all or verbose : print('Set the polarization to',self.polarization,'(default).')
         
+        if 'pol_list' in params :
+            self.pol_list = params.get('pol_list')
+            if verbose_all or verbose : print('Set the polarization angles to',self.pol_list,'.')
+        else : 
+            self.pol_list = self.set_pulse_angles(self.polarization)
+            if verbose_all or verbose : print('Set the polarization angles to',self.pol_list,'(calculated default).')
+        
+        self.n_zp = 2*self.n_t
         self.freqs = self.freqmat[0]
         self.verbose_all = verbose_all
         self.nmodesexc = self.calc_nmodesexc()
         self.unitconvfactor = 0.188 # unit conversion factor
         self.timepoints = np.arange(0,(self.n_t)*self.dt)
+        self.fak1, self.fak2, self.fak3 = self.calc_fourpoint_faktors(self.pol_list)
         
         if (self.nmodesexc+self.noscill+1)!=self.nmodes: 
             print('The number of modes is',self.nmodes,'not equal to the sum of the number of oscillators',self.noscill,' and the number of excited states',self.nmodesexc,' plus 1 (for the ground state).')
@@ -463,9 +465,9 @@ class calc_2dirtimedomain(basics):
             if val == 'l':
                 mu[i] = mus[3]
 
-        S1 = fak1 * calc_cos(mu[0],mu[1]) * calc_cos(mu[2],mu[3])
-        S2 = fak2 * calc_cos(mu[0],mu[2]) * calc_cos(mu[1],mu[3])
-        S3 = fak3 * calc_cos(mu[0],mu[3]) * calc_cos(mu[1],mu[2])
+        S1 = fak1 * self.calc_cos(mu[0],mu[1]) * self.calc_cos(mu[2],mu[3])
+        S2 = fak2 * self.calc_cos(mu[0],mu[2]) * self.calc_cos(mu[1],mu[3])
+        S3 = fak3 * self.calc_cos(mu[0],mu[3]) * self.calc_cos(mu[1],mu[2])
 
         S = (S1 + S2 + S3) / 30
 
@@ -494,28 +496,25 @@ class calc_2dirtimedomain(basics):
             for i in range(self.noscill):
 
                 if self.verbose_all or verbose : print('i:',i,'j:',j)
-
+                
                 mui = LA.norm(mu[i])
                 muj = LA.norm(mu[j])
-                cos1 = (mu[i][0]*np.conj(mu[j][0])+mu[i][1]*np.conj(mu[j][1])+mu[i][2]*np.conj(mu[j][2])) / (mui*muj)
+                
                 dipole = mui**2 * muj**2
-                if self.polarization == 'ZZZZ':
-                    angle = (1 + 2*cos1**2) /15
-                elif self.polarization == 'ZZXX':
-                    angle = (2 - cos1**2) /15
-                else:
-                    raise Exception('No polarization function found. This error should be cought in the init method. Please check.')
-                factor = angle*dipole
+                
+                angle_jjii = self.calc_fourpointcorr('jjii',self.fak1,self.fak2,self.fak3,mu[i],mu[j])
+                angle_jiji = self.calc_fourpointcorr('jiji',self.fak1,self.fak2,self.fak3,mu[i],mu[j])
+                angle_jiij = self.calc_fourpointcorr('jiij',self.fak1,self.fak2,self.fak3,mu[i],mu[j])
 
                 if self.verbose_all or verbose : print('mu_i:',mui,'mu_j:',muj)
                 if self.verbose_all or verbose : print('cos1:',cos1,'angle:',angle,'dipole:',dipole)
 
                 for jj,T3 in enumerate(t):
                     for ii,T1 in enumerate(t):
-                        R1[ii][jj] -= factor * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-                        R2[ii][jj] -= factor * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
-                        R4[ii][jj] -= factor * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-                        R5[ii][jj] -= factor * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
+                        R1[ii][jj] -= angle_jiji*dipole * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
+                        R2[ii][jj] -= angle_jjii*dipole * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
+                        R4[ii][jj] -= angle_jiij*dipole * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
+                        R5[ii][jj] -= angle_jjii*dipole * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
 
                 for k in range(self.nmodesexc):
 
@@ -528,45 +527,14 @@ class calc_2dirtimedomain(basics):
                     if self.verbose_all or verbose : print('mu_ik:',muik,'mu_jk:',mujk)
                     if self.verbose_all or verbose : print('dipole2:',dipole2)
 
-                    if muik != 0 and mujk != 0 : 
-                        cos2 = ( mu2[i][k][0]*np.conj(mu2[j][k][0]) + mu2[i][k][1]*np.conj(mu2[j][k][1]) + mu2[i][k][2]*np.conj(mu2[j][k][2]) ) / ( mujk*muik )
-                    else: 
-                        cos2 = 0 
 
-                    if muik != 0 : 
-                        cos3 = ( mu[i][0]*np.conj(mu2[i][k][0]) + mu[i][1]*np.conj(mu2[i][k][1]) + mu[i][2]*np.conj(mu2[i][k][2]) ) / ( mui*muik )
-                        cos6 = ( mu[j][0]*np.conj(mu2[i][k][0]) + mu[j][1]*np.conj(mu2[i][k][1]) + mu[j][2]*np.conj(mu2[i][k][2]) ) / ( muj*muik )
-                    else: 
-                        cos3 = 0 
-                        cos6 = 0
-
-                    if mujk != 0 : 
-                        cos4 = ( mu[j][0]*np.conj(mu2[j][k][0]) + mu[j][1]*np.conj(mu2[j][k][1]) + mu[j][2]*np.conj(mu2[j][k][2]) ) / ( muj*mujk )
-                        cos5 = ( mu[i][0]*np.conj(mu2[j][k][0]) + mu[i][1]*np.conj(mu2[j][k][1]) + mu[i][2]*np.conj(mu2[j][k][2]) ) / ( mui*mujk )
-                    else: 
-                        cos4 = 0 
-                        cos5 = 0
-
-                    if self.verbose_all or verbose : print('cos2:',cos2)
-                    if self.verbose_all or verbose : print('cos3:',cos3)
-                    if self.verbose_all or verbose : print('cos4:',cos4)
-                    if self.verbose_all or verbose : print('cos5:',cos5)
-                    if self.verbose_all or verbose : print('cos6:',cos6)
-
-                    if self.polarization == 'ZZZZ':
-                        angle2 = (cos1*cos2 + cos3*cos4 + cos5*cos6) / 15
-                    elif self.polarization == 'ZZXX':
-                        angle2 = (4*cos1*cos2 - cos3*cos4 - cos5*cos6) / 30
-                    else:
-                        raise Exception('No polarization function found. This error should be cought in the init method. Please check. (Access to higher states.)')
-                    factor2 = dipole2*angle2
-
-                    if self.verbose_all or verbose : print('angle2:',angle2)
+                    angle_jilk = self.calc_fourpointcorr('jilk',self.fak1,self.fak2,self.fak3,mu[i],mu[j],mu2[i][k],mu2[j][k])
+                    angle_jikl = self.calc_fourpointcorr('jikl',self.fak1,self.fak2,self.fak3,mu[i],mu[j],mu2[i][k],mu2[j][k])
 
                     for jj,T3 in enumerate(t):
                         for ii,T1 in enumerate(t):
-                            R3[ii][jj] += factor2 * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*(omega2[k]-omega[j])*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-                            R6[ii][jj] += factor2 * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*(omega2[k]-omega[i])*self.unitconvfactor*T3 - 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
+                            R3[ii][jj] += dipole2*angle_jilk * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*(omega2[k]-omega[j])*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
+                            R6[ii][jj] += dipole2*angle_jikl * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*(omega2[k]-omega[i])*self.unitconvfactor*T3 - 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
 
                 if self.verbose_all or verbose : print()
 
