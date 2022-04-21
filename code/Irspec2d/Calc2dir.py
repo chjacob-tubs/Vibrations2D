@@ -381,6 +381,97 @@ class calc_2dirtimedomain(basics):
         '''
         return self.transmat[0][1:self.noscill+1] , self.calc_secondexcitation()
     
+    def set_pulse_angles(self,pol):
+        '''
+        Returns a list of different angles for different polarization conditions.
+        E.g. for the <ZZZZ> polarization condition the list is [0,0,0,0].
+        
+        '''
+        
+        pol_list = [0,0,0,0]
+        
+        for i, val in enumerate(pol):
+            if val == pol[0]:
+                pol_list[i] = 0
+            if val != pol[0]:
+                pol_list[i] = 90
+        
+        return pol_list
+    
+    def calc_fourpoint_faktors(self,pol):
+        '''
+        Needs the list of angles of the polarization condition.
+        Calculating parts of the four-point correlation function:
+        row1 = 4 * cos theta_ab * cos theta_cd - cos theta_ac * cos theta_bd - cos theta_ad * cos theta_bc
+        row2 = 4 * cos theta_ac * cos theta_bd - cos theta_ab * cos theta_cd - cos theta_ad * cos theta_bc
+        row3 = 4 * cos theta_ad * cos theta_bc - cos theta_ab * cos theta_cd - cos theta_ac * cos theta_bd
+
+        '''
+
+        ab = np.deg2rad(pol[0]-pol[1])
+        cd = np.deg2rad(pol[2]-pol[3])
+        ac = np.deg2rad(pol[0]-pol[2])
+        bd = np.deg2rad(pol[1]-pol[3])
+        ad = np.deg2rad(pol[0]-pol[3])
+        bc = np.deg2rad(pol[1]-pol[2])
+
+        row1 = 4 * np.cos(ab) * np.cos(cd) - np.cos(ac) * np.cos(bd) - np.cos(ad) * np.cos(bc)
+        row2 = 4 * np.cos(ac) * np.cos(bd) - np.cos(ab) * np.cos(cd) - np.cos(ad) * np.cos(bc)
+        row3 = 4 * np.cos(ad) * np.cos(bc) - np.cos(ab) * np.cos(cd) - np.cos(ac) * np.cos(bd)
+
+        return row1,row2,row3
+    
+    def calc_cos(self,vec1,vec2):
+        '''
+        calculates the cosine between two three-dimensional vectors
+
+        '''
+
+        mu1 = LA.norm(vec1)
+        mu2 = LA.norm(vec2)
+
+        if mu1 != 0 and mu2 !=0:
+            cos12 = ( vec1[0]*np.conj(vec2[0])+vec1[1]*np.conj(vec2[1])+vec1[2]*np.conj(vec2[2]) ) / (mu1*mu2)
+        else:
+            cos12 = 0
+
+        return cos12
+    
+    def calc_fourpointcorr(self,pathway,fak1,fak2,fak3,*mus):
+        '''
+        pathway : 'jjii', 'jiji', 'jiij', 'jikl'
+
+        S = 1/30 * ( cos theta_alpha_beta  * cos theta_gamma_delta * fak1
+                   - cos theta_alpha_gamma * cos theta_beta_delta  * fak2
+                   - cos theta_alpha_delta * cos theta_beta_gamma  * fak3 )
+
+        '''
+
+        mu = [0,0,0,0]
+
+        for i, val in enumerate(pathway):
+
+            if val == 'j':
+                mu[i] = mus[0]
+
+            if val == 'i':
+                mu[i] = mus[1]
+
+            if val == 'k':
+                mu[i] = mus[2]
+
+            if val == 'l':
+                mu[i] = mus[3]
+
+        S1 = fak1 * calc_cos(mu[0],mu[1]) * calc_cos(mu[2],mu[3])
+        S2 = fak2 * calc_cos(mu[0],mu[2]) * calc_cos(mu[1],mu[3])
+        S3 = fak3 * calc_cos(mu[0],mu[3]) * calc_cos(mu[1],mu[2])
+
+        S = (S1 + S2 + S3) / 30
+
+        return S
+    
+    
     def calc_diagrams(self,verbose=False):
         '''
         This computes the diagrams R_1 to R_6.
