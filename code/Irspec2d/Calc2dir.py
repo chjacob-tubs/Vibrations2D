@@ -304,7 +304,7 @@ class calc_2dirtimedomain(basics):
             self.pol_list = self.set_pulse_angles(self.polarization)
             if verbose_all or verbose : print('Set the polarization angles to',self.pol_list,'(calculated default).')
         
-        self.n_zp = 2*self.n_t
+        self.n_zp = 2*self.n_t #zeropadded length (used for Fourier Transform)
         self.freqs = self.freqmat[0]
         self.verbose_all = verbose_all
         self.nmodesexc = self.calc_nmodesexc()
@@ -361,8 +361,8 @@ class calc_2dirtimedomain(basics):
         The states after state n_oscill are the second excited states.
         
         '''
-        omega_init = self.set_omega_initial()
-        omega2_init = self.freqs[self.noscill+1:]
+        omega_init = self.freqmat[0][1:self.noscill+1]
+        omega2_init = self.freqmat[0][self.noscill+1:]
         
         omega_off_value = self.set_omega_off()
         
@@ -507,7 +507,7 @@ class calc_2dirtimedomain(basics):
                 angle_jiij = self.calc_fourpointcorr('jiij',self.fak1,self.fak2,self.fak3,mu[i],mu[j])
 
                 if self.verbose_all or verbose : print('mu_i:',mui,'mu_j:',muj)
-                if self.verbose_all or verbose : print('cos1:',cos1,'angle:',angle,'dipole:',dipole)
+                if self.verbose_all or verbose : print('dipole:',dipole)
 
                 for jj,T3 in enumerate(t):
                     for ii,T1 in enumerate(t):

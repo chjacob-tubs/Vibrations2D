@@ -8,7 +8,7 @@ import sys # sys.exit()
 initdir = os.getcwd()
 
 # Here are the scripts
-folderwithscripts = '/home/julia/2d-ir-spectroscopy/skripte'
+folderwithscripts = '/home/julia/2d-ir-spectroscopy/script'
 resultsfolder = os.path.join(initdir,'results_VCI_exciton')
 
 exciton = os.path.join(folderwithscripts,'3_calc_excitonmodel.py')
