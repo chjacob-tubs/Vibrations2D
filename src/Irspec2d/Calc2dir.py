@@ -177,6 +177,11 @@ class Calc2dir_base():
             val = str(number)
             
         return val
+
+    
+class spectra(Calc2dir_base):
+    
+    
     
     @staticmethod
     def set_line_spacing(maximum,number):
@@ -204,7 +209,7 @@ class Calc2dir_base():
     def gauss_func(intensity,x,x0,halfwidth):
         '''
         Computes a single value at position x for a 
-        1D gaussian type function
+        1D gaussian type function.
         
         @param intensity: Intensity of a peak
         @type intensity: Float
@@ -227,10 +232,36 @@ class Calc2dir_base():
         return (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - (x - x0)**2 / (2*gamma**2) )
     
     @staticmethod
+    def gauss2d_func(intensity,x,x0,y,y0,halfwidth):
+        '''
+        Computes a single value at position x for a 
+        1D gaussian type function.
+        
+        @param intensity: Intensity of a peak
+        @type intensity: Float
+        
+        @param x: x-values 
+        @type x: List of floats
+        
+        @param x0: Position of a peak
+        @type x0: Float
+        
+        @param halfwidth: Parameter to control the width of the peaks
+        @type halfwidth: Float
+        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
+        
+        @return: Corresponding y-values
+        @rtype: List of floats
+        
+        '''        
+        gamma = halfwidth / (2.0*math.sqrt(2.0*math.log(2.0)))
+        return (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - ((x - x0)**2 + (y - y0)**2) / (2*gamma**2) )
+    
+    @staticmethod
     def lorentz_func(intensity,x,x0,halfwidth):
         '''
         Computes a single value at position x for a 
-        1D lorentzian type function
+        1D lorentzian type function.
         
         @param intensity: Intensity of a peak
         @type intensity: Float
@@ -252,9 +283,34 @@ class Calc2dir_base():
         return ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (halfwidth/2)**2 )
     
     @staticmethod
-    def get_norm_spectrum(xmin,xmax,freqs,ints,steps=5000,halfwidth=5,ftype='gauss'):
+    def lorentz2d_func(intensity,x,x0,y,y0,halfwidth=5):
         '''
-        Sums up all gauss/lorentz functions for each peak.
+        Computes a single value at grid x,y for a 
+        2D lorentzian type function.
+        
+        @param intensity: Intensity of a peak
+        @type intensity: Float
+        
+        @param x/y: x-values 
+        @type x/y: List of floats
+        
+        @param x0/y0: Position of a peak
+        @type x0/y0: Float
+        
+        @param halfwidth: Parameter to control the width of the peaks
+        @type halfwidth: Float
+        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
+        
+        @return: Corresponding y-values
+        @rtype: List of floats
+        
+        '''
+        return ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (y-y0)**2 + (halfwidth/2)**2 )
+    
+    @staticmethod
+    def get_norm_1d_spectrum(xmin,xmax,freqs,ints,steps=5000,halfwidth=5,ftype='gauss'):
+        '''
+        Sums up all gauss/lorentz functions for each peak and sets the highest value to one.
         
         @param xmin/xmax: minimum and maximum value of the spectrum
         @type xmin/xmax: Float
@@ -281,9 +337,53 @@ class Calc2dir_base():
         
         for freq, inten in zip(freqs,ints):
             if ftype.lower() == 'gauss':
-                y += Calc2dir_base.gauss_func(inten,x,freq,halfwidth)
+                y += spectra.gauss_func(inten,x,freq,halfwidth)
             if ftype.lower() == 'lorentz':
-                y += Calc2dir_base.lorentz_func(inten,x,freq,halfwidth)
+                y += spectra.lorentz_func(inten,x,freq,halfwidth)
 
         y = list(map(lambda x : x/y.max(), y))
         return x,y
+    
+    @staticmethod
+    def get_2d_spectrum(xmin,xmax,exc,ble,emi,steps=2000,halfwidth=15,ftype='gauss'):
+        '''
+        Text
+        
+        '''
+        
+        x = np.linspace(xmin, xmax, steps)
+        y = np.linspace(xmin, xmax, steps)
+        xx, yy = np.meshgrid(x, y)
+        
+        z = np.zeros((steps,steps))
+        
+        exc_x,exc_y,exc_i = exc
+        emi_x,emi_y,emi_i = emi
+        ble_x,ble_y,ble_i = ble
+        
+        y_vals = []
+        y_vals.extend([exc_y,emi_y,ble_y])
+        i_vals = []
+        i_vals.extend([exc_i,emi_i,ble_i])
+
+        
+        for freq_x, freq_y, inten in zip(exc_x+emi_x+ble_x, exc_y+emi_y+ble_y, exc_i+emi_i+ble_i):
+            if ftype.lower() == 'gauss':
+                z += spectra.gauss2d_func(inten,xx,freq_x,yy,freq_y,halfwidth=5)
+            if ftype.lower() == 'lorentz':
+                z += spectra.lorentz2d_func(inten,xx,freq_x,yy,freq_y,halfwidth=5)
+            
+        
+        return x,y,z
+    
+    @staticmethod
+    def norm_2d_spectum(z,max_z):
+        '''
+        Text
+        
+        '''        
+        for i in range(len(z)):
+            for j in range(len(z)):
+                z[i][j] = z[i][j] / max_z
+        
+        return z
