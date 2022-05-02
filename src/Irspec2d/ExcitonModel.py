@@ -264,5 +264,11 @@ class excitonmodel(Calc2dir_base):
         firstmult = self.multiply(ev.T,dipole_lm)
         dipole_nm = self.multiply(firstmult,ev)
         
-        return [ew], dipole_nm
+        # simulating a symmetrical frequency matrix from the eigen values:
+        freqs_lm = [[0 for i in range(len(ew))] for i in range(len(ew))] 
+        for i in range(len(ew)):
+            freqs_lm[i][0] = ew[i]
+            freqs_lm[0][i] = ew[i]
+        
+        return np.asarray(freqs_lm), np.asarray(dipole_nm)
         
