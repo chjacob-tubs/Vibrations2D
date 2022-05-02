@@ -199,58 +199,7 @@ class Calc2dir_base():
         return np.concatenate((negspace,posspace))
     
     
-# EXCITON MODEL FUNCTIONS
 
-class excitonmodel(Calc2dir_base):
-    
-    def __init__(self, cmat, dipoles, anharm):
-        '''
-        
-        @param cmat: coupling matrix, which is in the shape of the one-exciton hamiltonian
-        @type cmat: list of lists of floats
-        '''
-        self.anharm = anharm
-        
-    @staticmethod
-    def multiply(A,B):
-        '''
-        For multiplying the (m,m,3)x(m,m) arrays.
-        Works also for simple (m,n)x(n,l) multiplications.
-        No further cases were tested.
-        
-        @param A: (m,m,3) shaped array
-        @type A: array or list of lists of float
-        
-        @param B: (m,m) shaped array
-        @type B: array or list of lists of float
-        
-        @return: product of A and B
-        @rtype: list of lists of float
-
-        '''
-
-        a = int(np.asarray(A).shape[0])
-        b = int(np.asarray(B).shape[1])
-
-        C = [[0 for i in range(b)] for j in range(a)]
-
-        for i, ii in enumerate(C):
-            for j, jj in enumerate(ii):
-
-                D = []
-                for k in B:
-                    # print(k[j])
-                    D.append(k[j])
-
-                matelement = []
-                for k,kk in enumerate(A[i]):
-                    prod = np.dot(kk,D[k])
-                    # print('kk:',kk,'D[i]:',D[k],'prod:',prod)
-                    matelement.append(prod)
-
-                C[i][j] = sum(matelement)
-
-        return C
 
 
     # FREQUENCY DOMAIN FUNCTIONS
