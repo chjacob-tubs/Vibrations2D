@@ -79,7 +79,7 @@ class freqdomain(Calc2dir_base):
 
                     emi_y.append(y_coor)
                     emi_x.append(x_coor)
-                    emi_i.append(emi_inten)
+                    emi_i.append(-emi_inten)
 
                     # print('Stimulated emission from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',emi_inten)
         return (emi_x, emi_y, emi_i)
@@ -115,7 +115,7 @@ class freqdomain(Calc2dir_base):
                         x_coor = self.freqmat[0][j]-self.freqmat[0][0]
                         ble_x.append(x_coor)
                         ble_y.append(y_coor)
-                        ble_i.append(ble_inten)
+                        ble_i.append(-ble_inten)
                         
                         # print('Bleaching from energy level 0 to',i,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
 
