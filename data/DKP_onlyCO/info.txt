@@ -1,2 +1,0 @@
-'/home/julia/testsystems/DKP/def2svp_b3lyp_V1V2_CO'
-[[28,29]]
