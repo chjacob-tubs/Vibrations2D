@@ -156,7 +156,7 @@ class Calc2dir_base():
         
         for i in range(len(intenmat)):
             for j in range(len(intenmat)):
-                intenmat[i][j]= (LA.norm(dipomat[i][j]))**2 * intfactor * freqmat[i][j]
+                intenmat[i][j]= (LA.norm(dipomat[i][j]))**2 * intfactor * (freqmat[0][j]-freqmat[0][i])
                 
         return intenmat
     
