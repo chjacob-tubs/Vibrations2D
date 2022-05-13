@@ -64,8 +64,8 @@ class Calc2dir_base():
         are compared. 
         
         '''
-        assert self.freqmat.shape[0] == self.dipoles.shape[0], 'First axis of frequency matrix and transition dipole moment matrix do not have the same length.'
-        assert self.freqmat.shape[1] == self.dipoles.shape[1], 'Second axis of frequency matrix and transition dipole moment matrix do not have the same length.'
+        assert np.asarray(self.freqmat).shape[0] == np.asarray(self.dipoles).shape[0], 'First axis of frequency matrix and transition dipole moment matrix do not have the same length.'
+        assert np.asarray(self.freqmat).shape[1] == np.asarray(self.dipoles).shape[1], 'Second axis of frequency matrix and transition dipole moment matrix do not have the same length.'
             
     def check_symmetry(self, a, tol=1e-5):
         '''
@@ -81,6 +81,8 @@ class Calc2dir_base():
         @type a: list of lists of numbers
 
         '''
+        a = np.asarray(a)
+        
         if len(a.shape) == 2:
             val = np.all(np.abs(abs(a)-abs(a).T) < tol)
             
