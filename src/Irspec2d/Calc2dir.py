@@ -24,7 +24,12 @@ class Calc2dir_base():
         self.dipoles = self.read_dipolemat(dipoles)
         
         self.check_input()
-        self.check_symmetry(self.freqmat)
+        
+        if len(np.asarray(self.freqmat).shape) == 2:
+            self.check_symmetry(self.freqmat)
+        if len(np.asarray(self.freqmat).shape) == 1:
+            self.freqmat = [freqmat]
+        
         self.check_symmetry(self.dipoles)
         
         self.noscill = self.calc_num_oscill(self.calc_nmodes())
