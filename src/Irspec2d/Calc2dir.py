@@ -51,7 +51,7 @@ class Calc2dir_base():
         
         '''
         if len(np.asarray(olddipole).shape) == 4:
-            dipolemat = np.reshape(olddipole,(len(olddipole),len(olddipole),3))
+            dipolemat = (np.reshape(olddipole,(len(olddipole),len(olddipole),3))).tolist()
         if len(np.asarray(olddipole).shape) == 3:
             dipolemat = olddipole
             
