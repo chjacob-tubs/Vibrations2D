@@ -225,8 +225,11 @@ class excitonmodel(Calc2dir_base):
     
     def add_anharmonicity(self,hamiltonian):
         '''
-        Adds the anharmonicitiy factor to the second excited matrix 
+        Adds the anharmonicitiy shift Delta to the second excited matrix 
         elements, exept for the combination bands.
+        For a two oscillator system, the diagonal elements are:
+        (0), (hbar omega1), (hbar omega2),
+            (2 hbar omega1 - Delta), (2 hbar omega2 - Delta), (hbar omega1 + hbar omega2).
         
         @param hamiltonian: Hamiltonian Matrix
         @type hamiltonian: List of lists of floats
@@ -241,18 +244,56 @@ class excitonmodel(Calc2dir_base):
             
         return hamiltonian
     
-    def get_nm_freqs_dipolmat(self):
+    def add_all_anharmonicity(self,hamiltonian):
+        '''
+        Adds the anharmonicitiy shift Delta to the all diagonal elements in 
+        addition to the second excitation elements. 
+        For a two oscillator system, the diagonal elements are:
+        (0), (hbar omega1 - Delta), (hbar omega2 - Delta),
+            (2 hbar omega1 - 3 Delta), (2 hbar omega2 - 3 Delta), (hbar omega1 + hbar omega2 - 2 Delta).
+        
+        
+        @param hamiltonian: Hamiltonian Matrix
+        @type hamiltonian: List of lists of floats
+        
+        @return: Hamiltonian including anharmoncity (Delta = self.anharm)
+        @rtype: List of lists of floats
+        
+        '''
+        # loop leaves out the first state, which is 0.
+        for i in range(1,len(hamiltonian)):
+            # first excitations: H[i][i] hbar*omega_i - Delta
+            if i < self.noscill+1 :
+                hamiltonian[i][i] -= self.anharm
+                
+            # second excitations: H[i][i] hbar*omega_i - 3 * Delta
+            elif i > self.noscill and i < 2*self.noscill+1 :
+                hamiltonian[i][i] -= 3 * self.anharm
+                
+            # combination excitations: H[i][i] hbar*omega_i - 2 * Delta
+            elif i > 2*self.noscill : 
+                hamiltonian[i][i] -= 2 * self.anharm
+            
+        return hamiltonian
+    
+    def get_nm_freqs_dipolmat(self,shift='all'):
         '''
         Calculates the normal mode frequencies and transition dipole
         moment matrix. 
         Can also calculate the normal mode hamiltonian.
+        
+        @param shift: determines how the anharmonicities are added
+        @type shift: String
         
         @return: Frequencies and transition dipole moment matrix
         @rtype: Two lists of lists of float
         
         '''
         states = self.generate_sorted_states()
-        hamilt_lm = self.add_anharmonicity(self.eval_hamiltonian(states))
+        if shift == 'all':
+            hamilt_lm = self.add_all_anharmonicity(self.eval_hamiltonian(states))
+        if shift == 'exc2':
+            hamilt_lm = self.add_anharmonicity(self.eval_hamiltonian(states))
         dipole_lm = self.eval_dipolmatrix(states)
         
         ew, ev = LA.eigh(hamilt_lm)
