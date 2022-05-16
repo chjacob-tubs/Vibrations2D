@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import linalg as LA
 
-from Calc2dir import *
+from Irspec2d import *
 
 # EXCITON MODEL FUNCTIONS
 
