@@ -2,7 +2,8 @@ import pytest
 import numpy as np
 import math
 from numpy import linalg as LA
-from Calc2dir import *
+# from Calc2dir import *
+import Irspec2d.Calc2dir as Calc2dir
 
 class TestCalc2dir_base():
     '''
@@ -154,7 +155,7 @@ class TestCalc2dir_base():
 #         self.noscill = self.calc_num_oscill(self.calc_nmodes())
     
     def test_read_dipolemat(self,freqmat,dipoles):
-        base2d = Calc2dir_base(freqmat,dipoles)
+        base2d = Calc2dir.Calc2dir_base(freqmat,dipoles)
         
         assert base2d.read_dipolemat(dipoles) == dipoles
         assert base2d.read_dipolemat(self.set_dipoles_diff_shape()) == dipoles
