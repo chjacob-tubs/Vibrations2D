@@ -2,17 +2,17 @@ import pytest
 import numpy as np
 import math
 from numpy import linalg as LA
-# from Calc2dir import *
+
 import Irspec2d.Calc2dir as Calc2dir
 
 class TestCalc2dir_base():
     '''
-    This is supposed to calculate all kinds of different 2D IR spectra.
+    This is supposed to test the calculation of all kinds of different 2D IR spectra.
     
     '''
     
     @pytest.fixture
-    def freqmat(self):
+    def freqmat_2modes(self):
         '''
         Sets the testing frequency matrix. 
         Rounded data is from the DAR molecule calculated with a 
@@ -25,9 +25,28 @@ class TestCalc2dir_base():
                  [-3526, -1762, -1759,   -1,    0,    6],
                  [-3532, -1767, -1765,   -6,   -6,    0]]
         return freq
+    
+    @pytest.fixture
+    def freqmat_3modes(self):
+        '''
+        Sets the testing frequency matrix. 
+        Rounded data is from the GAAP molecule calculated with a 
+        def2-TZVP basis set and B3-LYP functional. 
+        '''
+        freq =  [[    0.,  1727.,  1739.,  1779.,  3449.,  3459.,  3476.,  3506.,  3518.,  3547.],
+                 [-1727.,     0.,    12.,    52.,  1722.,  1732.,  1749.,  1779.,  1791.,  1820.],
+                 [-1739.,   -12.,     0.,    40.,  1710.,  1719.,  1736.,  1767.,  1778.,  1808.],
+                 [-1779.,   -52.,   -40.,     0.,  1670.,  1679.,  1696.,  1727.,  1738.,  1768.],
+                 [-3449., -1722., -1710., -1670.,     0.,     9.,    26.,    57.,    68.,    98.],
+                 [-3459., -1732., -1719., -1679.,    -9.,     0.,    17.,    48.,    59.,    88.],
+                 [-3476., -1749., -1736., -1696.,   -26.,   -17.,     0.,    30.,    42.,    71.],
+                 [-3506., -1779., -1767., -1727.,   -57.,   -48.,   -30.,     0.,    11.,    41.],
+                 [-3518., -1791., -1778., -1738.,   -68.,   -59.,   -42.,   -11.,     0.,    29.],
+                 [-3547., -1820., -1808., -1768.,   -98.,   -88.,   -71.,   -41.,   -29.,     0.]]
+        return freq
         
     @pytest.fixture
-    def dipoles(self):
+    def dipoles_2modes(self):
         '''
         Sets the testing transition dipole moment matrix. 
         Rounded data is from the DAR molecule calculated with a 
@@ -75,8 +94,144 @@ class TestCalc2dir_base():
                   [ 2.040e-02, -1.880e-02, -1.530e-02],
                   [-1.800e-03,  4.600e-03, -1.090e-02]]]
         return dips
+        
+    @pytest.fixture
+    def dipoles_3modes(self):
+        '''
+        Sets the testing transition dipole moment matrix. 
+        Rounded data is from the GAAP molecule calculated with a 
+        def2-TZVP basis set and B3-LYP functional. 
+        '''
+        dips = [[[-5.620e-02,  2.570e-02, -2.220e-02],
+                [-2.180e-02, -2.549e-01,  1.943e-01],
+                [ 1.735e-01,  3.190e-02,  8.000e-03],
+                [-5.160e-02,  1.281e-01, -6.470e-02],
+                [ 9.600e-03, -3.600e-03,  3.700e-03],
+                [-2.200e-03, -1.820e-02,  1.330e-02],
+                [-6.800e-03,  4.000e-04, -1.000e-03],
+                [-7.000e-04, -5.700e-03,  3.300e-03],
+                [ 9.000e-04,  6.300e-03, -3.300e-03],
+                [ 2.700e-03, -1.190e-02,  5.900e-03]],
 
-    def set_dipoles_diff_shape(self):
+               [[-2.180e-02, -2.549e-01,  1.943e-01],
+                [-3.560e-02,  2.410e-02, -1.760e-02],
+                [-2.000e-03, -2.500e-02,  2.050e-02],
+                [ 2.200e-03,  7.100e-03, -4.700e-03],
+                [ 1.040e-02,  3.461e-01, -2.681e-01],
+                [-1.763e-01, -7.080e-02,  2.260e-02],
+                [ 3.000e-04,  5.950e-02, -4.550e-02],
+                [-4.690e-02,  1.301e-01, -6.560e-02],
+                [-4.600e-03,  2.800e-03, -6.000e-04],
+                [ 1.000e-03, -8.100e-03,  4.200e-03]],
+
+               [[ 1.735e-01,  3.190e-02,  8.000e-03],
+                [-2.000e-03, -2.500e-02,  2.050e-02],
+                [-3.650e-02,  2.480e-02, -1.850e-02],
+                [-3.400e-03, -7.200e-03,  3.900e-03],
+                [-3.680e-02,  2.320e-02, -2.490e-02],
+                [ 2.120e-02,  2.491e-01, -1.907e-01],
+                [ 2.432e-01,  4.820e-02,  8.000e-03],
+                [-1.500e-03, -1.350e-02,  8.100e-03],
+                [-4.800e-02,  1.291e-01, -6.520e-02],
+                [-3.600e-03,  1.810e-02, -9.400e-03]],
+
+               [[-5.160e-02,  1.281e-01, -6.470e-02],
+                [ 2.200e-03,  7.100e-03, -4.700e-03],
+                [-3.400e-03, -7.200e-03,  3.900e-03],
+                [-5.440e-02,  2.000e-03, -9.600e-03],
+                [ 2.600e-03,  1.300e-03, -6.000e-04],
+                [-2.800e-03, -5.800e-03,  4.400e-03],
+                [-3.200e-03, -2.400e-03,  1.700e-03],
+                [-2.590e-02, -2.644e-01,  1.976e-01],
+                [ 1.628e-01,  3.770e-02,  8.500e-03],
+                [ 9.430e-02, -1.616e-01,  8.120e-02]],
+
+               [[ 9.600e-03, -3.600e-03,  3.700e-03],
+                [ 1.040e-02,  3.461e-01, -2.681e-01],
+                [-3.680e-02,  2.320e-02, -2.490e-02],
+                [ 2.600e-03,  1.300e-03, -6.000e-04],
+                [-1.620e-02,  1.480e-02, -6.700e-03],
+                [-3.500e-03, -3.840e-02,  3.140e-02],
+                [ 6.000e-04,  1.900e-03, -1.500e-03],
+                [-2.700e-03, -8.400e-03,  5.600e-03],
+                [ 1.000e-04,  2.000e-04, -0.000e+00],
+                [ 1.000e-04,  5.000e-04, -3.000e-04]],
+
+               [[-2.200e-03, -1.820e-02,  1.330e-02],
+                [-1.763e-01, -7.080e-02,  2.260e-02],
+                [ 2.120e-02,  2.491e-01, -1.907e-01],
+                [-2.800e-03, -5.800e-03,  4.400e-03],
+                [-3.500e-03, -3.840e-02,  3.140e-02],
+                [-1.510e-02,  3.200e-02, -2.100e-02],
+                [ 2.300e-03,  2.870e-02, -2.350e-02],
+                [ 3.700e-03,  7.500e-03, -4.300e-03],
+                [-1.900e-03, -6.200e-03,  4.200e-03],
+                [-4.000e-04, -1.000e-03,  6.000e-04]],
+
+               [[-6.800e-03,  4.000e-04, -1.000e-03],
+                [ 3.000e-04,  5.950e-02, -4.550e-02],
+                [ 2.432e-01,  4.820e-02,  8.000e-03],
+                [-3.200e-03, -2.400e-03,  1.700e-03],
+                [ 6.000e-04,  1.900e-03, -1.500e-03],
+                [ 2.300e-03,  2.870e-02, -2.350e-02],
+                [-1.510e-02,  2.520e-02, -1.550e-02],
+                [-4.000e-04, -1.600e-03,  1.200e-03],
+                [-5.200e-03, -9.600e-03,  5.400e-03],
+                [-5.000e-04, -8.000e-04,  4.000e-04]],
+
+               [[-7.000e-04, -5.700e-03,  3.300e-03],
+                [-4.690e-02,  1.301e-01, -6.560e-02],
+                [-1.500e-03, -1.350e-02,  8.100e-03],
+                [-2.590e-02, -2.644e-01,  1.976e-01],
+                [-2.700e-03, -8.400e-03,  5.600e-03],
+                [ 3.700e-03,  7.500e-03, -4.300e-03],
+                [-4.000e-04, -1.600e-03,  1.200e-03],
+                [-3.350e-02,  2.200e-03, -6.800e-03],
+                [-1.100e-03, -2.200e-02,  1.870e-02],
+                [-4.700e-03, -1.420e-02,  9.500e-03]],
+
+               [[ 9.000e-04,  6.300e-03, -3.300e-03],
+                [-4.600e-03,  2.800e-03, -6.000e-04],
+                [-4.800e-02,  1.291e-01, -6.520e-02],
+                [ 1.628e-01,  3.770e-02,  8.500e-03],
+                [ 1.000e-04,  2.000e-04, -0.000e+00],
+                [-1.900e-03, -6.200e-03,  4.200e-03],
+                [-5.200e-03, -9.600e-03,  5.400e-03],
+                [-1.100e-03, -2.200e-02,  1.870e-02],
+                [-3.470e-02, -4.300e-03, -2.200e-03],
+                [ 7.000e-03,  1.220e-02, -6.400e-03]],
+
+               [[ 2.700e-03, -1.190e-02,  5.900e-03],
+                [ 1.000e-03, -8.100e-03,  4.200e-03],
+                [-3.600e-03,  1.810e-02, -9.400e-03],
+                [ 9.430e-02, -1.616e-01,  8.120e-02],
+                [ 1.000e-04,  5.000e-04, -3.000e-04],
+                [-4.000e-04, -1.000e-03,  6.000e-04],
+                [-5.000e-04, -8.000e-04,  4.000e-04],
+                [-4.700e-03, -1.420e-02,  9.500e-03],
+                [ 7.000e-03,  1.220e-02, -6.400e-03],
+                [-4.890e-02, -1.740e-02,  1.000e-04]]]
+        return dips
+    
+    @pytest.fixture
+    def Calc2dir_base_2modes(self,freqmat_2modes,dipoles_2modes):
+        '''
+        Sets the testing object. 
+        Rounded data is from the DAR molecule calculated with a 
+        def2-TZVP basis set and B3-LYP functional. 
+        '''
+        return Calc2dir.Calc2dir_base(freqmat_2modes,dipoles_2modes)
+    
+    @pytest.fixture
+    def Calc2dir_base_3modes(self,freqmat_3modes,dipoles_3modes):
+        '''
+        Sets the testing object. 
+        Rounded data is from the GAAP molecule calculated with a 
+        def2-TZVP basis set and B3-LYP functional. 
+        '''
+        return Calc2dir.Calc2dir_base(freqmat_3modes,dipoles_3modes)
+
+    def set_dipoles_diff_shape_2modes(self):
         '''
         Sets the testing transition dipole moment matrix in the (m,m,3,1) shape. 
         Rounded data is from the DAR molecule calculated with a 
@@ -124,190 +279,212 @@ class TestCalc2dir_base():
                           [[ 2.040e-02, -1.880e-02, -1.530e-02]],
                           [[-1.800e-03,  4.600e-03, -1.090e-02]]]]
         return dips_diff_shape
-    
-    # self.base2d = Calc2dir_base(self.set_freqmat,self.set_dipoles)
-    
-    
-#     def __init__(self, freqmat, dipoles):
-#         '''
-#         Create settings for object to calculate 2D IR spectra 
-        
-#         @param dipoles: Matrix of transition dipole moments
-#         @type dipoles: list of lists of numbers
-        
-#         @param freqmat: Matrix of frequencies
-#         @type freqmat: list of lists of numbers
-        
-#         '''
-        
-#         self.freqmat = freqmat
-#         self.dipoles = self.read_dipolemat(dipoles)
-        
-#         self.check_input()
-        
-#         if len(np.asarray(self.freqmat).shape) == 2:
-#             self.check_symmetry(self.freqmat)
-#         if len(np.asarray(self.freqmat).shape) == 1:
-#             self.freqmat = [freqmat]
-        
-#         self.check_symmetry(self.dipoles)
-        
-#         self.noscill = self.calc_num_oscill(self.calc_nmodes())
-    
-    def test_read_dipolemat(self,freqmat,dipoles):
-        base2d = Calc2dir.Calc2dir_base(freqmat,dipoles)
-        
-        assert base2d.read_dipolemat(dipoles) == dipoles
-        assert base2d.read_dipolemat(self.set_dipoles_diff_shape()) == dipoles
-        
-        
-#     def read_dipolemat(self,olddipole):
-#         '''
-#         The transition dipole moment matrix that is obtained by VIBRATIONS calculations
-#         has the shape (n,n,1,3). In order to use it in the following calculations it is
-#         reduced to the shape (n,n,3). 
-        
-#         n = number of frequencies/transition dipole moments. 
-        
-#         @param olddipole: Given transition dipole moment matrix
-#         @type olddipole: list of lists of numbers
-        
-#         @return: Transition dipole moment matrix in reduced form
-#         @rtype: list of lists of numbers
-        
-#         '''
-#         if len(np.asarray(olddipole).shape) == 4:
-#             dipolemat = (np.reshape(olddipole,(len(olddipole),len(olddipole),3))).tolist()
-#         if len(np.asarray(olddipole).shape) == 3:
-#             dipolemat = olddipole
-            
-#         return dipolemat
-        
-#     def check_input(self):
-#         '''
-#         Compares the frequency matrix (n,n) and the transition dipole moment matrix (n,n,3).
-#         Due to the transition dipole moments being vectors, the length of the first two elements
-#         are compared. 
-        
-#         '''
-#         assert self.freqmat.shape[0] == self.dipoles.shape[0], 'First axis of frequency matrix and transition dipole moment matrix do not have the same length.'
-#         assert self.freqmat.shape[1] == self.dipoles.shape[1], 'Second axis of frequency matrix and transition dipole moment matrix do not have the same length.'
-            
-#     def check_symmetry(self, a, tol=1e-5):
-#         '''
-#         Checks if a given matrix a is symmetric or skew-symmetric.
-#         Returns True/False.
-        
-#         If the matrix is three-dimensional, as in case of the 
-#         transition dipole moment matrix, the function transposes 
-#         the matrix with respect to the axes. This leads to 
-#         leaving the single vectors as vectors. 
-        
-#         @param a: two- or three-dimensional matrix
-#         @type a: list of lists of numbers
 
-#         '''
-#         if len(a.shape) == 2:
-#             val = np.all(np.abs(abs(a)-abs(a).T) < tol)
-            
-#         elif len(a.shape) == 3:
-#             val = np.all(np.abs(abs(a)-np.transpose(abs(a),(1,0,2))) < tol)
-            
-#         else:
-#             raise ValueError('The shape of the given matrix is not implemented in the check_symmetry function.')
-        
-#         assert val == True, 'Given matrix is not (skew-)symmetrical. Please check!'
-        
-#     def calc_nmodes(self):
-#         '''
-#         The number of modes equals the length of the frequency matrix in one direction.
-        
-#         @return: number of modes
-#         @rtype: integer
-        
-#         '''
-#         if len(self.dipoles) == len(self.freqmat[0]):
-#             n = int(len(self.freqmat[0]))
-#         else:
-#             raise ValueError('The matrices containing the frequencies and the transition dipole moments do not have the same length.')
-            
-#         return n
-    
-#     def calc_num_oscill(self,n):
-#         '''
-#         Calculates the number of oscillators n_oscill based on a 
-#         given number of modes n. This is based on the assumption 
-#         that there are 
-#            n_modes = 1 + 2n_oscill + (n_oscill*(n_oscill-1))/2 
-#         modes. There is one ground state (0) plus n first excited states 
-#         plus n second excited states plus (n_oscill*(n_oscill-1))/2 combination 
-#         states. 
-#         This leads to 
-#            n_oscill = 1/2 * (-3 + sqrt(8*n - 1)).
-        
-#         If there are 
-#            n = 2n_oscill + (n_oscill*(n_oscill-1))/2
-#         modes, then 
-#            n_oscill = 1/2 * (-3 + sqrt(8*n + 9)).
-           
-#         @param nmodes: number of modes
-#         @type nmodes: integer
-        
-#         @return: number of oscillators
-#         @rtype: integer
+    def set_dipoles_diff_shape_3modes(self):
+        '''
+        Sets the testing transition dipole moment matrix in the (m,m,3,1) shape. 
+        Rounded data is from the GAAP molecule calculated with a 
+        def2-TZVP basis set and B3-LYP functional. 
+        '''
+        dips_diff_shape = [[[[-5.620e-02,  2.570e-02, -2.220e-02]],
+                            [[-2.180e-02, -2.549e-01,  1.943e-01]],
+                            [[ 1.735e-01,  3.190e-02,  8.000e-03]],
+                            [[-5.160e-02,  1.281e-01, -6.470e-02]],
+                            [[ 9.600e-03, -3.600e-03,  3.700e-03]],
+                            [[-2.200e-03, -1.820e-02,  1.330e-02]],
+                            [[-6.800e-03,  4.000e-04, -1.000e-03]],
+                            [[-7.000e-04, -5.700e-03,  3.300e-03]],
+                            [[ 9.000e-04,  6.300e-03, -3.300e-03]],
+                            [[ 2.700e-03, -1.190e-02,  5.900e-03]]],
 
-#         '''
-#         noscill = (-3. + np.sqrt(8.*n +1.) ) /2.
-        
-#         assert n != 0, 'There are no modes, because nmodes=0.'
-        
-#         if noscill-int(noscill)==0:
-#             val = int(noscill)
-#         else:
-#             new_noscill = (-3. + np.sqrt(8.*n +9.) ) /2.
-#             if new_noscill-int(new_noscill)==0:
-#                 val = int(new_noscill)
-#             else:
-#                 raise ValueError("Number of Oscillators couldn't be evaluated.")
-                
-#         return val
+
+                           [[[-2.180e-02, -2.549e-01,  1.943e-01]],
+                            [[-3.560e-02,  2.410e-02, -1.760e-02]],
+                            [[-2.000e-03, -2.500e-02,  2.050e-02]],
+                            [[ 2.200e-03,  7.100e-03, -4.700e-03]],
+                            [[ 1.040e-02,  3.461e-01, -2.681e-01]],
+                            [[-1.763e-01, -7.080e-02,  2.260e-02]],
+                            [[ 3.000e-04,  5.950e-02, -4.550e-02]],
+                            [[-4.690e-02,  1.301e-01, -6.560e-02]],
+                            [[-4.600e-03,  2.800e-03, -6.000e-04]],
+                            [[ 1.000e-03, -8.100e-03,  4.200e-03]]],
+
+
+                           [[[ 1.735e-01,  3.190e-02,  8.000e-03]],
+                            [[-2.000e-03, -2.500e-02,  2.050e-02]],
+                            [[-3.650e-02,  2.480e-02, -1.850e-02]],
+                            [[-3.400e-03, -7.200e-03,  3.900e-03]],
+                            [[-3.680e-02,  2.320e-02, -2.490e-02]],
+                            [[ 2.120e-02,  2.491e-01, -1.907e-01]],
+                            [[ 2.432e-01,  4.820e-02,  8.000e-03]],
+                            [[-1.500e-03, -1.350e-02,  8.100e-03]],
+                            [[-4.800e-02,  1.291e-01, -6.520e-02]],
+                            [[-3.600e-03,  1.810e-02, -9.400e-03]]],
+
+
+                           [[[-5.160e-02,  1.281e-01, -6.470e-02]],
+                            [[ 2.200e-03,  7.100e-03, -4.700e-03]],
+                            [[-3.400e-03, -7.200e-03,  3.900e-03]],
+                            [[-5.440e-02,  2.000e-03, -9.600e-03]],
+                            [[ 2.600e-03,  1.300e-03, -6.000e-04]],
+                            [[-2.800e-03, -5.800e-03,  4.400e-03]],
+                            [[-3.200e-03, -2.400e-03,  1.700e-03]],
+                            [[-2.590e-02, -2.644e-01,  1.976e-01]],
+                            [[ 1.628e-01,  3.770e-02,  8.500e-03]],
+                            [[ 9.430e-02, -1.616e-01,  8.120e-02]]],
+
+
+                           [[[ 9.600e-03, -3.600e-03,  3.700e-03]],
+                            [[ 1.040e-02,  3.461e-01, -2.681e-01]],
+                            [[-3.680e-02,  2.320e-02, -2.490e-02]],
+                            [[ 2.600e-03,  1.300e-03, -6.000e-04]],
+                            [[-1.620e-02,  1.480e-02, -6.700e-03]],
+                            [[-3.500e-03, -3.840e-02,  3.140e-02]],
+                            [[ 6.000e-04,  1.900e-03, -1.500e-03]],
+                            [[-2.700e-03, -8.400e-03,  5.600e-03]],
+                            [[ 1.000e-04,  2.000e-04, -0.000e+00]],
+                            [[ 1.000e-04,  5.000e-04, -3.000e-04]]],
+
+
+                           [[[-2.200e-03, -1.820e-02,  1.330e-02]],
+                            [[-1.763e-01, -7.080e-02,  2.260e-02]],
+                            [[ 2.120e-02,  2.491e-01, -1.907e-01]],
+                            [[-2.800e-03, -5.800e-03,  4.400e-03]],
+                            [[-3.500e-03, -3.840e-02,  3.140e-02]],
+                            [[-1.510e-02,  3.200e-02, -2.100e-02]],
+                            [[ 2.300e-03,  2.870e-02, -2.350e-02]],
+                            [[ 3.700e-03,  7.500e-03, -4.300e-03]],
+                            [[-1.900e-03, -6.200e-03,  4.200e-03]],
+                            [[-4.000e-04, -1.000e-03,  6.000e-04]]],
+
+
+                           [[[-6.800e-03,  4.000e-04, -1.000e-03]],
+                            [[ 3.000e-04,  5.950e-02, -4.550e-02]],
+                            [[ 2.432e-01,  4.820e-02,  8.000e-03]],
+                            [[-3.200e-03, -2.400e-03,  1.700e-03]],
+                            [[ 6.000e-04,  1.900e-03, -1.500e-03]],
+                            [[ 2.300e-03,  2.870e-02, -2.350e-02]],
+                            [[-1.510e-02,  2.520e-02, -1.550e-02]],
+                            [[-4.000e-04, -1.600e-03,  1.200e-03]],
+                            [[-5.200e-03, -9.600e-03,  5.400e-03]],
+                            [[-5.000e-04, -8.000e-04,  4.000e-04]]],
+
+
+                           [[[-7.000e-04, -5.700e-03,  3.300e-03]],
+                            [[-4.690e-02,  1.301e-01, -6.560e-02]],
+                            [[-1.500e-03, -1.350e-02,  8.100e-03]],
+                            [[-2.590e-02, -2.644e-01,  1.976e-01]],
+                            [[-2.700e-03, -8.400e-03,  5.600e-03]],
+                            [[ 3.700e-03,  7.500e-03, -4.300e-03]],
+                            [[-4.000e-04, -1.600e-03,  1.200e-03]],
+                            [[-3.350e-02,  2.200e-03, -6.800e-03]],
+                            [[-1.100e-03, -2.200e-02,  1.870e-02]],
+                            [[-4.700e-03, -1.420e-02,  9.500e-03]]],
+
+
+                           [[[ 9.000e-04,  6.300e-03, -3.300e-03]],
+                            [[-4.600e-03,  2.800e-03, -6.000e-04]],
+                            [[-4.800e-02,  1.291e-01, -6.520e-02]],
+                            [[ 1.628e-01,  3.770e-02,  8.500e-03]],
+                            [[ 1.000e-04,  2.000e-04, -0.000e+00]],
+                            [[-1.900e-03, -6.200e-03,  4.200e-03]],
+                            [[-5.200e-03, -9.600e-03,  5.400e-03]],
+                            [[-1.100e-03, -2.200e-02,  1.870e-02]],
+                            [[-3.470e-02, -4.300e-03, -2.200e-03]],
+                            [[ 7.000e-03,  1.220e-02, -6.400e-03]]],
+
+
+                           [[[ 2.700e-03, -1.190e-02,  5.900e-03]],
+                            [[ 1.000e-03, -8.100e-03,  4.200e-03]],
+                            [[-3.600e-03,  1.810e-02, -9.400e-03]],
+                            [[ 9.430e-02, -1.616e-01,  8.120e-02]],
+                            [[ 1.000e-04,  5.000e-04, -3.000e-04]],
+                            [[-4.000e-04, -1.000e-03,  6.000e-04]],
+                            [[-5.000e-04, -8.000e-04,  4.000e-04]],
+                            [[-4.700e-03, -1.420e-02,  9.500e-03]],
+                            [[ 7.000e-03,  1.220e-02, -6.400e-03]],
+                            [[-4.890e-02, -1.740e-02,  1.000e-04]]]]
+        return dips_diff_shape
     
-#     @staticmethod
-#     def calc_trans2int(freqmat,dipomat):
-#         '''
-#         Calculates the intensity matrix from the given transition dipole moment matrix 
-#         and the given frequeny matrix.
-        
-#         @return: intensity matrix
-#         @rtype: numpy.ndarray
-        
-#         '''
-#         intfactor = 2.5066413842056297 # factor to calculate integral absorption coefficient having  [cm-1]  and  [Debye] ; see Vibrations/Misc.py code
-#         intenmat = np.zeros_like(freqmat)
-        
-#         for i in range(len(intenmat)):
-#             for j in range(len(intenmat)):
-#                 intenmat[i][j]= (LA.norm(dipomat[i][j]))**2 * intfactor * (freqmat[0][j]-freqmat[0][i])
-                
-#         return intenmat
     
-#     @staticmethod
-#     def n2s(number):
-#         '''
-#         Takes a number with a decimal point and changes it to an underscore. 
+    def test_read_dipolemat(self,Calc2dir_base_2modes,Calc2dir_base_3modes,dipoles_2modes,dipoles_3modes):
+        '''
+        The transition dipole moment matrix that is obtained by VIBRATIONS calculations
+        has the shape (n,n,1,3). In order to use it in the following calculations it is
+        reduced to the shape (n,n,3). 
         
-#         @param number: any number
-#         @type number: float
+        The test takes the (n,n,3) and a (n,n,1,3) shaped dipole matrix, uses the 
+        read_dipolemat function and compares it to the given (n,n,3) matrix.         
         
-#         @return: number without decimal point
-#         @rtype: string
-#         '''
-#         if str(number).find('.') != -1 : 
-#             val = str(number)[0:str(number).find('.')]+'_'+str(number)[str(number).find('.')+1:]
-#         else : 
-#             val = str(number)
-            
-#         return val
+        '''        
+        assert Calc2dir_base_2modes.read_dipolemat(dipoles_2modes) == dipoles_2modes
+        assert Calc2dir_base_2modes.read_dipolemat(self.set_dipoles_diff_shape_2modes()) == dipoles_2modes
+        assert Calc2dir_base_3modes.read_dipolemat(dipoles_3modes) == dipoles_3modes
+        assert Calc2dir_base_3modes.read_dipolemat(self.set_dipoles_diff_shape_3modes()) == dipoles_3modes
+
+    def test_calc_nmodes(self,Calc2dir_base_2modes,Calc2dir_base_3modes):
+        '''
+        The number of modes equals the length of the frequency matrix in one direction.
+        
+        '''
+        assert Calc2dir_base_2modes.calc_nmodes() == 6
+        assert Calc2dir_base_3modes.calc_nmodes() == 10
+    
+    def test_calc_num_oscill(self,Calc2dir_base_2modes,Calc2dir_base_3modes):
+        '''
+        Calculates the number of oscillators n_oscill based on a 
+        given number of modes n. This is based on the assumption 
+        that there are 
+           n_modes = 1 + 2n_oscill + (n_oscill*(n_oscill-1))/2 
+        modes. There is one ground state (0) plus n first excited states 
+        plus n second excited states plus (n_oscill*(n_oscill-1))/2 combination 
+        states. 
+        This leads to 
+           n_oscill = 1/2 * (-3 + sqrt(8*n - 1)).
+        
+        If there are 
+           n = 2n_oscill + (n_oscill*(n_oscill-1))/2
+        modes, then 
+           n_oscill = 1/2 * (-3 + sqrt(8*n + 9)).
+
+        '''
+        n2 = Calc2dir_base_2modes.calc_nmodes()
+        n3 = Calc2dir_base_3modes.calc_nmodes()
+        assert Calc2dir_base_2modes.calc_num_oscill(n2) == 2
+        assert Calc2dir_base_3modes.calc_num_oscill(n3) == 3
+
+    def test_calc_trans2int(self,Calc2dir_base_2modes,Calc2dir_base_3modes):
+        '''
+        Calculates the intensity matrix from the given transition dipole moment matrix 
+        and the given frequeny matrix.
+        
+        '''
+        ints_2modes = [[    0,   852,     4,     0,     8,     0],
+                       [ -852,     0,     0,  1482,     4,   204],
+                       [   -4,     0,     0,     1,   836,     7],
+                       [    0, -1482,    -1,     0,     0,     0],
+                       [   -8,    -4,  -836,     0,     0,     0],
+                       [    0,  -204,    -7,     0,     0,     0]]
+        ints_3modes = [[ 0.000000e+00,  4.467572e+02,  1.359320e+02,  1.037159e+02,  1.027200e+00,  4.447700e+00,  4.130000e-01,  3.855000e-01,  4.532000e-01,  1.633400e+00],
+                       [-4.467572e+02,  0.000000e+00,  3.160000e-02,  1.010000e-02,  8.277673e+02,  1.589211e+02,  2.459750e+01,  1.044772e+02,  1.318000e-01,  3.844000e-01],
+                       [-1.359320e+02, -3.160000e-02,  0.000000e+00,  7.900000e-03,  1.076940e+01,  4.262564e+02,  2.679190e+02,  1.107800e+00,  1.035535e+02,  1.943900e+00],
+                       [-1.037159e+02, -1.010000e-02, -7.900000e-03,  0.000000e+00,  3.690000e-02,  2.562000e-01,  8.040000e-02,  4.745587e+02,  1.220420e+02,  1.843626e+02],
+                       [-1.027200e+00, -8.277673e+02, -1.076940e+01, -3.690000e-02,  0.000000e+00,  6.200000e-02,  4.000000e-04,  1.560000e-02,  0.000000e+00,  1.000000e-04],
+                       [-4.447700e+00, -1.589211e+02, -4.262564e+02, -2.562000e-01, -6.200000e-02,  0.000000e+00,  5.890000e-02,  1.040000e-02,  8.800000e-03,  3.000000e-04],
+                       [-4.130000e-01, -2.459750e+01, -2.679190e+02, -8.040000e-02, -4.000000e-04, -5.890000e-02,  0.000000e+00,  3.000000e-04,  1.560000e-02,  2.000000e-04],
+                       [-3.855000e-01, -1.044772e+02, -1.107800e+00, -4.745587e+02, -1.560000e-02, -1.040000e-02, -3.000000e-04,  0.000000e+00,  2.510000e-02,  3.230000e-02],
+                       [-4.532000e-01, -1.318000e-01, -1.035535e+02, -1.220420e+02, -0.000000e+00, -8.800000e-03, -1.560000e-02, -2.510000e-02,  0.000000e+00,  1.740000e-02],
+                       [-1.633400e+00, -3.844000e-01, -1.943900e+00, -1.843626e+02, -1.000000e-04, -3.000000e-04, -2.000000e-04, -3.230000e-02, -1.740000e-02,  0.000000e+00]]
+        
+        np.testing.assert_almost_equal(Calc2dir_base_2modes.calc_trans2int(),ints_2modes, decimal=4)
+        np.testing.assert_almost_equal(Calc2dir_base_3modes.calc_trans2int(),ints_3modes, decimal=4)
+        
+    def test_n2s(self,Calc2dir_base_2modes):
+        '''
+        Takes a number with a decimal point and changes it to an underscore. 
+        '''        
+        assert Calc2dir_base_2modes.n2s(2.5) == '2_5'
+
 
     
 # class spectra(Calc2dir_base):

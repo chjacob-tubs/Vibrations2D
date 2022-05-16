@@ -148,8 +148,7 @@ class Calc2dir_base():
                 
         return val
     
-    @staticmethod
-    def calc_trans2int(freqmat,dipomat):
+    def calc_trans2int(self):
         '''
         Calculates the intensity matrix from the given transition dipole moment matrix 
         and the given frequeny matrix.
@@ -159,13 +158,13 @@ class Calc2dir_base():
         
         '''
         intfactor = 2.5066413842056297 # factor to calculate integral absorption coefficient having  [cm-1]  and  [Debye] ; see Vibrations/Misc.py code
-        intenmat = np.zeros_like(freqmat)
+        intenmat = np.zeros_like(self.freqmat)
         
         for i in range(len(intenmat)):
             for j in range(len(intenmat)):
-                intenmat[i][j]= (LA.norm(dipomat[i][j]))**2 * intfactor * (freqmat[0][j]-freqmat[0][i])
+                intenmat[i][j]= (LA.norm(self.dipoles[i][j]))**2 * intfactor * (self.freqmat[0][j]-self.freqmat[0][i])
                 
-        return intenmat
+        return intenmat.tolist()
     
     @staticmethod
     def n2s(number):
