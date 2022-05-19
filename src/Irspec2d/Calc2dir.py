@@ -185,7 +185,7 @@ class Calc2dir_base():
         return val
 
     
-class spectra(Calc2dir_base):
+class spectra():
     
     
     
@@ -209,7 +209,7 @@ class spectra(Calc2dir_base):
         firstvalue = maximum/number
         negspace = np.linspace(-maximum,-firstvalue,number)
         posspace = np.linspace(firstvalue,maximum,number)
-        return np.concatenate((negspace,posspace))
+        return np.concatenate((negspace,posspace)).tolist()
     
     @staticmethod
     def gauss_func(intensity,x,x0,halfwidth):
@@ -289,7 +289,7 @@ class spectra(Calc2dir_base):
         return ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (halfwidth/2)**2 )
     
     @staticmethod
-    def lorentz2d_func(intensity,x,x0,y,y0,halfwidth=5):
+    def lorentz2d_func(intensity,x,x0,y,y0,halfwidth):
         '''
         Computes a single value at grid x,y for a 
         2D lorentzian type function.
@@ -383,7 +383,7 @@ class spectra(Calc2dir_base):
         return x,y,z
     
     @staticmethod
-    def norm_2d_spectum(z,max_z):
+    def norm_2d_spectrum(z,max_z):
         '''
         Text
         
