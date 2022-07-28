@@ -380,7 +380,7 @@ class spectra():
                 z += spectra.lorentz2d_func(inten,xx,freq_x,yy,freq_y,halfwidth=5)
             
         
-        return x,y,z
+        return x.tolist(),y.tolist(),z.tolist()
     
     @staticmethod
     def norm_2d_spectrum(z,max_z):

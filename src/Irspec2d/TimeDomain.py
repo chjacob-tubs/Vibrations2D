@@ -53,7 +53,7 @@ class timedomain(Calc2dir_base):
             print('Set the dephasing time (T2) to',self.T2,'ps.')
         else : 
             self.T2 = 2
-            print('Set the zeropadded length (T2) to',self.T2,'ps (default value).')
+            print('Set the dephasing time (T2) to',self.T2,'ps (default value).')
         
         if 't2' in params : 
             self.t2 = params.get('t2')

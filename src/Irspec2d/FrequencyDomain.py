@@ -131,7 +131,7 @@ class freqdomain(Calc2dir_base):
         @rtype: three tuples of lists
 
         '''
-        intmat = self.calc_trans2int(self.freqmat,self.dipoles)
+        intmat = self.calc_trans2int()
         
         exc = self.calc_excitation(intmat)
         ste = self.calc_stimulatedemission(intmat)
