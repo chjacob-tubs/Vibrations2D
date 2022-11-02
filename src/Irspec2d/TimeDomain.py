@@ -319,7 +319,7 @@ class timedomain(Calc2dir_base):
                     for ii,T1 in enumerate(t):
                         R1[ii][jj] -= angle_jiji*dipole * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
                         R2[ii][jj] -= angle_jjii*dipole * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
-                        R4[ii][jj] -= angle_jiij*dipole * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
+                        R4[ii][jj] -= angle_jiij*dipole * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[j]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
                         R5[ii][jj] -= angle_jjii*dipole * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
 
                 for k in range(self._calc_nmodesexc()):
@@ -348,7 +348,13 @@ class timedomain(Calc2dir_base):
     
     def calc_sum_diagram(self,R_a,R_b,R_c):
         '''
-        Text.
+        Calculates the sum of diagrams and divides the first row and column by two.
+        
+        @param R_i, i=a,b,c: Feynman diagrams
+        @type R_i, i=a,b,c: numpy arrays
+        
+        @return: Sum of Feynman diagrams
+        @rtype: numpy array
         
         '''
         R = R_a + R_b + R_c
@@ -361,7 +367,13 @@ class timedomain(Calc2dir_base):
     
     def calc_2d_fft(self,R):
         '''
-        Text.
+        Calculates a two-dimensional Fourier transformation of a given array
+        
+        @param R: sum of Feynman diagrams
+        @type R: numpy array
+        
+        @return: Fourier transformed sum of Feynman diagrams
+        @rtype: numpy array
         
         '''
         n_zp = self.n_t * 2
@@ -371,7 +383,14 @@ class timedomain(Calc2dir_base):
     
     def get_absorptive_spectrum(self):
         '''
-        Text.
+        Automatically calculateds a fully absorption 2D IR spectrum.
+        R(w3,t2,w1) = FFT2D ( Real ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
+        
+        @return R: Resulting signal from fourier-transformed sum of Feynman diagrams
+        @rtype R: numpy array
+        
+        @return axes: frequency axis
+        @rtype axes: list of floats
         
         '''
         R1,R2,R3,R4,R5,R6 = self.calc_diagrams()
@@ -380,6 +399,52 @@ class timedomain(Calc2dir_base):
         R_nr_ft = self.calc_2d_fft(self.calc_sum_diagram(R4,R5,R6))
         
         R = np.asarray( np.fft.fftshift((np.flipud(np.roll(R_r_ft,-1,axis=0))+R_nr_ft).real,axes=(0,1)) )
+        
+        axes = self.calc_axes()
+        
+        return R, axes
+    
+    def get_photon_echo_spectrum(self):
+        '''
+        Automatically calculateds a photon echo 2D IR spectrum.
+        R(w3,t2,w1) = abs( FFT2D ( Real ( R_r(t3,t2,t1)) ) )
+        
+        @return R: Resulting signal from fourier-transformed sum of Feynman diagrams
+        @rtype R: numpy array
+        
+        @return axes: frequency axis
+        @rtype axes: list of floats
+        
+        '''
+        R1,R2,R3,R4,R5,R6 = self.calc_diagrams()
+        
+        R_r_ft = self.calc_2d_fft(self.calc_sum_diagram(R1,R2,R3))
+        R_r_ft = np.absolute(R_r_ft)
+        
+        R = np.asarray( np.fft.fftshift((np.flipud(np.roll(R_r_ft,-1,axis=0))).real,axes=(0,1)) )
+        
+        axes = self.calc_axes()
+        
+        return R, axes
+    
+    def get_correlation_spectrum(self):
+        '''
+        Automatically calculateds a correlation 2D IR spectrum.
+        R(w3,t2,w1) = FFT2D ( Imag ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
+        
+        @return R: Resulting signal from fourier-transformed sum of Feynman diagrams
+        @rtype R: numpy array
+        
+        @return axes: frequency axis
+        @rtype axes: list of floats
+        
+        '''
+        R1,R2,R3,R4,R5,R6 = self.calc_diagrams()
+        
+        R_r_ft = self.calc_2d_fft(self.calc_sum_diagram(R1,R2,R3))
+        R_nr_ft = self.calc_2d_fft(self.calc_sum_diagram(R4,R5,R6))
+        
+        R = np.asarray( np.fft.fftshift((np.flipud(np.roll(R_r_ft,-1,axis=0))+R_nr_ft).imag,axes=(0,1)) )
         
         axes = self.calc_axes()
         
