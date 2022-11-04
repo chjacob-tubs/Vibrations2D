@@ -9,9 +9,15 @@ class excitonmodel(Calc2dir_base):
     
     def __init__(self, cmat, dipoles, anharm):
         '''
+        @param cmat: Coupling matrix, which is in the shape of the one-exciton hamiltonian
+        @type cmat: List of lists of floats
         
-        @param cmat: coupling matrix, which is in the shape of the one-exciton hamiltonian
-        @type cmat: list of lists of floats
+        @param dipoles: Matrix of dipole moments
+        @type dipoles: List of lists of lists
+        
+        @param anharm: Anharmonic shift as an empirical parameter
+        @type anharm: Float
+        
         '''
         self.cmat = cmat
         self.dipoles = dipoles

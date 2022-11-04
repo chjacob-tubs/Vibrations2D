@@ -10,7 +10,9 @@ class Calc2dir_base():
     
     def __init__(self, freqmat, dipoles):
         '''
-        Create settings for object to calculate 2D IR spectra 
+        Create settings for object to calculate 2D IR spectra.
+        Checks if input data is a (skew-)symmetrical matrix.
+        Calculates the number of fundamental frequencies = number of oscillators.
         
         @param dipoles: Matrix of transition dipole moments
         @type dipoles: list of lists of numbers
@@ -186,14 +188,16 @@ class Calc2dir_base():
 
     
 class spectra():
+    '''
+    Collection of useful functions for plotting (2D) IR spectra.
     
-    
+    '''
     
     @staticmethod
     def set_line_spacing(maximum,number):
         '''
         Use this for matplotlib.pyplot contour plots in order to set the 
-        number of lines. 
+        number of displayed lines. 
         Example: plt.contour(x,y,z,set_line_spacing(abs(z.max()),20))
         
         @param maximum: maximum value of the plotted array
@@ -214,8 +218,7 @@ class spectra():
     @staticmethod
     def gauss_func(intensity,x,x0,halfwidth):
         '''
-        Computes a single value at position x for a 
-        1D gaussian type function.
+        Computes a single value at position x for a 1D gaussian type function.
         
         @param intensity: Intensity of a peak
         @type intensity: Float
@@ -240,8 +243,7 @@ class spectra():
     @staticmethod
     def gauss2d_func(intensity,x,x0,y,y0,halfwidth):
         '''
-        Computes a single value at position x for a 
-        1D gaussian type function.
+        Computes a single value at position x for a 2D gaussian type function.
         
         @param intensity: Intensity of a peak
         @type intensity: Float
@@ -266,8 +268,7 @@ class spectra():
     @staticmethod
     def lorentz_func(intensity,x,x0,halfwidth):
         '''
-        Computes a single value at position x for a 
-        1D lorentzian type function.
+        Computes a single value at position x for a 1D lorentzian type function.
         
         @param intensity: Intensity of a peak
         @type intensity: Float
@@ -291,8 +292,7 @@ class spectra():
     @staticmethod
     def lorentz2d_func(intensity,x,x0,y,y0,halfwidth):
         '''
-        Computes a single value at grid x,y for a 
-        2D lorentzian type function.
+        Computes a single value at grid x,y for a 2D lorentzian type function.
         
         @param intensity: Intensity of a peak
         @type intensity: Float
@@ -385,7 +385,16 @@ class spectra():
     @staticmethod
     def norm_2d_spectrum(z,max_z):
         '''
-        Text
+        Divides a every element in a matrix by a given value.
+        
+        @param z: matrix that is supposed to be normalized
+        @type z: List of lists
+        
+        @param max_z: Value that matrix is normalized to.
+        @type max_z: Float
+        
+        @return: Normalized matrix
+        @rtype: List of lists 
         
         '''        
         for i in range(len(z)):
