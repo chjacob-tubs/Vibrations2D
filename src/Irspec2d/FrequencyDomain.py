@@ -17,9 +17,6 @@ class freqdomain(Calc2dir_base):
         the excited state absorption processes that occur in an 2D IR
         experiment. 
         
-        @param noscill: number of oscillators
-        @type noscill: integer
-        
         @param intmat: matrix of intensities
         @type intmat: numpy array or list of lists of numbers
         
@@ -55,9 +52,6 @@ class freqdomain(Calc2dir_base):
         In order to match the experiment the stimulated emission can only 
         happen in transition to the ground state energy level!
         
-        @param noscill: number of oscillators
-        @type noscill: integer
-        
         @param intmat: matrix of intensities
         @type intmat: numpy array or list of lists of numbers
         
@@ -88,9 +82,6 @@ class freqdomain(Calc2dir_base):
         '''
         Takes the energy levels and the intensity matrix in order to find
         the bleaching processes that occur in an 2D IR experiment.
-        
-        @param noscill: number of oscillators
-        @type noscill: integer
         
         @param intmat: matrix of intensities
         @type intmat: numpy array or list of lists of numbers

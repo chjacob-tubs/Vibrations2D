@@ -7,7 +7,7 @@ from Irspec2d import *
 
 class excitonmodel(Calc2dir_base):
     
-    def __init__(self, cmat, dipoles, anharm):
+    def __init__(self, cmat, dipoles):
         '''
         @param cmat: Coupling matrix, which is in the shape of the one-exciton hamiltonian
         @type cmat: List of lists of floats
@@ -15,13 +15,9 @@ class excitonmodel(Calc2dir_base):
         @param dipoles: Matrix of dipole moments
         @type dipoles: List of lists of lists
         
-        @param anharm: Anharmonic shift as an empirical parameter
-        @type anharm: Float
-        
         '''
         self.cmat = cmat
         self.dipoles = dipoles
-        self.anharm = anharm
         self.noscill = len(cmat)
         
     @staticmethod
@@ -181,6 +177,7 @@ class excitonmodel(Calc2dir_base):
 
                         hamiltonian[i][j] += prefactor*op
                         
+        # print([np.around(hamiltonian[i][i],4) for i in range(len(hamiltonian))])
         return hamiltonian 
     
     def eval_dipolmatrix(self,states):
@@ -229,7 +226,7 @@ class excitonmodel(Calc2dir_base):
                             
         return dipmatrix
     
-    def add_anharmonicity(self,hamiltonian):
+    def add_anharmonicity(self,hamiltonian,anharm):
         '''
         Adds the anharmonicitiy shift Delta to the second excited matrix 
         elements, exept for the combination bands.
@@ -246,11 +243,11 @@ class excitonmodel(Calc2dir_base):
         '''
         for i in range(self.noscill+1,2*self.noscill+1):
             
-            hamiltonian[i][i] -= self.anharm
+            hamiltonian[i][i] -= anharm
             
         return hamiltonian
     
-    def add_all_anharmonicity(self,hamiltonian):
+    def add_all_anharmonicity(self,hamiltonian,anharm):
         '''
         Adds the anharmonicitiy shift Delta to the all diagonal elements in 
         addition to the second excitation elements. 
@@ -262,7 +259,7 @@ class excitonmodel(Calc2dir_base):
         @param hamiltonian: Hamiltonian Matrix
         @type hamiltonian: List of lists of floats
         
-        @return: Hamiltonian including anharmoncity (Delta = self.anharm)
+        @return: Hamiltonian including anharmoncity (Delta = anharm)
         @rtype: List of lists of floats
         
         '''
@@ -270,23 +267,26 @@ class excitonmodel(Calc2dir_base):
         for i in range(1,len(hamiltonian)):
             # first excitations: H[i][i] hbar*omega_i - Delta
             if i < self.noscill+1 :
-                hamiltonian[i][i] -= self.anharm
+                hamiltonian[i][i] -= anharm
                 
             # second excitations: H[i][i] hbar*omega_i - 3 * Delta
             elif i > self.noscill and i < 2*self.noscill+1 :
-                hamiltonian[i][i] -= 3 * self.anharm
+                hamiltonian[i][i] -= 3 * anharm
                 
             # combination excitations: H[i][i] hbar*omega_i - 2 * Delta
             elif i > 2*self.noscill : 
-                hamiltonian[i][i] -= 2 * self.anharm
+                hamiltonian[i][i] -= 2 * anharm
             
         return hamiltonian
     
-    def get_nm_freqs_dipolmat(self,shift='all'):
+    def get_nm_freqs_dipolmat(self,anharm,shift='all'):
         '''
         Calculates the normal mode frequencies and transition dipole
         moment matrix. 
         Can also calculate the normal mode hamiltonian.
+        
+        @param anharm: anharmonic shift added onto the exciton hamiltonian
+        @type anharm: Integer or float
         
         @param shift: determines how the anharmonicities are added
         @type shift: String
@@ -297,9 +297,9 @@ class excitonmodel(Calc2dir_base):
         '''
         states = self.generate_sorted_states()
         if shift == 'all':
-            hamilt_lm = self.add_all_anharmonicity(self.eval_hamiltonian(states))
+            hamilt_lm = self.add_all_anharmonicity(self.eval_hamiltonian(states),anharm)
         if shift == 'exc2':
-            hamilt_lm = self.add_anharmonicity(self.eval_hamiltonian(states))
+            hamilt_lm = self.add_anharmonicity(self.eval_hamiltonian(states),anharm)
         dipole_lm = self.eval_dipolmatrix(states)
         
         ew, ev = LA.eigh(hamilt_lm)
@@ -319,3 +319,41 @@ class excitonmodel(Calc2dir_base):
         
         return np.asarray(freqs_lm), np.asarray(dipole_nm)
         
+    
+    def get_nm_freqs_dipolmat_from_VSCF(self,VSCF_freqs):
+        '''
+        Calculates the normal mode frequencies and transition dipole
+        moment matrix without any need for anharmonic shift parameters,
+        as it puts L-VSCF frequencies instead of harmonic frequencies into 
+        the calculation.
+        
+        @param VSCF_freqs: frequencies obtained from L-VSCF calculation
+        @type shift: List of float
+        
+        @return: Frequencies and transition dipole moment matrix
+        @rtype: Two lists of lists of float
+        
+        '''
+        states = self.generate_sorted_states()
+        
+        hamilt_lm = self.eval_hamiltonian(states)
+        dipole_lm = self.eval_dipolmatrix(states)
+        
+        if len(VSCF_freqs) != len(hamilt_lm):
+            raise ValueError('The length of the given list is not equal to the length of the calculated hamiltonian matrix.')
+        else: 
+            for i in range(len(hamilt_lm)):
+                hamilt_lm[i][i] = VSCF_freqs[i]
+                
+        ew, ev = LA.eigh(hamilt_lm)
+        
+        firstmult = self.multiply(ev.T,dipole_lm)
+        dipole_nm = self.multiply(firstmult,ev)
+        
+        # simulating a symmetrical frequency matrix from the eigen values:
+        freqs_lm = [[0 for i in range(len(ew))] for i in range(len(ew))] 
+        for i in range(len(ew)):
+            freqs_lm[i][0] = ew[i]
+            freqs_lm[0][i] = ew[i]
+        
+        return np.asarray(freqs_lm), np.asarray(dipole_nm)

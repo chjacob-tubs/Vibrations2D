@@ -128,8 +128,8 @@ class Calc2dir_base():
         modes, then 
            n_oscill = 1/2 * (-3 + sqrt(8*n + 9)).
            
-        @param nmodes: number of modes
-        @type nmodes: integer
+        @param n: number of modes
+        @type n: integer
         
         @return: number of oscillators
         @rtype: integer
@@ -353,7 +353,26 @@ class spectra():
     @staticmethod
     def get_2d_spectrum(xmin,xmax,exc,ble,emi,steps=2000,halfwidth=15,ftype='gauss'):
         '''
-        Text
+        Plots the simple 2D IR spectrum automatically.
+        
+        @param xmin/xmax: minimum or maximum value of the spectrum in both axes
+        @type xmin/xmax: Float
+        
+        @param exc/ble/emi: lists of evaluated x- and y-coordinates and associated intensities
+        @type exc/ble/emi: List of lists of floats
+        
+        @param steps: number of points for the x-axis
+        @type steps: Integer
+        
+        @param halfwidth: Parameter to control the width of the peaks
+        @type halfwidth: Float
+        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
+        
+        @param ftype: Choses between gauss and lorentz function
+        @type ftype: String
+        
+        @return: x, y and z values of the 2D plot
+        @rtype: Lists of floats
         
         '''
         

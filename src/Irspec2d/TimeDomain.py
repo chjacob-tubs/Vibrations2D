@@ -13,6 +13,12 @@ class timedomain(Calc2dir_base):
         '''
         Setting all parameters needed for the time domain 2D IR spectra calculations.
         
+        @param dipoles: Matrix of transition dipole moments
+        @type dipoles: list of lists of floats
+        
+        @param freqmat: Matrix of frequencies
+        @type freqmat: list of lists of floats
+        
         @param n_t: number of grid points
         @type n_t: integer
         
@@ -171,8 +177,8 @@ class timedomain(Calc2dir_base):
         '''
         calculates the cosine between two three-dimensional vectors
         
-        @param vec1,vec2: two 3D vectors
-        @type vec1,vec2: list of three floats 
+        @param vec1/vec2: two 3D vectors
+        @type vec1/vec2: list of three floats 
         
         @return: angle between the vectors
         @rtype: float
