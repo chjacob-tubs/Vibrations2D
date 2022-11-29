@@ -1,15 +1,70 @@
 variables:
-  SCHEDULER_PARAMETERS: "-n 12 -p nitrogen"
+  SCHEDULER_PARAMETERS: "-n 1 -p nitrogen"
+  USER: legit
+  VIBRA_HOME: $CI_BUILDS_DIR/$CI_PROJECT_PATH
+
+
 stages:
+    - build
     - test
 
-unit_test:
+before_script:
+        - hostname
+        - module load module_include_dir
+        - . /usr/share/modules/init/bash
+        - . /usr/share/modules/init/setup
+        - export PYTHONPATH=$PYTHONPATH:$VIBRA_HOME/src
+        - module load python/anaconda3-2021.11
+        - source activate base
+        - conda init bash
+        - conda activate ci_vibrations
+        - module load pyadf/master-20220201
+
+check-requirements:
+    tags:
+        - nodes
+    stage: build
+    script:
+        - hostname
+        - module load module_include_dir
+        - . /usr/share/modules/init/bash
+        - . /usr/share/modules/init/setup
+        - export PYTHONPATH=$PYTHONPATH:$VIBRA_HOME/src
+        - module load python/anaconda3-2021.11
+        - source activate base
+        - conda activate ci_vibrations
+        - module load pyadf/master-20220201
+
+unittest-Calc2dir:
     tags:
         - nodes
     stage: test
     script:
-        - hostname
-        - pytest
+        - cd src/Irspec2d/test/ 
+        - pytest -v test_Calc2dir.py 
+        - cd
+
+unittest-spectra:
+    tags:
+        - nodes
+    stage: test
+    script:
+        - cd src/Irspec2d/test/
+        - pytest -v test_spectra.py
+        - cd 
+
+#variables:
+#  SCHEDULER_PARAMETERS: "-n 12 -p nitrogen"
+#stages:
+#    - test
+#
+#unit_test:
+#    tags:
+#        - nodes
+#    stage: test
+#    script:
+#        - hostname
+#        - pytest
 
 
 # This file is a template, and might need editing before it works on your project.

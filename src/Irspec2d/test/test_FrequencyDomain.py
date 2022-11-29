@@ -3,6 +3,7 @@ import numpy as np
 from numpy import linalg as LA
 
 import Irspec2d.Calc2dir as Calc2dir
+from test_Calc2dir import TestCalc2dir_base
 
 class Testfreqdomain(TestCalc2dir_base):
     
