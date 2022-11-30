@@ -4,7 +4,7 @@ from numpy import linalg as LA
 
 import Irspec2d.Calc2dir as Calc2dir
 
-class Testfreqdomain(TestCalc2dir_base):
+class Testfreqdomain():
     
     def test_calc_num_oscill(self,Calc2dir_base_2modes,Calc2dir_base_3modes):
         '''
