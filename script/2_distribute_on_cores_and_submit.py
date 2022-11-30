@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ./distribute_on_cores.py <queue> <how_many_cores> <jobrunner>
-#
+# ./distribute_on_cores.py n 12 Calculate_potentials.pyadf
 
 from glob import glob
 import sys
@@ -27,6 +27,31 @@ print('  Energies stored to: ', endir)
 
 print('*****')
 
+# look what files are in the initial directory
+needed_files = []
+tm_files = ['coord','snf.out','restart']
+orca_files = ['hessfile.hess','coord.xyz']
+
+for i in tm_files:
+    if os.path.isfile(os.path.join(initdir,i)):
+        needed_files.append(i)
+
+for i in orca_files:
+    if os.path.isfile(os.path.join(initdir,i)):
+        needed_files.append(i)
+        
+if os.path.isfile(os.path.join(initdir,'subsets.npy')):
+    needed_files.append('subsets.npy')
+    tm_files.append('subsets.npy')
+    orca_files.append('subsets.npy')
+        
+if needed_files == tm_files:
+    print('Found all needed Turbomole results in initial directory.')
+elif needed_files == orca_files:
+    print('Found all needed Orca results in initial directory.')
+else:
+    print('Missing some files.')
+        
 # looks for already existing folders
 folders = 0
 for folder in os.listdir():
@@ -40,9 +65,8 @@ if folders == 0 :
         dirname = str(i+1)
         os.mkdir(dirname)
 
-        shutil.copy('restart', dirname)
-        shutil.copy('snf.out', dirname)
-        shutil.copy('coord', dirname)
+        for i in needed_files:
+            shutil.copy(i,dirname)
         if os.path.isfile('subsets.npy'):
             shutil.copy('subsets.npy', dirname)
 
@@ -85,7 +109,7 @@ elif folders == nodes :
         dirname = str(i+1)
         os.chdir(dirname)
         
-        checkfiles = ['coord','snf.out','restart',runscript]
+        checkfiles = needed_files+[runscript]
         if all(elem in os.listdir(os.getcwd()) for elem in checkfiles):
             
             print('Restarting',runscript,'script in folder',dirname+'.')
