@@ -28,20 +28,19 @@ class freqdomain(Calc2dir_base):
         exc_y = [] 
         exc_i = [] # intensity
 
-        for i in range(len(intmat)):
-            if intmat[0][i] and i<=self.noscill:
+        for i in range(self.noscill+1):
                 for j in range(len(intmat)):
-                    if j>i:
+                    if i>0 and j>i:
 
-                        y_coor = self.freqmat[0][j]-self.freqmat[0][i]
                         x_coor = self.freqmat[0][i]-self.freqmat[0][0]
+                        y_coor = self.freqmat[0][j]-self.freqmat[0][i]
                         exc_inten = intmat[i][j]
 
                         exc_y.append(y_coor)
                         exc_x.append(x_coor)
                         exc_i.append(exc_inten)
 
-                        # print('Excitation from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',exc_inten)
+                        print('Excitation from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(exc_inten,2))
                         
         return (exc_x, exc_y, exc_i)
     
@@ -63,19 +62,19 @@ class freqdomain(Calc2dir_base):
         emi_y = [] 
         emi_i = [] # intensity
 
-        for i in range(len(intmat)):
+        for i in range(self.noscill+1):
             for j in range(len(intmat)):
-                if j==0 and i>j and i<=self.noscill:
+                if j==0 and i>j:
 
-                    y_coor = self.freqmat[0][i]-self.freqmat[0][j]
                     x_coor = self.freqmat[0][i]-self.freqmat[0][j]
-                    emi_inten = -intmat[j][i]
+                    y_coor = self.freqmat[0][i]-self.freqmat[0][j]
+                    emi_inten = intmat[i][j]
 
                     emi_y.append(y_coor)
                     emi_x.append(x_coor)
                     emi_i.append(emi_inten)
 
-                    # print('Stimulated emission from energy level',i,'to',j,'at (',x_coor,',',y_coor,') rcm and intensity: ',emi_inten)
+                    print('Stim. emission from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(emi_inten,2))
         return (emi_x, emi_y, emi_i)
 
     def calc_bleaching(self,intmat):
@@ -91,24 +90,24 @@ class freqdomain(Calc2dir_base):
 
         '''
 
-        ble_x = [] # excitation coords
+        ble_x = [] # bleaching coords
         ble_y = [] 
         ble_i = [] # intensity
 
-        for i in range(len(intmat)):
-            if intmat[0][i] != 0 and i<=self.noscill:
-                
-                y_coor = self.freqmat[0][i]-self.freqmat[0][0]
-                ble_inten = -intmat[0][i]
-                
-                for j in range(len(intmat)):
-                    if intmat[0][j] != 0 and j<=self.noscill:
-                        x_coor = self.freqmat[0][j]-self.freqmat[0][0]
+        for i in range(self.noscill+1):
+            for j in range(len(intmat)):
+                if i==0 and j>0 and j<=self.noscill:
+                    for k in range(1,self.noscill+1):
+
+                        x_coor = self.freqmat[0][k]-self.freqmat[0][i]
+                        y_coor = self.freqmat[0][j]-self.freqmat[0][i]
+                        ble_inten = -intmat[i][j]
+
                         ble_x.append(x_coor)
                         ble_y.append(y_coor)
                         ble_i.append(ble_inten)
-                        
-                        # print('Bleaching from energy level 0 to',i,'at (',x_coor,',',y_coor,') rcm and intensity: ',ble_inten)
+
+                        print('Bleaching from energy level 0 to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(ble_inten,2))
 
         return (ble_x, ble_y, ble_i)
                       
@@ -124,8 +123,60 @@ class freqdomain(Calc2dir_base):
         '''
         intmat = self.calc_trans2int()
         
-        exc = self.calc_excitation(intmat)
-        ste = self.calc_stimulatedemission(intmat)
-        ble = self.calc_bleaching(intmat)
+        exc_x = [] # excitation coords
+        exc_y = [] 
+        exc_i = [] # intensity
+        
+        emi_x = [] # stimulated emission coords
+        emi_y = [] 
+        emi_i = [] # intensity
+        
+        ble_x = [] # bleaching coords
+        ble_y = [] 
+        ble_i = [] # intensity
+        
+        for i in range(self.noscill+1):
+            for j in range(len(intmat)):
+
+                # look for excitation
+                if i>0 and j>i:
+                    e_x = self.freqmat[0][i]-self.freqmat[0][0]
+                    e_y = self.freqmat[0][j]-self.freqmat[0][i]
+                    e_i = intmat[i][j]
+                    
+                    exc_x.append(e_x)
+                    exc_y.append(e_y)
+                    exc_i.append(e_i)
+                    
+                    # print('excitation',i,j,'  ( '+str(e_x)+' | '+str(e_y)+' )',' :',e_i)
+
+                # look for stimulated emission
+                if j==0 and i>j:
+                    s_x = self.freqmat[0][i]-self.freqmat[0][j]
+                    s_y = self.freqmat[0][i]-self.freqmat[0][j]
+                    s_i = intmat[i][j]
+                    
+                    emi_x.append(s_x)
+                    emi_y.append(s_y)
+                    emi_i.append(s_i)
+                    
+                    # print('emission',i,j,'  ( '+str(s_x)+' | '+str(s_y)+' )',' :',s_i)
+
+                # look for bleaching
+                if i==0 and j>0 and j<=self.noscill:
+                    for k in range(1,self.noscill+1):
+                        b_x = self.freqmat[0][k]-self.freqmat[0][i]
+                        b_y = self.freqmat[0][j]-self.freqmat[0][i]
+                        b_i = -intmat[i][j]
+                    
+                        ble_x.append(b_x)
+                        ble_y.append(b_y)
+                        ble_i.append(b_i)
+                    
+                        # print('bleaching',i,j,'  ( '+str(b_x)+' | '+str(b_y)+' )',' :',b_i)
+
+        exc = (exc_x,exc_y,exc_i)
+        ste = (emi_x,emi_y,emi_i)
+        ble = (ble_x,ble_y,ble_i)
         
         return exc, ste, ble
