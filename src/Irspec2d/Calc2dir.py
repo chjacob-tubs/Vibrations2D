@@ -314,7 +314,43 @@ class spectra():
         return ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (y-y0)**2 + (halfwidth/2)**2 )
     
     @staticmethod
-    def get_norm_1d_spectrum(xmin,xmax,freqs,ints,steps=5000,halfwidth=5,ftype='gauss'):
+    def get_1d_spectrum(xmin,xmax,freqs,ints,steps=5000,halfwidth=5,ftype='gauss',**param):
+        '''
+        Sums up all gauss/lorentz functions for each peak.
+        
+        @param xmin/xmax: minimum and maximum value of the spectrum
+        @type xmin/xmax: Float
+        
+        @param freqs/ints: frequencies and corresponding intensities
+        @type freqs/ints: Lists of floats
+        
+        @param steps: number of points for the x-axis
+        @type steps: Integer
+        
+        @param halfwidth: Parameter to control the width of the peaks
+        @type halfwidth: Float
+        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
+        
+        @param ftype: Choses between gauss and lorentz function
+        @type ftype: String
+        
+        @return: x and y values of the 1D plot
+        @rtype: Lists of floats
+        
+        '''
+        x = np.linspace(xmin,xmax,steps)
+        y = np.zeros(steps)
+        
+        for freq, inten in zip(freqs,ints):
+            if ftype.lower() == 'gauss':
+                y += spectra.gauss_func(inten,x,freq,halfwidth)
+            if ftype.lower() == 'lorentz':
+                y += spectra.lorentz_func(inten,x,freq,halfwidth)
+        
+        return x.tolist(),y
+    
+    @staticmethod
+    def get_norm_1d_spectrum(xmin,xmax,freqs,ints,steps=5000,halfwidth=5,ftype='gauss',**param):
         '''
         Sums up all gauss/lorentz functions for each peak and sets the highest value to one.
         
@@ -346,9 +382,10 @@ class spectra():
                 y += spectra.gauss_func(inten,x,freq,halfwidth)
             if ftype.lower() == 'lorentz':
                 y += spectra.lorentz_func(inten,x,freq,halfwidth)
-
-        y = list(map(lambda x : x/y.max(), y))
-        return x,y
+            
+        y = y.tolist()/y.max()
+        
+        return x.tolist(),y
     
     @staticmethod
     def get_2d_spectrum(xmin,xmax,exc,ble,emi,steps=2000,halfwidth=15,ftype='gauss'):

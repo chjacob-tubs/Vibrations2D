@@ -81,6 +81,13 @@ class timedomain(Calc2dir_base):
         else : 
             self.pol_list = self._get_pulse_angles(self.polarization)
             print('Set the polarization angles (pol_list) to',self.pol_list,'(calculated default).')
+        
+        if 'omega_off' in params :
+            self.omega_off = params.get('omega_off')
+            print('Set the omega offset value (omega_off) to',self.omega_off,'.')
+        else : 
+            self.omega_off = self._get_omega_off()
+            print('Set the omega offset value (omega_off) to',self.omega_off,'(calculated default).')
             
         
     def _get_secexc_dipoles(self): 
@@ -127,7 +134,7 @@ class timedomain(Calc2dir_base):
         omega_init = self.freqmat[0][1:self.noscill+1]
         omega2_init = self.freqmat[0][self.noscill+1:]
         
-        omega_off_value = self._get_omega_off()
+        omega_off_value = self.omega_off
         
         omega = [i-omega_off_value for i in omega_init]
         omega2 = [i-2*omega_off_value for i in omega2_init]
@@ -277,7 +284,7 @@ class timedomain(Calc2dir_base):
         ticks = []
         n_zp = self.n_t * 2
         for i in range(0,n_zp):
-            ticks.append( (i-(n_zp/2))*2*np.pi / (self.unitconvfactor*n_zp*self.dt) + self._get_omega_off() )
+            ticks.append( (i-(n_zp/2))*2*np.pi / (self.unitconvfactor*n_zp*self.dt) + self.omega_off )
         return ticks
     
     def calc_diagrams(self):
@@ -389,7 +396,7 @@ class timedomain(Calc2dir_base):
     
     def get_absorptive_spectrum(self):
         '''
-        Automatically calculateds a fully absorption 2D IR spectrum.
+        Automatically calculates a fully absorption 2D IR spectrum.
         R(w3,t2,w1) = FFT2D ( Real ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
         
         @return R: Resulting signal from fourier-transformed sum of Feynman diagrams
@@ -412,7 +419,7 @@ class timedomain(Calc2dir_base):
     
     def get_photon_echo_spectrum(self):
         '''
-        Automatically calculateds a photon echo 2D IR spectrum.
+        Automatically calculates a photon echo 2D IR spectrum.
         R(w3,t2,w1) = abs( FFT2D ( Real ( R_r(t3,t2,t1)) ) )
         
         @return R: Resulting signal from fourier-transformed sum of Feynman diagrams
@@ -435,7 +442,7 @@ class timedomain(Calc2dir_base):
     
     def get_correlation_spectrum(self):
         '''
-        Automatically calculateds a correlation 2D IR spectrum.
+        Automatically calculates a correlation 2D IR spectrum.
         R(w3,t2,w1) = FFT2D ( Imag ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
         
         @return R: Resulting signal from fourier-transformed sum of Feynman diagrams

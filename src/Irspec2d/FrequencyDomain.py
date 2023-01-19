@@ -40,7 +40,7 @@ class freqdomain(Calc2dir_base):
                         exc_x.append(x_coor)
                         exc_i.append(exc_inten)
 
-                        print('Excitation from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(exc_inten,2))
+                        # print('Excitation from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(exc_inten,2))
                         
         return (exc_x, exc_y, exc_i)
     
@@ -74,7 +74,7 @@ class freqdomain(Calc2dir_base):
                     emi_x.append(x_coor)
                     emi_i.append(emi_inten)
 
-                    print('Stim. emission from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(emi_inten,2))
+                    # print('Stim. emission from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(emi_inten,2))
         return (emi_x, emi_y, emi_i)
 
     def calc_bleaching(self,intmat):
@@ -107,7 +107,7 @@ class freqdomain(Calc2dir_base):
                         ble_y.append(y_coor)
                         ble_i.append(ble_inten)
 
-                        print('Bleaching from energy level 0 to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(ble_inten,2))
+                        # print('Bleaching from energy level 0 to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(ble_inten,2))
 
         return (ble_x, ble_y, ble_i)
                       
@@ -136,12 +136,25 @@ class freqdomain(Calc2dir_base):
         ble_i = [] # intensity
         
         for i in range(self.noscill+1):
+            
+            # look for stimulated emission
+            if i > 0 :
+                s_xy = abs(self.freqmat[i][0])
+                s_i = intmat[i][0]
+
+                emi_x.append(s_xy)
+                emi_y.append(s_xy)
+                emi_i.append(s_i)
+
+                # print('emission',i,0,'  ( '+str(s_xy)+' | '+str(s_xy)+' )',' :',s_i)
+                
+                
             for j in range(len(intmat)):
 
                 # look for excitation
                 if i>0 and j>i:
-                    e_x = self.freqmat[0][i]-self.freqmat[0][0]
-                    e_y = self.freqmat[0][j]-self.freqmat[0][i]
+                    e_x = self.freqmat[0][i]
+                    e_y = self.freqmat[i][j]
                     e_i = intmat[i][j]
                     
                     exc_x.append(e_x)
@@ -150,29 +163,17 @@ class freqdomain(Calc2dir_base):
                     
                     # print('excitation',i,j,'  ( '+str(e_x)+' | '+str(e_y)+' )',' :',e_i)
 
-                # look for stimulated emission
-                if j==0 and i>j:
-                    s_x = self.freqmat[0][i]-self.freqmat[0][j]
-                    s_y = self.freqmat[0][i]-self.freqmat[0][j]
-                    s_i = intmat[i][j]
-                    
-                    emi_x.append(s_x)
-                    emi_y.append(s_y)
-                    emi_i.append(s_i)
-                    
-                    # print('emission',i,j,'  ( '+str(s_x)+' | '+str(s_y)+' )',' :',s_i)
-
                 # look for bleaching
                 if i==0 and j>0 and j<=self.noscill:
                     for k in range(1,self.noscill+1):
-                        b_x = self.freqmat[0][k]-self.freqmat[0][i]
-                        b_y = self.freqmat[0][j]-self.freqmat[0][i]
+                        b_x = self.freqmat[i][k]
+                        b_y = self.freqmat[i][j]
                         b_i = -intmat[i][j]
                     
                         ble_x.append(b_x)
                         ble_y.append(b_y)
                         ble_i.append(b_i)
-                    
+                        
                         # print('bleaching',i,j,'  ( '+str(b_x)+' | '+str(b_y)+' )',' :',b_i)
 
         exc = (exc_x,exc_y,exc_i)
