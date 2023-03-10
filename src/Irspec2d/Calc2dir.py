@@ -34,7 +34,7 @@ class Calc2dir_base():
         
         self.check_symmetry(self.dipoles)
         
-        self.noscill = self.calc_num_oscill(self.calc_nmodes())
+        self.noscill = self.calc_num_oscill(self.calc_nmodes())        
     
     
     def read_dipolemat(self,olddipole):
@@ -167,6 +167,28 @@ class Calc2dir_base():
                 intenmat[i][j]= (LA.norm(self.dipoles[i][j]))**2 * intfactor * (self.freqmat[0][j]-self.freqmat[0][i])
                 
         return intenmat.tolist()
+    
+    def generate_freqmat(self,freq):
+        '''
+        Makes a frequency matrix from given frequency list
+        
+        @param freq: list of frequencies
+        @type freq: list
+        
+        @return: matrix of frequencies
+        @rtype: np.array
+        
+        '''
+        dim = self.calc_nmodes()
+        
+        freqmat = np.zeros((dim,dim))
+
+        for i in range(dim):
+            for j in range(dim):
+                freqmat[i][j] = freqs[j] - freqs[i]
+
+        return freqmat
+    
     
     @staticmethod
     def n2s(number):
