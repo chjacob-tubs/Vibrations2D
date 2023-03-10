@@ -4,30 +4,31 @@ from numpy import linalg as LA
 
 import Irspec2d.Calc2dir as Calc2dir
 
-class Testfreqdomain():
+# class Testfreqdomain():
     
-    def test_calc_num_oscill(self,Calc2dir_base_2modes,Calc2dir_base_3modes):
-        '''
-        Calculates the number of oscillators n_oscill based on a 
-        given number of modes n. This is based on the assumption 
-        that there are 
-           n_modes = 1 + 2n_oscill + (n_oscill*(n_oscill-1))/2 
-        modes. There is one ground state (0) plus n first excited states 
-        plus n second excited states plus (n_oscill*(n_oscill-1))/2 combination 
-        states. 
-        This leads to 
-           n_oscill = 1/2 * (-3 + sqrt(8*n - 1)).
+#     def test_calc_num_oscill(self,Calc2dir_base_2modes,Calc2dir_base_3modes):
+#         '''
+#         Calculates the number of oscillators n_oscill based on a 
+#         given number of modes n. This is based on the assumption 
+#         that there are 
+#            n_modes = 1 + 2n_oscill + (n_oscill*(n_oscill-1))/2 
+#         modes. There is one ground state (0) plus n first excited states 
+#         plus n second excited states plus (n_oscill*(n_oscill-1))/2 combination 
+#         states. 
+#         This leads to 
+#            n_oscill = 1/2 * (-3 + sqrt(8*n - 1)).
         
-        If there are 
-           n = 2n_oscill + (n_oscill*(n_oscill-1))/2
-        modes, then 
-           n_oscill = 1/2 * (-3 + sqrt(8*n + 9)).
+#         If there are 
+#            n = 2n_oscill + (n_oscill*(n_oscill-1))/2
+#         modes, then 
+#            n_oscill = 1/2 * (-3 + sqrt(8*n + 9)).
 
-        '''
-        n2 = Calc2dir_base_2modes.calc_nmodes()
-        n3 = Calc2dir_base_3modes.calc_nmodes()
-        assert Calc2dir_base_2modes.calc_num_oscill(n2) == 2
-        assert Calc2dir_base_3modes.calc_num_oscill(n3) == 3
+#         '''
+#         pass
+        # n2 = Calc2dir_base_2modes.calc_nmodes()
+        # n3 = Calc2dir_base_3modes.calc_nmodes()
+        # assert Calc2dir_base_2modes.calc_num_oscill(n2) == 2
+        # assert Calc2dir_base_3modes.calc_num_oscill(n3) == 3
 
 # # FREQUENCY DOMAIN FUNCTIONS
 

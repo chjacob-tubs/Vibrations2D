@@ -9,7 +9,7 @@ class timedomain(Calc2dir_base):
     
     unitconvfactor = 0.188 # unit conversion factor
     
-    def __init__(self, freqmat, dipoles,**params):
+    def __init__(self, freqs, dipoles,**params):
         '''
         Setting all parameters needed for the time domain 2D IR spectra calculations.
         
@@ -38,7 +38,7 @@ class timedomain(Calc2dir_base):
         @type pol_list: list of integers
         
         '''
-        super().__init__(freqmat, dipoles)
+        super().__init__(freqs, dipoles)
         
         if 'n_t' in params : 
             self.n_t = params.get('n_t')
@@ -119,7 +119,7 @@ class timedomain(Calc2dir_base):
         @rtype: integer
         
         '''
-        return round(sum(self.freqmat[0][1:self.noscill+1])/len(self.freqmat[0][1:self.noscill+1]))
+        return round(sum(self.freqs[1:self.noscill+1])/len(self.freqs[1:self.noscill+1]))
     
     def set_omega(self):
         '''
@@ -131,8 +131,8 @@ class timedomain(Calc2dir_base):
         @rtype: lists of floats
         
         '''
-        omega_init = self.freqmat[0][1:self.noscill+1]
-        omega2_init = self.freqmat[0][self.noscill+1:]
+        omega_init = self.freqs[1:self.noscill+1]
+        omega2_init = self.freqs[self.noscill+1:]
         
         omega_off_value = self.omega_off
         

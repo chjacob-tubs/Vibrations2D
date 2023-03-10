@@ -1,5 +1,5 @@
-import numpy as np
 import math
+import numpy as np
 from numpy import linalg as LA
 
 class Calc2dir_base():
@@ -8,7 +8,7 @@ class Calc2dir_base():
     
     '''
     
-    def __init__(self, freqmat, dipoles):
+    def __init__(self, freqs : list, dipoles : np.ndarray):
         '''
         Create settings for object to calculate 2D IR spectra.
         Checks if input data is a (skew-)symmetrical matrix.
@@ -22,42 +22,17 @@ class Calc2dir_base():
         
         '''
         
-        self.freqmat = freqmat
-        self.dipoles = self.read_dipolemat(dipoles)
+        self.dipoles = np.squeeze(dipoles)
+        
+        if len(np.asarray(freqs).shape) == 2:
+            self.freqs = np.asarray(freqs)[0]
+        if len(np.asarray(freqs).shape) == 1:
+            self.freqs = np.asarray(freqs)
         
         self.check_input()
-        
-        if len(np.asarray(self.freqmat).shape) == 2:
-            self.check_symmetry(self.freqmat)
-        if len(np.asarray(self.freqmat).shape) == 1:
-            self.freqmat = [freqmat]
-        
         self.check_symmetry(self.dipoles)
         
-        self.noscill = self.calc_num_oscill(self.calc_nmodes())        
-    
-    
-    def read_dipolemat(self,olddipole):
-        '''
-        The transition dipole moment matrix that is obtained by VIBRATIONS calculations
-        has the shape (n,n,1,3). In order to use it in the following calculations it is
-        reduced to the shape (n,n,3). 
-        
-        n = number of frequencies/transition dipole moments. 
-        
-        @param olddipole: Given transition dipole moment matrix
-        @type olddipole: list of lists of numbers
-        
-        @return: Transition dipole moment matrix in reduced form
-        @rtype: list of lists of numbers
-        
-        '''
-        if len(np.asarray(olddipole).shape) == 4:
-            dipolemat = (np.reshape(olddipole,(len(olddipole),len(olddipole),3))).tolist()
-        if len(np.asarray(olddipole).shape) == 3:
-            dipolemat = olddipole
-            
-        return dipolemat
+        self.noscill = self.calc_num_oscill(self.calc_nmodes())
         
     def check_input(self):
         '''
@@ -66,10 +41,9 @@ class Calc2dir_base():
         are compared. 
         
         '''
-        assert np.asarray(self.freqmat).shape[0] == np.asarray(self.dipoles).shape[0], 'First axis of frequency matrix and transition dipole moment matrix do not have the same length.'
-        assert np.asarray(self.freqmat).shape[1] == np.asarray(self.dipoles).shape[1], 'Second axis of frequency matrix and transition dipole moment matrix do not have the same length.'
+        assert self.freqs.shape[0] == self.dipoles.shape[0], 'Frequency list and first axis of transition dipole moment matrix do not have the same length.'
             
-    def check_symmetry(self, a, tol=1e-5):
+    def check_symmetry(self, a : np.ndarray, tol = 1e-5):
         '''
         Checks if a given matrix a is symmetric or skew-symmetric.
         Returns True/False.
@@ -104,14 +78,14 @@ class Calc2dir_base():
         @rtype: integer
         
         '''
-        if len(self.dipoles) == len(self.freqmat[0]):
-            n = int(len(self.freqmat[0]))
+        if len(self.dipoles) == len(self.freqs):
+            n = int(len(self.freqs))
         else:
             raise ValueError('The matrices containing the frequencies and the transition dipole moments do not have the same length.')
             
         return n
     
-    def calc_num_oscill(self,n):
+    def calc_num_oscill(self, n : int):
         '''
         Calculates the number of oscillators n_oscill based on a 
         given number of modes n. This is based on the assumption 
@@ -150,7 +124,7 @@ class Calc2dir_base():
                 
         return val
     
-    def calc_trans2int(self):
+    def calc_trans2int(self) -> np.ndarray :
         '''
         Calculates the intensity matrix from the given transition dipole moment matrix 
         and the given frequeny matrix.
@@ -160,15 +134,16 @@ class Calc2dir_base():
         
         '''
         intfactor = 2.5066413842056297 # factor to calculate integral absorption coefficient having  [cm-1]  and  [Debye] ; see Vibrations/Misc.py code
-        intenmat = np.zeros_like(self.freqmat)
+        dim = self.calc_nmodes()
+        intenmat = np.zeros((dim,dim))
         
         for i in range(len(intenmat)):
             for j in range(len(intenmat)):
-                intenmat[i][j]= (LA.norm(self.dipoles[i][j]))**2 * intfactor * (self.freqmat[0][j]-self.freqmat[0][i])
+                intenmat[i][j] = (LA.norm(self.dipoles[i][j]))**2 * intfactor * (self.freqs[j]-self.freqs[i])
                 
-        return intenmat.tolist()
+        return intenmat
     
-    def generate_freqmat(self,freq):
+    def generate_freqmat(self, freq : np.ndarray) -> np.ndarray:
         '''
         Makes a frequency matrix from given frequency list
         
@@ -180,18 +155,13 @@ class Calc2dir_base():
         
         '''
         dim = self.calc_nmodes()
-        
-        freqmat = np.zeros((dim,dim))
+        freqmat = np.tile(freq,(dim,1))
 
-        for i in range(dim):
-            for j in range(dim):
-                freqmat[i][j] = freqs[j] - freqs[i]
-
-        return freqmat
+        return freqmat - freqmat.T
     
     
     @staticmethod
-    def n2s(number):
+    def n2s(number : float) -> str:
         '''
         Takes a number with a decimal point and changes it to an underscore. 
         
@@ -216,7 +186,7 @@ class spectra():
     '''
     
     @staticmethod
-    def set_line_spacing(maximum,number):
+    def set_line_spacing(maximum : float, number : int) -> np.ndarray:
         '''
         Use this for matplotlib.pyplot contour plots in order to set the 
         number of displayed lines. 
@@ -235,10 +205,10 @@ class spectra():
         firstvalue = maximum/number
         negspace = np.linspace(-maximum,-firstvalue,number)
         posspace = np.linspace(firstvalue,maximum,number)
-        return np.concatenate((negspace,posspace)).tolist()
+        return np.concatenate((negspace,posspace))
     
     @staticmethod
-    def gauss_func(intensity,x,x0,halfwidth):
+    def gauss_func(intensity : float, x : list, x0 : float, halfwidth: float) -> float:
         '''
         Computes a single value at position x for a 1D gaussian type function.
         
@@ -263,7 +233,7 @@ class spectra():
         return (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - (x - x0)**2 / (2*gamma**2) )
     
     @staticmethod
-    def gauss2d_func(intensity,x,x0,y,y0,halfwidth):
+    def gauss2d_func(intensity : float, x : list, x0 : float, y : list, y0 : float, halfwidth : float) -> float:
         '''
         Computes a single value at position x for a 2D gaussian type function.
         
@@ -288,7 +258,7 @@ class spectra():
         return (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - ((x - x0)**2 + (y - y0)**2) / (2*gamma**2) )
     
     @staticmethod
-    def lorentz_func(intensity,x,x0,halfwidth):
+    def lorentz_func(intensity : float, x : list, x0 : float, halfwidth : float) -> float:
         '''
         Computes a single value at position x for a 1D lorentzian type function.
         
@@ -312,7 +282,7 @@ class spectra():
         return ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (halfwidth/2)**2 )
     
     @staticmethod
-    def lorentz2d_func(intensity,x,x0,y,y0,halfwidth):
+    def lorentz2d_func(intensity : float, x : list, x0 : float, y : list, y0 : float, halfwidth : float) -> float:
         '''
         Computes a single value at grid x,y for a 2D lorentzian type function.
         
@@ -336,7 +306,7 @@ class spectra():
         return ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (y-y0)**2 + (halfwidth/2)**2 )
     
     @staticmethod
-    def get_1d_spectrum(xmin,xmax,freqs,ints,steps=5000,halfwidth=5,ftype='gauss',**param):
+    def get_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param):
         '''
         Sums up all gauss/lorentz functions for each peak.
         
@@ -372,7 +342,7 @@ class spectra():
         return x.tolist(),y
     
     @staticmethod
-    def get_norm_1d_spectrum(xmin,xmax,freqs,ints,steps=5000,halfwidth=5,ftype='gauss',**param):
+    def get_norm_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param):
         '''
         Sums up all gauss/lorentz functions for each peak and sets the highest value to one.
         
@@ -410,7 +380,7 @@ class spectra():
         return x.tolist(),y
     
     @staticmethod
-    def get_2d_spectrum(xmin,xmax,exc,ble,emi,steps=2000,halfwidth=15,ftype='gauss'):
+    def get_2d_spectrum(xmin : float, xmax : float, exc : np.ndarray, ble : np.ndarray, emi : np.ndarray, steps=2000, halfwidth=15, ftype='gauss'):
         '''
         Plots the simple 2D IR spectrum automatically.
         
@@ -461,7 +431,7 @@ class spectra():
         return x.tolist(),y.tolist(),z.tolist()
     
     @staticmethod
-    def norm_2d_spectrum(z,max_z):
+    def norm_2d_spectrum(z : np.ndarray, max_z : float) -> np.ndarray:
         '''
         Divides a every element in a matrix by a given value.
         

@@ -7,11 +7,14 @@ from Irspec2d import *
 
 class freqdomain(Calc2dir_base):
     
-    def __init__(self, freqmat, dipoles):
+    def __init__(self, freqs, dipoles):
         
-        super().__init__(freqmat, dipoles)
+        super().__init__(freqs, dipoles)
+        
+        self.freqmat = self.generate_freqmat(self.freqs)
+        self.nmodes = self.calc_nmodes()
     
-    def calc_excitation(self,intmat):
+    def calc_excitation(self,intmat : np.ndarray) -> list:
         '''
         Takes the energy levels and the intensity matrix in order to find 
         the excited state absorption processes that occur in an 2D IR
@@ -24,23 +27,23 @@ class freqdomain(Calc2dir_base):
         @rtype: tuple of lists
 
         '''
+        
         exc_x = [] # excitation coords
         exc_y = [] 
         exc_i = [] # intensity
 
-        for i in range(self.noscill+1):
-                for j in range(len(intmat)):
-                    if i>0 and j>i:
+        for i in range(1,self.noscill+1):
+            for j in range(self.noscill,len(intmat)):
 
-                        x_coor = self.freqmat[0][i]-self.freqmat[0][0]
-                        y_coor = self.freqmat[0][j]-self.freqmat[0][i]
-                        exc_inten = intmat[i][j]
+                x_coor = self.freqmat[0][i]-self.freqmat[0][0]
+                y_coor = self.freqmat[0][j]-self.freqmat[0][i]
+                exc_inten = intmat[i][j]
 
-                        exc_y.append(y_coor)
-                        exc_x.append(x_coor)
-                        exc_i.append(exc_inten)
+                exc_y.append(y_coor)
+                exc_x.append(x_coor)
+                exc_i.append(exc_inten)
 
-                        # print('Excitation from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(exc_inten,2))
+                print('Excitation from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(exc_inten,2))
                         
         return (exc_x, exc_y, exc_i)
     
