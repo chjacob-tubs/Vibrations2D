@@ -7,7 +7,7 @@ from Irspec2d import *
     
 class timedomain(Calc2dir_base):
     
-    unitconvfactor = 0.188 # unit conversion factor
+    ucf = 0.188 # unit conversion factor
     
     def __init__(self, freqs, dipoles,**params):
         '''
@@ -284,7 +284,7 @@ class timedomain(Calc2dir_base):
         ticks = []
         n_zp = self.n_t * 2
         for i in range(0,n_zp):
-            ticks.append( (i-(n_zp/2))*2*np.pi / (self.unitconvfactor*n_zp*self.dt) + self.omega_off )
+            ticks.append( (i-(n_zp/2))*2*np.pi / (self.ucf*n_zp*self.dt) + self.omega_off )
         return ticks
     
     def calc_diagrams(self):
@@ -300,6 +300,7 @@ class timedomain(Calc2dir_base):
         fak1, fak2, fak3 = self._calc_fourpoint_factors(self.pol_list)
         
         R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_)
+        _R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_)
         R2 = np.zeros_like(R1,dtype=np.complex_)
         R3 = np.zeros_like(R1,dtype=np.complex_)
         R4 = np.zeros_like(R1,dtype=np.complex_)
@@ -321,19 +322,21 @@ class timedomain(Calc2dir_base):
                 
                 dipole = mui**2 * muj**2
                 
-                angle_jjii = self.calc_fourpointcorr('jjii',fak1,fak2,fak3,mu[i],mu[j])
-                angle_jiji = self.calc_fourpointcorr('jiji',fak1,fak2,fak3,mu[i],mu[j])
-                angle_jiij = self.calc_fourpointcorr('jiij',fak1,fak2,fak3,mu[i],mu[j])
+                f_jjii = self.calc_fourpointcorr('jjii',fak1,fak2,fak3,mu[i],mu[j]) * dipole
+                f_jiji = self.calc_fourpointcorr('jiji',fak1,fak2,fak3,mu[i],mu[j]) * dipole
+                f_jiij = self.calc_fourpointcorr('jiij',fak1,fak2,fak3,mu[i],mu[j]) * dipole
 
                 # print('mu_i:',mui,'mu_j:',muj)
                 # print('dipole:',dipole)
-
-                for jj,T3 in enumerate(t):
-                    for ii,T1 in enumerate(t):
-                        R1[ii][jj] -= angle_jiji*dipole * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-                        R2[ii][jj] -= angle_jjii*dipole * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
-                        R4[ii][jj] -= angle_jiij*dipole * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[j]*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-                        R5[ii][jj] -= angle_jjii*dipole * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*omega[i]*self.unitconvfactor*T3 - (T1+T3)/self.T2)
+                
+                partc = 1j*(omega[j]-omega[i])*self.ucf*self.t2
+                
+                _t = np.tile(t,(self.n_t,1))
+                
+                R1 -= f_jiji * np.exp(   1j*omega[j]*self.ucf*_t.T - 1j*omega[i]*self.ucf*_t + partc - (_t.T+_t)/self.T2 )
+                R2 -= f_jiji * np.exp(   1j*omega[j]*self.ucf*_t.T - 1j*omega[i]*self.ucf*_t         - (_t.T+_t)/self.T2 )
+                R3 -= f_jiji * np.exp( - 1j*omega[j]*self.ucf*_t.T - 1j*omega[i]*self.ucf*_t + partc - (_t.T+_t)/self.T2 )
+                R4 -= f_jiji * np.exp( - 1j*omega[j]*self.ucf*_t.T - 1j*omega[i]*self.ucf*_t         - (_t.T+_t)/self.T2 )
 
                 for k in range(self._calc_nmodesexc()):
 
@@ -346,14 +349,11 @@ class timedomain(Calc2dir_base):
                     # rint('mu_ik:',muik,'mu_jk:',mujk)
                     # print('dipole2:',dipole2)
 
-
-                    angle_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k])
-                    angle_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k])
-
-                    for jj,T3 in enumerate(t):
-                        for ii,T1 in enumerate(t):
-                            R3[ii][jj] += dipole2*angle_jilk * np.exp(   1j*omega[j]*self.unitconvfactor*T1 - 1j*(omega2[k]-omega[j])*self.unitconvfactor*T3 + 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
-                            R6[ii][jj] += dipole2*angle_jikl * np.exp( - 1j*omega[j]*self.unitconvfactor*T1 - 1j*(omega2[k]-omega[i])*self.unitconvfactor*T3 - 1j*(omega[j]-omega[i])*self.unitconvfactor*self.t2 - (T1+T3)/self.T2)
+                    f_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
+                    f_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
+                    
+                    R3 += f_jilk * np.exp(   1j*omega[j]*self.ucf*_t.T - 1j*(omega2[k]-omega[j])*self.ucf*_t + partc - (_t.T+_t)/self.T2 )
+                    R6 += f_jikl * np.exp( - 1j*omega[j]*self.ucf*_t.T - 1j*(omega2[k]-omega[j])*self.ucf*_t - partc - (_t.T+_t)/self.T2 )
 
                 # print()
 
