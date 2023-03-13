@@ -343,18 +343,18 @@ class timedomain(Calc2dir_base):
                 partd = (_t.T+_t)/self.T2 
                 
                 # new faster way! 
-                _R1 -= f_jiji * np.exp(   parta - partb + partc - partd )
-                _R2 -= f_jiji * np.exp(   parta - partb         - partd )
+                R1 -= f_jiji * np.exp(   parta - partb + partc - partd )
+                R2 -= f_jiji * np.exp(   parta - partb         - partd )
                 _R4 -= f_jiji * np.exp( - parta - partb + partc - partd ) # error
-                _R5 -= f_jiji * np.exp( - parta - partb         - partd ) 
+                R5 -= f_jiji * np.exp( - parta - partb         - partd ) 
                 
                 # old slow way
                 for jj,T3 in enumerate(t):
                     for ii,T1 in enumerate(t):
-                        R1[ii][jj] -= f_jiji * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
-                        R2[ii][jj] -= f_jjii * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 - (T1+T3)/self.T2)
+                        # R1[ii][jj] -= f_jiji * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
+                        # R2[ii][jj] -= f_jjii * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 - (T1+T3)/self.T2)
                         R4[ii][jj] -= f_jiij * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*omega[j]*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
-                        R5[ii][jj] -= f_jjii * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 - (T1+T3)/self.T2)
+                        # R5[ii][jj] -= f_jjii * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 - (T1+T3)/self.T2)
 
 
                 for k in range(self._calc_nmodesexc()):
