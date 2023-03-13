@@ -300,12 +300,18 @@ class timedomain(Calc2dir_base):
         fak1, fak2, fak3 = self._calc_fourpoint_factors(self.pol_list)
         
         R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_)
-        _R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_)
         R2 = np.zeros_like(R1,dtype=np.complex_)
         R3 = np.zeros_like(R1,dtype=np.complex_)
         R4 = np.zeros_like(R1,dtype=np.complex_)
         R5 = np.zeros_like(R1,dtype=np.complex_)
         R6 = np.zeros_like(R1,dtype=np.complex_)
+        
+        _R1 = np.zeros_like(R1,dtype=np.complex_)
+        _R2 = np.zeros_like(R1,dtype=np.complex_)
+        _R3 = np.zeros_like(R1,dtype=np.complex_)
+        _R4 = np.zeros_like(R1,dtype=np.complex_)
+        _R5 = np.zeros_like(R1,dtype=np.complex_)
+        _R6 = np.zeros_like(R1,dtype=np.complex_)
         
         t = np.arange(0,self.n_t*self.dt,self.dt)
         mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles()
@@ -329,14 +335,27 @@ class timedomain(Calc2dir_base):
                 # print('mu_i:',mui,'mu_j:',muj)
                 # print('dipole:',dipole)
                 
-                partc = 1j*(omega[j]-omega[i])*self.ucf*self.t2
-                
                 _t = np.tile(t,(self.n_t,1))
                 
-                R1 -= f_jiji * np.exp(   1j*omega[j]*self.ucf*_t.T - 1j*omega[i]*self.ucf*_t + partc - (_t.T+_t)/self.T2 )
-                R2 -= f_jiji * np.exp(   1j*omega[j]*self.ucf*_t.T - 1j*omega[i]*self.ucf*_t         - (_t.T+_t)/self.T2 )
-                R3 -= f_jiji * np.exp( - 1j*omega[j]*self.ucf*_t.T - 1j*omega[i]*self.ucf*_t + partc - (_t.T+_t)/self.T2 )
-                R4 -= f_jiji * np.exp( - 1j*omega[j]*self.ucf*_t.T - 1j*omega[i]*self.ucf*_t         - (_t.T+_t)/self.T2 )
+                parta = 1j*omega[j]*self.ucf*_t.T
+                partb = 1j*omega[i]*self.ucf*_t
+                partc = 1j*(omega[j]-omega[i])*self.ucf*self.t2
+                partd = (_t.T+_t)/self.T2 
+                
+                # new faster way! 
+                _R1 -= f_jiji * np.exp(   parta - partb + partc - partd )
+                _R2 -= f_jiji * np.exp(   parta - partb         - partd )
+                _R4 -= f_jiji * np.exp( - parta - partb + partc - partd ) # error
+                _R5 -= f_jiji * np.exp( - parta - partb         - partd ) 
+                
+                # old slow way
+                for jj,T3 in enumerate(t):
+                    for ii,T1 in enumerate(t):
+                        R1[ii][jj] -= f_jiji * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
+                        R2[ii][jj] -= f_jjii * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 - (T1+T3)/self.T2)
+                        R4[ii][jj] -= f_jiij * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*omega[j]*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
+                        R5[ii][jj] -= f_jjii * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 - (T1+T3)/self.T2)
+
 
                 for k in range(self._calc_nmodesexc()):
 
@@ -348,13 +367,39 @@ class timedomain(Calc2dir_base):
 
                     # rint('mu_ik:',muik,'mu_jk:',mujk)
                     # print('dipole2:',dipole2)
+                    
+                    parta2 = 1j*omega[j]*self.ucf*_t.T
+                    partb2 = 1j*(omega2[k]-omega[j])*self.ucf*_t
+                    partc2 = 1j*(omega[j]-omega[i])*self.ucf*self.t2
+                    partd2 = (_t.T+_t)/self.T2
 
                     f_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
                     f_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
                     
-                    R3 += f_jilk * np.exp(   1j*omega[j]*self.ucf*_t.T - 1j*(omega2[k]-omega[j])*self.ucf*_t + partc - (_t.T+_t)/self.T2 )
-                    R6 += f_jikl * np.exp( - 1j*omega[j]*self.ucf*_t.T - 1j*(omega2[k]-omega[j])*self.ucf*_t - partc - (_t.T+_t)/self.T2 )
+                    # new faster way! 
+                    _R3 += f_jilk * np.exp(   parta2 - partb2 + partc2 - partd2 ) # error
+                    _R6 += f_jikl * np.exp( - parta2 - partb2 - partc2 - partd2 ) # error
 
+                    # old slow way
+                    for jj,T3 in enumerate(t):
+                        for ii,T1 in enumerate(t):
+                            R3[ii][jj] += f_jilk * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*(omega2[k]-omega[j])*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
+                            R6[ii][jj] += f_jikl * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*(omega2[k]-omega[i])*self.ucf*T3 - 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
+
+                            
+        # print('try asserting R1')
+        # np.testing.assert_almost_equal(R1,_R1)
+        # print('try asserting R2')
+        # np.testing.assert_almost_equal(R2,_R2)
+        # print('try asserting R3')
+        # np.testing.assert_almost_equal(R3,_R3) #
+        # print('try asserting R4')
+        # np.testing.assert_almost_equal(R4,_R4) #
+        # print('try asserting R5')
+        # np.testing.assert_almost_equal(R5,_R5)
+        # print('try asserting R6')
+        # np.testing.assert_almost_equal(R6,_R6) #
+                            
                 # print()
 
         return R1,R2,R3,R4,R5,R6
