@@ -19,46 +19,6 @@ class excitonmodel(Calc2dir_base):
         self.cmat = cmat
         self.dipoles = dipoles
         self.noscill = len(cmat)
-        
-    @staticmethod
-    def multiply(A,B):
-        '''
-        For multiplying the (m,m,3)x(m,m) arrays.
-        Works also for simple (m,n)x(n,l) multiplications.
-        No further cases were tested.
-        
-        @param A: (m,m,3) shaped array
-        @type A: array or list of lists of float
-        
-        @param B: (m,m) shaped array
-        @type B: array or list of lists of float
-        
-        @return: product of A and B
-        @rtype: list of lists of float
-
-        '''
-        a = int(np.asarray(A).shape[0])
-        b = int(np.asarray(B).shape[1])
-
-        C = [[0 for i in range(b)] for j in range(a)]
-
-        for i, ii in enumerate(C):
-            for j, jj in enumerate(ii):
-
-                D = []
-                for k in B:
-                    # print(k[j])
-                    D.append(k[j])
-
-                matelement = []
-                for k,kk in enumerate(A[i]):
-                    prod = np.dot(kk,D[k])
-                    # print('kk:',kk,'D[i]:',D[k],'prod:',prod)
-                    matelement.append(prod)
-
-                C[i][j] = sum(matelement)
-
-        return C
     
     def generate_sorted_states(self):
         '''
@@ -77,7 +37,10 @@ class excitonmodel(Calc2dir_base):
         @rtype: list of tuples of ints
         
         '''
+        nmod = int(1 + 2*self.noscill + (self.noscill*(self.noscill-1))/2)
         states = []
+        _states = np.zeros((nmod,2))
+        print('xx',_states)
 
         def generate_states(*args, repeat=1):
             '''
@@ -135,13 +98,25 @@ class excitonmodel(Calc2dir_base):
         
         '''
         lenstates = len(states) # the number of states
-        hamiltonian = [[0 for i in range(lenstates)] for i in range(lenstates)] 
+        hamiltonian = np.zeros((lenstates,lenstates))
+        
+        print(states)
+        
+        # rstates = np.tile(states, (lenstates,1))
+        # print('rstates \n',rstates)
+        
 
         # loop over all the states in order to evaluate the matrix elements: < state | H | state >
         for i, rstate in enumerate(states) : 
             
             values = []
+            # _values = np.zeros(len(self.cmat)**2)
             # print(rstate)
+            
+            # _a = np.linspace(0,len(self.cmat)-1,len(self.cmat))
+            # __a = np.tile(_a,(len(self.cmat),1))
+            
+            # _rstate = 
             
             for a in range(len(self.cmat)):
                 for b in range(len(self.cmat)):
@@ -308,8 +283,8 @@ class excitonmodel(Calc2dir_base):
         ### in order to calculate 2D IR spectra.
         # hamilt_nm = np.dot(np.dot(ev.T,hamilt_lm),ev)
         
-        firstmult = self.multiply(ev.T,dipole_lm)
-        dipole_nm = self.multiply(firstmult,ev)
+        firstmult = np.tensordot(ev.T,dipole_lm,axes=1)
+        dipole_nm = np.tensordot(ev,firstmult,axes=(0,1))
         
         # simulating a symmetrical frequency matrix from the eigen values:
         freqs_lm = [[0 for i in range(len(ew))] for i in range(len(ew))] 
@@ -347,8 +322,8 @@ class excitonmodel(Calc2dir_base):
                 
         ew, ev = LA.eigh(hamilt_lm)
         
-        firstmult = self.multiply(ev.T,dipole_lm)
-        dipole_nm = self.multiply(firstmult,ev)
+        firstmult = np.tensordot(ev.T,dipole_lm,axes=1)
+        dipole_nm = np.tensordot(ev,firstmult,axes=(0,1))
         
         # simulating a symmetrical frequency matrix from the eigen values:
         freqs_lm = [[0 for i in range(len(ew))] for i in range(len(ew))] 
