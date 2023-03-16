@@ -135,11 +135,8 @@ class Calc2dir_base():
         '''
         intfactor = 2.5066413842056297 # factor to calculate integral absorption coefficient having  [cm-1]  and  [Debye] ; see Vibrations/Misc.py code
         dim = self.calc_nmodes()
-        intenmat = np.zeros((dim,dim))
-        
-        for i in range(len(intenmat)):
-            for j in range(len(intenmat)):
-                intenmat[i][j] = (LA.norm(self.dipoles[i][j]))**2 * intfactor * (self.freqs[j]-self.freqs[i])
+        freqmat = np.tile(self.freqs,(dim,1))
+        intenmat = np.linalg.norm(self.dipoles,axis=2)**2 * intfactor * (freqmat - freqmat.T)
                 
         return intenmat
     
