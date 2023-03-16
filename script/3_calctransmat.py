@@ -129,67 +129,17 @@ VCI = vib.VCI(dVSCF.get_groundstate_wfn(), v1,v2)
 #VCI = vib.VCI(dVSCF.get_groundstate_wfn(), v1,v2h)
 VCI.generate_states(2) # singles only # for further calculations with test case water use triples (3)
 VCI.solve()
-VCI.print_results(which=8, maxfreq=8000)
+# VCI.print_results(which=8, maxfreq=8000)
 
 # Calculate Transition Matrix
 #transm0 = VCI.calculate_transition_moments([dm1],[dm2])
-transm, inten, freqs = VCI.calculate_transition_matrix([dm1],[dm2])
-#inten = np.zeros([len(transm),len(transm)])
+transm = VCI.calculate_transition_matrix([dm1],[dm2])
+freqs = VCI2.energiesrcm - VCI2.energiesrcm[0]
 
-#print('Dim ',len(transm))
-
-#for i,t in enumerate(transm):
-#    for j,u in enumerate(t):
-#        inten[i][j] = LA.norm(u)
-        
-#for i in transm:
-#    print i
-#for i in inten:
-#    print i
-
-#np.savetxt('transmat.txt',transm)
-#np.savetxt('intenmat.txt',inten)
-#np.savetxt('freqsmat.txt',freqs)
-
-np.save('results_VCI_exciton/VCI_intensities.npy',inten)
 np.save('results_VCI_exciton/VCI_frequencies.npy',freqs)
 np.save('results_VCI_exciton/VCI_dipolemoments.npy',transm)
 
 
-#intensities = np.zeros(len(transm))
-#for i in range(1,len(transm)):
-#    totaltm = transm[i]
-#    for tens in totaltm:
-#        intens = (tens[0]**2 + tens[1]**2 + tens[2]**2)
-#    intensities[i] = intens
-#print('inten:',intensities)
-
-#VCI.calculate_IR(dm1,dm2) # calculate intensities
-
-#freqs = VCI.energiesrcm[:] - VCI.energiesrcm[0]
-#print(freqs)
-#freqs = 10000000/freqs
-#ints = VCI.intensities[:]
-
-#print('Freqs: ',freqs)
-#print('Ints: ',ints)
-
-#with open('freqs4e', 'wb') as fp:
-#    pickle.dump(freqs, fp)
-
-#with open('ints4e', 'wb') as fp:
-#    pickle.dump(ints, fp)
-
-#sp = LocVib.VibSpectrum(freqs, ints)
-
-#irplot = sp.get_plot(1300.0, 2100.0,ymin=-0.5,ymax=1,include_linespec=False,spectype='IR',label_maxima=False)
-#irplot.draw()
-
-#x,y = sp.get_line_spectrum(0.0, 10000.0)
-#pyplot.plot(x,y)
-#pyplot.xlim(1000.0, 8000.0)
-
-#pyplot.show()
 
 print() 
 print() 
