@@ -40,54 +40,62 @@ class timedomain(Calc2dir_base):
         '''
         super().__init__(freqs, dipoles)
         
+        
+        if 'print_output' in params :
+            self.print_output = params.get('print_output')
+            if self.print_output : print('Prints all output. To suppress printed output use print_output=False.')
+        else : 
+            self.print_output = True
+            if self.print_output : print('Prints all output (default). To suppress printed output use timedomain(freqs,dipoles,print_output=False).')
+            
         if 'n_t' in params : 
             self.n_t = params.get('n_t')
-            print('Set the number of time points (n_t) to',str(self.n_t)+'.')
+            if self.print_output : print('Set the number of time points (n_t) to',str(self.n_t)+'.')
         else : 
             self.n_t = 128
-            print('Set the number of time points (n_t) to',self.n_t,'(default value).')
+            if self.print_output : print('Set the number of time points (n_t) to',self.n_t,'(default value).')
         
         if 'dt' in params : 
             self.dt = params.get('dt')
-            print('Set the time step length (dt) to',self.dt,'ps.')
+            if self.print_output : print('Set the time step length (dt) to',self.dt,'ps.')
         else : 
             self.dt = 0.25
-            print('Set the time step length (dt) to',self.dt,'ps (default value).')
+            if self.print_output : print('Set the time step length (dt) to',self.dt,'ps (default value).')
         
         if 'T2' in params : 
             self.T2 = params.get('T2')
-            print('Set the dephasing time (T2) to',self.T2,'ps.')
+            if self.print_output : print('Set the dephasing time (T2) to',self.T2,'ps.')
         else : 
             self.T2 = 2
-            print('Set the dephasing time (T2) to',self.T2,'ps (default value).')
+            if self.print_output : print('Set the dephasing time (T2) to',self.T2,'ps (default value).')
         
         if 't2' in params : 
             self.t2 = params.get('t2')
-            print('Set the population time (t2) to',self.t2,'ps.')
+            if self.print_output : print('Set the population time (t2) to',self.t2,'ps.')
         else : 
             self.t2 = 0
-            print('Set the population time (t2) to',self.t2,'ps (default value).')
+            if self.print_output : print('Set the population time (t2) to',self.t2,'ps (default value).')
         
         if 'pol' in params :
             self.polarization = params.get('pol')
-            print('Set the polarization (pol) to',self.polarization,'.')
+            if self.print_output : print('Set the polarization (pol) to',self.polarization,'.')
         else : 
             self.polarization = 'ZZZZ'
-            print('Set the polarization (pol) to',self.polarization,'(default).')
+            if self.print_output : print('Set the polarization (pol) to',self.polarization,'(default).')
         
         if 'pol_list' in params :
             self.pol_list = params.get('pol_list')
-            print('Set the polarization angles (pol_list) to',self.pol_list,'.')
+            if self.print_output : print('Set the polarization angles (pol_list) to',self.pol_list,'.')
         else : 
             self.pol_list = self._get_pulse_angles(self.polarization)
-            print('Set the polarization angles (pol_list) to',self.pol_list,'(calculated default).')
+            if self.print_output : print('Set the polarization angles (pol_list) to',self.pol_list,'(calculated default).')
         
         if 'omega_off' in params :
             self.omega_off = params.get('omega_off')
-            print('Set the omega offset value (omega_off) to',self.omega_off,'.')
+            if self.print_output : print('Set the omega offset value (omega_off) to',self.omega_off,'.')
         else : 
             self.omega_off = self._get_omega_off()
-            print('Set the omega offset value (omega_off) to',self.omega_off,'(calculated default).')
+            if self.print_output : print('Set the omega offset value (omega_off) to',self.omega_off,'(calculated default).')
             
         
     def _get_secexc_dipoles(self): 
