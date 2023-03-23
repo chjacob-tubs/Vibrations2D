@@ -40,7 +40,7 @@ class excitonmodel(Calc2dir_base):
         nmod = int(1 + 2*self.noscill + (self.noscill*(self.noscill-1))/2)
         states = []
         _states = np.zeros((nmod,2))
-        print('xx',_states)
+        # print('xx',_states)
 
         def generate_states(*args, repeat=1):
             '''
@@ -100,7 +100,7 @@ class excitonmodel(Calc2dir_base):
         lenstates = len(states) # the number of states
         hamiltonian = np.zeros((lenstates,lenstates))
         
-        print(states)
+        # print(states)
         
         # rstates = np.tile(states, (lenstates,1))
         # print('rstates \n',rstates)

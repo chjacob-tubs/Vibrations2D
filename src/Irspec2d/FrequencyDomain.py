@@ -43,7 +43,7 @@ class freqdomain(Calc2dir_base):
                 exc_x.append(x_coor)
                 exc_i.append(exc_inten)
 
-                print('Excitation from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(exc_inten,2))
+                # print('Excitation from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(exc_inten,2))
                         
         return (exc_x, exc_y, exc_i)
     

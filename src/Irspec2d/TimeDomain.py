@@ -273,6 +273,48 @@ class timedomain(Calc2dir_base):
 
         return S
     
+    def calc_fourpointcorr_mat(self,pathway,fak1,fak2,fak3,mu_mat):
+        '''
+        pathway : 'jjii', 'jiji', 'jiij', 'jikl'
+
+        S = 1/30 * ( cos theta_alpha_beta  * cos theta_gamma_delta * fak1
+                   - cos theta_alpha_gamma * cos theta_beta_delta  * fak2
+                   - cos theta_alpha_delta * cos theta_beta_gamma  * fak3 )
+
+        @param pathway: feynman pathway of a diagram
+        @type pathway: string
+        
+        @param fak1/fak2/fak3: prefactor of the correlation function
+        @type fak1/fak2/fak3: float
+        
+        @param mus: dipole moments
+        @type mus: list of floats
+        '''
+
+        mu = [0,0,0,0]
+
+        for i, val in enumerate(pathway):
+
+            if val == 'j':
+                mu[i] = mus[0]
+
+            if val == 'i':
+                mu[i] = mus[1]
+
+            if val == 'k':
+                mu[i] = mus[2]
+
+            if val == 'l':
+                mu[i] = mus[3]
+
+        S1 = fak1 * self.calc_cos(mu[0],mu[1]) * self.calc_cos(mu[2],mu[3])
+        S2 = fak2 * self.calc_cos(mu[0],mu[2]) * self.calc_cos(mu[1],mu[3])
+        S3 = fak3 * self.calc_cos(mu[0],mu[3]) * self.calc_cos(mu[1],mu[2])
+
+        S = (S1 + S2 + S3) / 30
+
+        return S
+    
     def calc_axes(self):
         '''
         Calculates the time axis into a frequency axis.
@@ -310,10 +352,35 @@ class timedomain(Calc2dir_base):
         mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles()
         
         omega, omega2 = self.set_omega()
-
+        
+        # try making this even faster...
+        
+        jj = np.linspace(0,self.noscill-1,self.noscill)
+        ii = np.linspace(0,self.noscill-1,self.noscill)
+        
+        mu_norm = LA.norm(mu,axis=1)
+        dipole_mat = mu_norm**2 * mu_norm.T**2
+        
+        import time 
+        file1 = open("timesj1.txt", "w")
+        file2 = open("timesi1.txt", "w")
+        file3 = open("timesk1.txt", "w")
+        
+        times_j = []
+        times_i = []
+        times_k = []
+        
+        # print(self.noscill)
+        # print(self._calc_nmodesexc())
+        
+        # old, working stuff : 
+        
         for j in range(self.noscill):
+            # timejstart = time.perf_counter()
             for i in range(self.noscill):
 
+                # timeistart = time.perf_counter()
+                
                 # print('i:',i,'j:',j)
                 
                 mui = LA.norm(mu[i])
@@ -352,6 +419,8 @@ class timedomain(Calc2dir_base):
 
 
                 for k in range(self._calc_nmodesexc()):
+                    
+                    # timekstart = time.perf_counter()
 
                     # print('k:',k)
 
@@ -374,6 +443,19 @@ class timedomain(Calc2dir_base):
                     # new faster way! 
                     R3 += f_jilk * np.exp(   parta2 - partb2_R3 + partc2 - partd2 ) 
                     R6 += f_jikl * np.exp( - parta2 - partb2_R6 - partc2 - partd2 ) 
+                    
+                    # timekend = time.perf_counter()
+                    # times_k.append(timekend-timekstart)
+                    # file3.write(str(timekend-timekstart)+'\n')
+                    # print('time k',timekend-timekstart)
+                # timeiend = time.perf_counter()
+                # times_i.append(timeiend-timeistart)
+                # file2.write(str(timeiend-timeistart)+'\n')
+                # print('time i',timeiend-timeistart)
+            # timejend = time.perf_counter()
+            # times_j.append(timejend-timejstart)
+            # file1.write(str(timejend-timejstart)+'\n')
+            # print('time j',timejend-timejstart)
 
                     # old slow way
                     # for jj,T3 in enumerate(t):
@@ -381,6 +463,13 @@ class timedomain(Calc2dir_base):
                     #         R3[ii][jj] += f_jilk * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*(omega2[k]-omega[j])*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
                     #         R6[ii][jj] += f_jikl * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*(omega2[k]-omega[i])*self.ucf*T3 - 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
 
+        # print(times_j)
+        # print(times_i)
+        # print(times_k)
+        # file1.close()
+        # file2.close()
+        # file3.close() 
+        
         return R1,R2,R3,R4,R5,R6
     
     def calc_sum_diagram(self,R_a,R_b,R_c):
@@ -430,13 +519,18 @@ class timedomain(Calc2dir_base):
         @rtype axes: list of floats
         
         '''
+        # print('start calc diagram')
         R1,R2,R3,R4,R5,R6 = self.calc_diagrams()
         
+        # print('start rephasing fft')
         R_r_ft = self.calc_2d_fft(self.calc_sum_diagram(R1,R2,R3))
+        # print('start non-rephasing fft')
         R_nr_ft = self.calc_2d_fft(self.calc_sum_diagram(R4,R5,R6))
         
+        # print('start fft shift / flip')
         R = np.asarray( np.fft.fftshift((np.flipud(np.roll(R_r_ft,-1,axis=0))+R_nr_ft).real,axes=(0,1)) )
         
+        # print('start calc_axes')
         axes = self.calc_axes()
         
         return R, axes
