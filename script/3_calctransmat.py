@@ -134,7 +134,7 @@ VCI.solve()
 # Calculate Transition Matrix
 #transm0 = VCI.calculate_transition_moments([dm1],[dm2])
 transm = VCI.calculate_transition_matrix([dm1],[dm2])
-freqs = VCI2.energiesrcm - VCI2.energiesrcm[0]
+freqs = VCI.energiesrcm - VCI.energiesrcm[0]
 
 np.save('results_VCI_exciton/VCI_frequencies.npy',freqs)
 np.save('results_VCI_exciton/VCI_dipolemoments.npy',transm)
