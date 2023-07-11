@@ -58,7 +58,7 @@ class Calc2dir_base():
 
         '''
         a = np.asarray(a)
-        
+            
         if len(a.shape) == 2:
             val = np.all(np.abs(abs(a)-abs(a).T) < tol)
             
@@ -66,7 +66,7 @@ class Calc2dir_base():
             val = np.all(np.abs(abs(a)-np.transpose(abs(a),(1,0,2))) < tol)
             
         else:
-            raise ValueError('The shape of the given matrix is not implemented in the check_symmetry function.')
+            raise ValueError('The shape',a.shape,'of the given matrix is not implemented in the check_symmetry function.')
         
         assert val == True, 'Given matrix is not (skew-)symmetrical. Please check!'
         
