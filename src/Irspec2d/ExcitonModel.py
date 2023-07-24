@@ -7,7 +7,7 @@ from Irspec2d import *
 
 class excitonmodel(Calc2dir_base):
     
-    def __init__(self, cmat, dipoles):
+    def __init__(self, cmat : np.ndarray, dipoles : np.ndarray):
         '''
         @param cmat: Coupling matrix, which is in the shape of the one-exciton hamiltonian
         @type cmat: List of lists of floats
@@ -20,7 +20,7 @@ class excitonmodel(Calc2dir_base):
         self.dipoles = dipoles
         self.noscill = len(cmat)
     
-    def generate_sorted_states(self):
+    def generate_sorted_states(self) -> list:
         '''
         We need the first and second excitations for a system with n_oscill Oscillators.
         n_oscill is the length of the tuples for the states.
@@ -37,10 +37,7 @@ class excitonmodel(Calc2dir_base):
         @rtype: list of tuples of ints
         
         '''
-        nmod = int(1 + 2*self.noscill + (self.noscill*(self.noscill-1))/2)
         states = []
-        _states = np.zeros((nmod,2))
-        # print('xx',_states)
 
         def generate_states(*args, repeat=1):
             '''
@@ -84,7 +81,7 @@ class excitonmodel(Calc2dir_base):
 
         return states
     
-    def eval_hamiltonian(self,states):
+    def eval_hamiltonian(self, states : list) -> np.ndarray:
         '''
         Evaluates the Hamiltonian used for the Exciton Model
         from the local mode coupling matrix.
@@ -99,24 +96,11 @@ class excitonmodel(Calc2dir_base):
         '''
         lenstates = len(states) # the number of states
         hamiltonian = np.zeros((lenstates,lenstates))
-        
-        # print(states)
-        
-        # rstates = np.tile(states, (lenstates,1))
-        # print('rstates \n',rstates)
-        
 
         # loop over all the states in order to evaluate the matrix elements: < state | H | state >
         for i, rstate in enumerate(states) : 
             
             values = []
-            # _values = np.zeros(len(self.cmat)**2)
-            # print(rstate)
-            
-            # _a = np.linspace(0,len(self.cmat)-1,len(self.cmat))
-            # __a = np.tile(_a,(len(self.cmat),1))
-            
-            # _rstate = 
             
             for a in range(len(self.cmat)):
                 for b in range(len(self.cmat)):
@@ -127,18 +111,18 @@ class excitonmodel(Calc2dir_base):
                         annihilation = a
                         newstate = list(rstate)
 
-                        # first apply annihilation operator b | n > = sqrt(n) | n-1 >
+                        # first apply annihilation operator: b | n > = sqrt(n) | n-1 >
                         fac = np.sqrt(newstate[creation]) # sqrt(n)
                         newstate[creation] = newstate[creation]-1 # | n-1 >
 
-                        # then apply creation operator b^dagger | n > = sqrt(n+1) | n+1 >
+                        # then apply creation operator: b^dagger | n > = sqrt(n+1) | n+1 >
                         fac *= np.sqrt(newstate[annihilation]+1) # sqrt(n+1)
                         newstate[annihilation] = newstate[annihilation]+1 # | n+1 >
 
                         # print([coup_lm[a][b],fac,newstate])
                         values.append([self.cmat[a][b],fac,newstate])
 
-            # loop over the left states < state |
+            # loop over the left states: < state |
             for j, lstate in enumerate(states) : 
                 leftstate = list(lstate)
 
@@ -148,14 +132,11 @@ class excitonmodel(Calc2dir_base):
                     rightstate = val[2]
 
                     if rightstate == leftstate :
-                        #print('found non-vanishing element: ', leftstate, rightstate, prefactor, op, i,j)
-
                         hamiltonian[i][j] += prefactor*op
                         
-        # print([np.around(hamiltonian[i][i],4) for i in range(len(hamiltonian))])
         return hamiltonian 
     
-    def eval_dipolmatrix(self,states):
+    def eval_dipolmatrix(self, states : list) -> np.ndarray:
         '''
         Evaluates the Transition Dipole Moment Matrix used for the Exciton Model
         from the local mode transition dipole moments.
@@ -201,7 +182,7 @@ class excitonmodel(Calc2dir_base):
                             
         return dipmatrix
     
-    def add_anharmonicity(self,hamiltonian,anharm):
+    def add_anharmonicity(self, hamiltonian : np.ndarray, anharm : float) -> np.ndarray:
         '''
         Adds the anharmonicitiy shift Delta to the second excited matrix 
         elements, exept for the combination bands.
@@ -222,7 +203,7 @@ class excitonmodel(Calc2dir_base):
             
         return hamiltonian
     
-    def add_all_anharmonicity(self,hamiltonian,anharm):
+    def add_all_anharmonicity(self, hamiltonian : np.ndarray, anharm : float) -> np.ndarray:
         '''
         Adds the anharmonicitiy shift Delta to the all diagonal elements in 
         addition to the second excitation elements. 
@@ -254,7 +235,7 @@ class excitonmodel(Calc2dir_base):
             
         return hamiltonian
     
-    def get_nm_freqs_dipolmat(self,anharm,shift='all'):
+    def get_nm_freqs_dipolmat(self, anharm : float, shift='all') -> np.ndarray:
         '''
         Calculates the normal mode frequencies and transition dipole
         moment matrix. 
@@ -287,15 +268,15 @@ class excitonmodel(Calc2dir_base):
         dipole_nm = np.tensordot(ev,firstmult,axes=(0,1))
         
         # simulating a symmetrical frequency matrix from the eigen values:
-        freqs_lm = [[0 for i in range(len(ew))] for i in range(len(ew))] 
+        freqs_lm = np.zeros((len(ew),len(ew)))
         for i in range(len(ew)):
             freqs_lm[i][0] = ew[i]
             freqs_lm[0][i] = ew[i]
-        
-        return np.asarray(freqs_lm), np.asarray(dipole_nm)
+            
+        return freqs_lm, dipole_nm
         
     
-    def get_nm_freqs_dipolmat_from_VSCF(self,VSCF_freqs):
+    def get_nm_freqs_dipolmat_from_VSCF(self, VSCF_freqs : list) -> np.ndarray:
         '''
         Calculates the normal mode frequencies and transition dipole
         moment matrix without any need for anharmonic shift parameters,
@@ -326,9 +307,9 @@ class excitonmodel(Calc2dir_base):
         dipole_nm = np.tensordot(ev,firstmult,axes=(0,1))
         
         # simulating a symmetrical frequency matrix from the eigen values:
-        freqs_lm = [[0 for i in range(len(ew))] for i in range(len(ew))] 
+        freqs_lm = np.zeros((len(ew),len(ew)))
         for i in range(len(ew)):
             freqs_lm[i][0] = ew[i]
             freqs_lm[0][i] = ew[i]
         
-        return np.asarray(freqs_lm), np.asarray(dipole_nm)
+        return freqs_lm, dipole_nm
