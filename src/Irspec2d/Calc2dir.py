@@ -202,6 +202,7 @@ class spectra():
         firstvalue = maximum/number
         negspace = np.linspace(-maximum,-firstvalue,number)
         posspace = np.linspace(firstvalue,maximum,number)
+        
         return np.concatenate((negspace,posspace))
     
     @staticmethod
@@ -227,7 +228,9 @@ class spectra():
         
         '''        
         gamma = halfwidth / (2.0*math.sqrt(2.0*math.log(2.0)))
-        return (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - (x - x0)**2 / (2*gamma**2) )
+        f = (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - (x - x0)**2 / (2*gamma**2) )
+        
+        return f
     
     @staticmethod
     def gauss2d_func(intensity : float, x : list, x0 : float, y : list, y0 : float, halfwidth : float) -> float:
@@ -252,7 +255,9 @@ class spectra():
         
         '''        
         gamma = halfwidth / (2.0*math.sqrt(2.0*math.log(2.0)))
-        return (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - ((x - x0)**2 + (y - y0)**2) / (2*gamma**2) )
+        f = (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - ((x - x0)**2 + (y - y0)**2) / (2*gamma**2) )
+        
+        return f
     
     @staticmethod
     def lorentz_func(intensity : float, x : list, x0 : float, halfwidth : float) -> float:
@@ -276,7 +281,9 @@ class spectra():
         @rtype: List of floats
         
         '''
-        return ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (halfwidth/2)**2 )
+        f = ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (halfwidth/2)**2 )
+        
+        return f
     
     @staticmethod
     def lorentz2d_func(intensity : float, x : list, x0 : float, y : list, y0 : float, halfwidth : float) -> float:
@@ -300,7 +307,9 @@ class spectra():
         @rtype: List of floats
         
         '''
-        return ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (y-y0)**2 + (halfwidth/2)**2 )
+        f = ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (y-y0)**2 + (halfwidth/2)**2 )
+        
+        return f
     
     @staticmethod
     def get_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param):
@@ -330,13 +339,13 @@ class spectra():
         x = np.linspace(xmin,xmax,steps)
         y = np.zeros(steps)
         
-        for freq, inten in zip(freqs,ints):
+        for f, i in zip(freqs,ints):
             if ftype.lower() == 'gauss':
-                y += spectra.gauss_func(inten,x,freq,halfwidth)
+                y += spectra.gauss_func(i,x,f,halfwidth)
             if ftype.lower() == 'lorentz':
-                y += spectra.lorentz_func(inten,x,freq,halfwidth)
+                y += spectra.lorentz_func(i,x,f,halfwidth)
         
-        return x.tolist(),y
+        return x, y
     
     @staticmethod
     def get_norm_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param):
@@ -372,9 +381,9 @@ class spectra():
             if ftype.lower() == 'lorentz':
                 y += spectra.lorentz_func(inten,x,freq,halfwidth)
             
-        y = y.tolist()/y.max()
+        y = y/y.max()
         
-        return x.tolist(),y
+        return x, y
     
     @staticmethod
     def get_2d_spectrum(xmin : float, xmax : float, exc : np.ndarray, ble : np.ndarray, emi : np.ndarray, steps=2000, halfwidth=15, ftype='gauss'):
@@ -425,7 +434,7 @@ class spectra():
                 z += spectra.lorentz2d_func(inten,xx,freq_x,yy,freq_y,halfwidth=5)
             
         
-        return x.tolist(),y.tolist(),z.tolist()
+        return x, y, z
     
     @staticmethod
     def norm_2d_spectrum(z : np.ndarray, max_z : float) -> np.ndarray:

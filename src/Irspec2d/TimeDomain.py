@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import linalg as LA
+from scipy import fft
 
 from Irspec2d import *
 
@@ -9,7 +10,7 @@ class timedomain(Calc2dir_base):
     
     ucf = 0.188 # unit conversion factor
     
-    def __init__(self, freqs, dipoles,**params):
+    def __init__(self, freqs, dipoles, **params):
         '''
         Setting all parameters needed for the time domain 2D IR spectra calculations.
         
@@ -372,9 +373,6 @@ class timedomain(Calc2dir_base):
                 f_jjii = self.calc_fourpointcorr('jjii',fak1,fak2,fak3,mu[i],mu[j]) * dipole
                 f_jiji = self.calc_fourpointcorr('jiji',fak1,fak2,fak3,mu[i],mu[j]) * dipole
                 f_jiij = self.calc_fourpointcorr('jiij',fak1,fak2,fak3,mu[i],mu[j]) * dipole
-
-                # print('mu_i:',mui,'mu_j:',muj)
-                # print('dipole:',dipole)
                 
                 _t = np.tile(t,(self.n_t,1))
                 
@@ -384,29 +382,16 @@ class timedomain(Calc2dir_base):
                 partc    = 1j*(omega[j]-omega[i])*self.ucf*self.t2
                 partd    = (_t.T+_t)/self.T2 
                 
-                # new faster way! 
                 R1 -= f_jiji * np.exp(   parta - partb    + partc - partd )
                 R2 -= f_jjii * np.exp(   parta - partb            - partd )
                 R4 -= f_jiij * np.exp( - parta - partb_R4 + partc - partd ) 
                 R5 -= f_jjii * np.exp( - parta - partb            - partd ) 
-                
-                # old slow way
-                # for jj,T3 in enumerate(t):
-                    # for ii,T1 in enumerate(t):
-                        # R1[ii][jj] -= f_jiji * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
-                        # R2[ii][jj] -= f_jjii * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 - (T1+T3)/self.T2)
-                        # R4[ii][jj] -= f_jiij * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*omega[j]*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
-                        # R5[ii][jj] -= f_jjii * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*omega[i]*self.ucf*T3 - (T1+T3)/self.T2)
-
 
                 for k in range(self._calc_nmodesexc()):
 
                     muik = LA.norm(mu2[i][k])
                     mujk = LA.norm(mu2[j][k])
                     dipole2 = mui*muj*muik*mujk
-
-                    # print('mu_ik:',muik,'mu_jk:',mujk)
-                    # print('dipole2:',dipole2)
                     
                     parta2    = 1j*omega[j]*self.ucf*_t.T
                     partb2_R3 = 1j*(omega2[k]-omega[j])*self.ucf*_t
@@ -417,15 +402,8 @@ class timedomain(Calc2dir_base):
                     f_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
                     f_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
                     
-                    # new faster way! 
                     R3 += f_jilk * np.exp(   parta2 - partb2_R3 + partc2 - partd2 ) 
                     R6 += f_jikl * np.exp( - parta2 - partb2_R6 - partc2 - partd2 ) 
-
-                    # old slow way
-                    # for jj,T3 in enumerate(t):
-                    #     for ii,T1 in enumerate(t):
-                    #         R3[ii][jj] += f_jilk * np.exp(   1j*omega[j]*self.ucf*T1 - 1j*(omega2[k]-omega[j])*self.ucf*T3 + 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
-                    #         R6[ii][jj] += f_jikl * np.exp( - 1j*omega[j]*self.ucf*T1 - 1j*(omega2[k]-omega[i])*self.ucf*T3 - 1j*(omega[j]-omega[i])*self.ucf*self.t2 - (T1+T3)/self.T2)
         
         return R1,R2,R3,R4,R5,R6
     
@@ -460,7 +438,7 @@ class timedomain(Calc2dir_base):
         
         '''
         n_zp = self.n_t * 2
-        R_ft = np.fft.ifft2(R,s=(n_zp,n_zp))
+        R_ft = fft.ifft2(R,s=(n_zp,n_zp))
         
         return R_ft
     
@@ -476,18 +454,13 @@ class timedomain(Calc2dir_base):
         @rtype axes: list of floats
         
         '''
-        # print('start calc diagram')
         R1,R2,R3,R4,R5,R6 = self.calc_diagrams()
         
-        # print('start rephasing fft')
         R_r_ft = self.calc_2d_fft(self.calc_sum_diagram(R1,R2,R3))
-        # print('start non-rephasing fft')
         R_nr_ft = self.calc_2d_fft(self.calc_sum_diagram(R4,R5,R6))
         
-        # print('start fft shift / flip')
         R = np.asarray( np.fft.fftshift((np.flipud(np.roll(R_r_ft,-1,axis=0))+R_nr_ft).real,axes=(0,1)) )
         
-        # print('start calc_axes')
         axes = self.calc_axes()
         
         return R, axes
