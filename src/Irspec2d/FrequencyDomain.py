@@ -14,7 +14,7 @@ class freqdomain(Calc2dir_base):
         self.freqmat = self.generate_freqmat(self.freqs)
         self.nmodes = self.calc_nmodes()
     
-    def calc_excitation(self,intmat : np.ndarray) -> list:
+    def calc_excitation(self, intmat : np.ndarray) -> list :
         '''
         Takes the energy levels and the intensity matrix in order to find 
         the excited state absorption processes that occur in an 2D IR
@@ -47,7 +47,7 @@ class freqdomain(Calc2dir_base):
                         
         return (exc_x, exc_y, exc_i)
     
-    def calc_stimulatedemission(self,intmat):
+    def calc_stimulatedemission(self, intmat : np.ndarray) -> list :
         '''
         Takes the energy levels and the intensity matrix in order to find
         the stimulated emission processes that occur in an 2D IR experiment.
@@ -80,7 +80,7 @@ class freqdomain(Calc2dir_base):
                     # print('Stim. emission from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(emi_inten,2))
         return (emi_x, emi_y, emi_i)
 
-    def calc_bleaching(self,intmat):
+    def calc_bleaching(self, intmat : np.ndarray) -> list :
         '''
         Takes the energy levels and the intensity matrix in order to find
         the bleaching processes that occur in an 2D IR experiment.
@@ -114,7 +114,7 @@ class freqdomain(Calc2dir_base):
 
         return (ble_x, ble_y, ble_i)
                       
-    def calc_all_2d_process(self):
+    def calc_all_2d_process(self) -> list :
         '''
         Calculates all processes that can occur within a
         2D IR experiment from the energy levels and the

@@ -8,7 +8,7 @@ class Calc2dir_base():
     
     '''
     
-    def __init__(self, freqs : list, dipoles : np.ndarray):
+    def __init__(self, freqs : np.ndarray, dipoles : np.ndarray):
         '''
         Create settings for object to calculate 2D IR spectra.
         Checks if input data is a (skew-)symmetrical matrix.
@@ -24,10 +24,10 @@ class Calc2dir_base():
         
         self.dipoles = np.squeeze(dipoles)
         
-        if len(np.asarray(freqs).shape) == 2:
-            self.freqs = np.asarray(freqs)[0]
-        if len(np.asarray(freqs).shape) == 1:
-            self.freqs = np.asarray(freqs)
+        if len(freqs.shape) == 2:
+            self.freqs = freqs[0]
+        if len(freqs.shape) == 1:
+            self.freqs = freqs
         
         self.check_input()
         self.check_symmetry(self.dipoles)
@@ -70,7 +70,7 @@ class Calc2dir_base():
         
         assert val == True, 'Given matrix is not (skew-)symmetrical. Please check!'
         
-    def calc_nmodes(self):
+    def calc_nmodes(self) -> int:
         '''
         The number of modes equals the length of the frequency matrix in one direction.
         
@@ -85,7 +85,7 @@ class Calc2dir_base():
             
         return n
     
-    def calc_num_oscill(self, n : int):
+    def calc_num_oscill(self, n : int) -> int :
         '''
         Calculates the number of oscillators n_oscill based on a 
         given number of modes n. This is based on the assumption 
@@ -114,15 +114,15 @@ class Calc2dir_base():
         assert n != 0, 'There are no modes, because nmodes=0.'
         
         if noscill-int(noscill)==0:
-            val = int(noscill)
+            n_osc = int(noscill)
         else:
             new_noscill = (-3. + np.sqrt(8.*n +9.) ) /2.
             if new_noscill-int(new_noscill)==0:
-                val = int(new_noscill)
+                n_osc = int(new_noscill)
             else:
                 raise ValueError("Number of Oscillators couldn't be evaluated.")
                 
-        return val
+        return n_osc
     
     def calc_trans2int(self) -> np.ndarray :
         '''
@@ -142,7 +142,7 @@ class Calc2dir_base():
     
     def generate_freqmat(self, freq : np.ndarray) -> np.ndarray:
         '''
-        Makes a frequency matrix from given frequency list
+        Generates a frequency matrix from given frequency list
         
         @param freq: list of frequencies
         @type freq: list
@@ -152,9 +152,10 @@ class Calc2dir_base():
         
         '''
         dim = self.calc_nmodes()
-        freqmat = np.tile(freq,(dim,1))
+        freqlist  = np.tile(freq,(dim,1))
+        freqmat = freqlist - freqlist.T
 
-        return freqmat - freqmat.T
+        return freqmat 
     
     
     @staticmethod
@@ -183,7 +184,7 @@ class spectra():
     '''
     
     @staticmethod
-    def set_line_spacing(maximum : float, number : int) -> np.ndarray:
+    def set_line_spacing(maximum : float, number : int) -> np.ndarray :
         '''
         Use this for matplotlib.pyplot contour plots in order to set the 
         number of displayed lines. 
@@ -196,7 +197,7 @@ class spectra():
         @type number: int
         
         @return: new values at which the lines are plotted
-        @rtype: list
+        @rtype: np.ndarray
 
         '''
         firstvalue = maximum/number
@@ -206,7 +207,7 @@ class spectra():
         return np.concatenate((negspace,posspace))
     
     @staticmethod
-    def gauss_func(intensity : float, x : list, x0 : float, halfwidth: float) -> float:
+    def gauss_func(intensity : float, x : np.ndarray, x0 : float, halfwidth: float) -> np.ndarray :
         '''
         Computes a single value at position x for a 1D gaussian type function.
         
@@ -214,7 +215,7 @@ class spectra():
         @type intensity: Float
         
         @param x: x-values 
-        @type x: List of floats
+        @type x: np.ndarray
         
         @param x0: Position of a peak
         @type x0: Float
@@ -224,7 +225,7 @@ class spectra():
         @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
         
         @return: Corresponding y-values
-        @rtype: List of floats
+        @rtype: np.ndarray
         
         '''        
         gamma = halfwidth / (2.0*math.sqrt(2.0*math.log(2.0)))
@@ -233,7 +234,7 @@ class spectra():
         return f
     
     @staticmethod
-    def gauss2d_func(intensity : float, x : list, x0 : float, y : list, y0 : float, halfwidth : float) -> float:
+    def gauss2d_func(intensity : float, x : np.ndarray, x0 : float, y : np.ndarray, y0 : float, halfwidth : float) -> np.ndarray :
         '''
         Computes a single value at position x for a 2D gaussian type function.
         
@@ -241,7 +242,7 @@ class spectra():
         @type intensity: Float
         
         @param x: x-values 
-        @type x: List of floats
+        @type x: np.ndarray
         
         @param x0: Position of a peak
         @type x0: Float
@@ -251,7 +252,7 @@ class spectra():
         @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
         
         @return: Corresponding y-values
-        @rtype: List of floats
+        @rtype: np.ndarray
         
         '''        
         gamma = halfwidth / (2.0*math.sqrt(2.0*math.log(2.0)))
@@ -260,7 +261,7 @@ class spectra():
         return f
     
     @staticmethod
-    def lorentz_func(intensity : float, x : list, x0 : float, halfwidth : float) -> float:
+    def lorentz_func(intensity : float, x : np.ndarray, x0 : float, halfwidth : float) -> np.ndarray :
         '''
         Computes a single value at position x for a 1D lorentzian type function.
         
@@ -268,7 +269,7 @@ class spectra():
         @type intensity: Float
         
         @param x: x-values 
-        @type x: List of floats
+        @type x: np.ndarray
         
         @param x0: Position of a peak
         @type x0: Float
@@ -278,15 +279,15 @@ class spectra():
         @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
         
         @return: Corresponding y-values
-        @rtype: List of floats
+        @rtype: np.ndarray
         
         '''
-        f = ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (halfwidth/2)**2 )
+        f = intensity * ( 1 / np.pi ) * ( ( 0.5 * halfwidth ) / ( (x - x0)**2 + (0.5 * halfwidth)**2 ) )
         
         return f
     
     @staticmethod
-    def lorentz2d_func(intensity : float, x : list, x0 : float, y : list, y0 : float, halfwidth : float) -> float:
+    def lorentz2d_func(intensity : float, x : np.ndarray, x0 : float, y : np.ndarray, y0 : float, halfwidth : float) -> np.ndarray:
         '''
         Computes a single value at grid x,y for a 2D lorentzian type function.
         
@@ -294,7 +295,7 @@ class spectra():
         @type intensity: Float
         
         @param x/y: x-values 
-        @type x/y: List of floats
+        @type x/y: np.ndarray
         
         @param x0/y0: Position of a peak
         @type x0/y0: Float
@@ -304,7 +305,7 @@ class spectra():
         @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
         
         @return: Corresponding y-values
-        @rtype: List of floats
+        @rtype: np.ndarray
         
         '''
         f = ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (y-y0)**2 + (halfwidth/2)**2 )
@@ -312,7 +313,7 @@ class spectra():
         return f
     
     @staticmethod
-    def get_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param):
+    def get_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param) -> np.ndarray :
         '''
         Sums up all gauss/lorentz functions for each peak.
         
@@ -348,7 +349,7 @@ class spectra():
         return x, y
     
     @staticmethod
-    def get_norm_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param):
+    def get_norm_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param) -> np.ndarray :
         '''
         Sums up all gauss/lorentz functions for each peak and sets the highest value to one.
         
@@ -386,7 +387,7 @@ class spectra():
         return x, y
     
     @staticmethod
-    def get_2d_spectrum(xmin : float, xmax : float, exc : np.ndarray, ble : np.ndarray, emi : np.ndarray, steps=2000, halfwidth=15, ftype='gauss'):
+    def get_2d_spectrum(xmin : float, xmax : float, exc : np.ndarray, ble : np.ndarray, emi : np.ndarray, steps=2000, halfwidth=15, ftype='gauss') -> np.ndarray :
         '''
         Plots the simple 2D IR spectrum automatically.
         
@@ -437,18 +438,18 @@ class spectra():
         return x, y, z
     
     @staticmethod
-    def norm_2d_spectrum(z : np.ndarray, max_z : float) -> np.ndarray:
+    def norm_2d_spectrum(z : np.ndarray, max_z : float) -> np.ndarray :
         '''
         Divides a every element in a matrix by a given value.
         
         @param z: matrix that is supposed to be normalized
-        @type z: List of lists
+        @type z: np.ndarray
         
         @param max_z: Value that matrix is normalized to.
         @type max_z: Float
         
         @return: Normalized matrix
-        @rtype: List of lists 
+        @rtype: np.ndarray
         
         '''        
         for i in range(len(z)):

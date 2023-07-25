@@ -10,7 +10,7 @@ class timedomain(Calc2dir_base):
     
     ucf = 0.188 # unit conversion factor
     
-    def __init__(self, freqs, dipoles, **params):
+    def __init__(self, freqs : np.ndarray, dipoles : np.ndarray, **params):
         '''
         Setting all parameters needed for the time domain 2D IR spectra calculations.
         
@@ -99,7 +99,7 @@ class timedomain(Calc2dir_base):
             if self.print_output : print('Set the omega offset value (omega_off) to',self.omega_off,'(calculated default).')
             
         
-    def _get_secexc_dipoles(self): 
+    def _get_secexc_dipoles(self) -> np.ndarray : 
         '''
         Extracts the matrix for the excited state transition dipole moments.
         
@@ -119,7 +119,7 @@ class timedomain(Calc2dir_base):
                 
         return np.asarray(exc_trans)
     
-    def _get_omega_off(self):
+    def _get_omega_off(self) -> int :
         '''
         Sets the omega_off value that is used to center the peaks, 
         in order for better computation of the fourier transforms.
@@ -128,9 +128,11 @@ class timedomain(Calc2dir_base):
         @rtype: integer
         
         '''
-        return round(sum(self.freqs[1:self.noscill+1])/len(self.freqs[1:self.noscill+1]))
+        omega_off = round(sum(self.freqs[1:self.noscill+1])/len(self.freqs[1:self.noscill+1]))
+        
+        return omega_off
     
-    def set_omega(self):
+    def set_omega(self) -> list :
         '''
         In the frequency matrix, the first state is 0. 
         The states 1 to n_oscill are the first excited states.
@@ -155,7 +157,7 @@ class timedomain(Calc2dir_base):
         
         return omega, omega2
     
-    def _get_pulse_angles(self,pol):
+    def _get_pulse_angles(self, pol : str) -> list :
         '''
         Returns a list of different angles for different polarization conditions.
         E.g. for the <ZZZZ> polarization condition the list is [0,0,0,0].
@@ -179,7 +181,7 @@ class timedomain(Calc2dir_base):
         
         return pol_list
         
-    def _calc_nmodesexc(self):
+    def _calc_nmodesexc(self) -> int :
         '''
         n_modesexc = n_oscill + (n_oscill*(n_oscill-1))/2
         
@@ -187,9 +189,11 @@ class timedomain(Calc2dir_base):
         @rtype: integer
         
         '''
-        return int(self.noscill + (self.noscill*(self.noscill-1))/2)
+        n_modes_exc = int(self.noscill + (self.noscill*(self.noscill-1))/2)
+        
+        return n_modes_exc
     
-    def calc_cos(self,vec1,vec2):
+    def calc_cos(self, vec1 : list, vec2 : list) -> float :
         '''
         calculates the cosine between two three-dimensional vectors
         
@@ -211,7 +215,7 @@ class timedomain(Calc2dir_base):
 
         return cos12
     
-    def _calc_fourpoint_factors(self,pol_lst):
+    def _calc_fourpoint_factors(self, pol_lst : list) -> float :
         '''
         Needs the list of angles of the polarization condition.
         Calculating parts of the four-point correlation function:
@@ -238,9 +242,9 @@ class timedomain(Calc2dir_base):
         row2 = 4 * np.cos(ac) * np.cos(bd) - np.cos(ab) * np.cos(cd) - np.cos(ad) * np.cos(bc)
         row3 = 4 * np.cos(ad) * np.cos(bc) - np.cos(ab) * np.cos(cd) - np.cos(ac) * np.cos(bd)
 
-        return row1,row2,row3
+        return row1, row2, row3
     
-    def calc_fourpointcorr(self,pathway,fak1,fak2,fak3,*mus):
+    def calc_fourpointcorr(self, pathway : str, fak1 : float, fak2 : float, fak3 : float, *mus) -> float:
         '''
         pathway : 'jjii', 'jiji', 'jiij', 'jikl'
 
@@ -282,7 +286,7 @@ class timedomain(Calc2dir_base):
 
         return S
     
-    def calc_fourpointcorr_mat(self,pathway,fak1,fak2,fak3,mu_mat):
+    def calc_fourpointcorr_mat(self, pathway : str, fak1 : float, fak2 : float, fak3 : float, *mus) -> float:
         '''
         pathway : 'jjii', 'jiji', 'jiij', 'jikl'
 
@@ -324,7 +328,7 @@ class timedomain(Calc2dir_base):
 
         return S
     
-    def calc_axes(self):
+    def calc_axes(self) -> np.ndarray :
         '''
         Calculates the time axis into a frequency axis.
         
@@ -338,7 +342,7 @@ class timedomain(Calc2dir_base):
         
         return ticks
     
-    def calc_diagrams(self):
+    def calc_diagrams(self) -> np.ndarray :
         '''
         This computes the diagrams R_1 to R_6.
         R_1, R_2 and R_3 are rephasing diagrams and R_4, R_5 and R_6 are non-rephasing diagrams.
@@ -407,7 +411,7 @@ class timedomain(Calc2dir_base):
         
         return R1,R2,R3,R4,R5,R6
     
-    def calc_sum_diagram(self,R_a,R_b,R_c):
+    def calc_sum_diagram(self, R_a : np.ndarray, R_b : np.ndarray, R_c : np.ndarray) -> np.ndarray :
         '''
         Calculates the sum of diagrams and divides the first row and column by two.
         
@@ -426,7 +430,7 @@ class timedomain(Calc2dir_base):
             
         return R
     
-    def calc_2d_fft(self,R):
+    def calc_2d_fft(self, R : np.ndarray) -> np.ndarray :
         '''
         Calculates a two-dimensional Fourier transformation of a given array
         
@@ -442,30 +446,30 @@ class timedomain(Calc2dir_base):
         
         return R_ft
     
-    def get_absorptive_spectrum(self):
+    def get_absorptive_spectrum(self) -> np.ndarray :
         '''
         Automatically calculates a fully absorption 2D IR spectrum.
         R(w3,t2,w1) = FFT2D ( Real ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
-        
+
         @return R: Resulting signal from fourier-transformed sum of Feynman diagrams
         @rtype R: numpy array
-        
+
         @return axes: frequency axis
         @rtype axes: list of floats
-        
+
         '''
         R1,R2,R3,R4,R5,R6 = self.calc_diagrams()
-        
+
         R_r_ft = self.calc_2d_fft(self.calc_sum_diagram(R1,R2,R3))
         R_nr_ft = self.calc_2d_fft(self.calc_sum_diagram(R4,R5,R6))
-        
+
         R = np.asarray( np.fft.fftshift((np.flipud(np.roll(R_r_ft,-1,axis=0))+R_nr_ft).real,axes=(0,1)) )
-        
+
         axes = self.calc_axes()
-        
+
         return R, axes
     
-    def get_photon_echo_spectrum(self):
+    def get_photon_echo_spectrum(self) -> np.ndarray :
         '''
         Automatically calculates a photon echo 2D IR spectrum.
         R(w3,t2,w1) = abs( FFT2D ( Real ( R_r(t3,t2,t1)) ) )
@@ -488,7 +492,7 @@ class timedomain(Calc2dir_base):
         
         return R, axes
     
-    def get_correlation_spectrum(self):
+    def get_correlation_spectrum(self) -> np.ndarray :
         '''
         Automatically calculates a correlation 2D IR spectrum.
         R(w3,t2,w1) = FFT2D ( Imag ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
