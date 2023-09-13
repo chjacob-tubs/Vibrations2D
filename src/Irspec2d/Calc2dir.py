@@ -29,19 +29,11 @@ class Calc2dir_base():
         if len(freqs.shape) == 1:
             self.freqs = freqs
         
-        self.check_input()
-        self.check_symmetry(self.dipoles)
+        assert self.freqs.shape[0] == self.dipoles.shape[0], 'Frequency list and first axis of transition dipole moment matrix do not have the same length.'
+        assert self.check_symmetry(self.dipoles) == True, 'Given matrix is not (skew-)symmetrical. Please check!'
         
         self.noscill = self.calc_num_oscill(self.calc_nmodes())
         
-    def check_input(self):
-        '''
-        Compares the frequency matrix (n,n) and the transition dipole moment matrix (n,n,3).
-        Due to the transition dipole moments being vectors, the length of the first two elements
-        are compared. 
-        
-        '''
-        assert self.freqs.shape[0] == self.dipoles.shape[0], 'Frequency list and first axis of transition dipole moment matrix do not have the same length.'
             
     def check_symmetry(self, a : np.ndarray, tol = 1e-5):
         '''
@@ -68,7 +60,8 @@ class Calc2dir_base():
         else:
             raise ValueError('The shape',a.shape,'of the given matrix is not implemented in the check_symmetry function.')
         
-        assert val == True, 'Given matrix is not (skew-)symmetrical. Please check!'
+        return val 
+        
         
     def calc_nmodes(self) -> int:
         '''
@@ -84,6 +77,18 @@ class Calc2dir_base():
             raise ValueError('The matrices containing the frequencies and the transition dipole moments do not have the same length.')
             
         return n
+        
+    def _calc_nmodesexc(self) -> int :
+        '''
+        n_modesexc = n_oscill + (n_oscill*(n_oscill-1))/2
+        
+        @return: number of excited modes
+        @rtype: integer
+        
+        '''
+        n_modes_exc = int(self.noscill + (self.noscill*(self.noscill-1))/2)
+        
+        return n_modes_exc
     
     def calc_num_oscill(self, n : int) -> int :
         '''
@@ -151,12 +156,135 @@ class Calc2dir_base():
         @rtype: np.array
         
         '''
-        dim = self.calc_nmodes()
-        freqlist  = np.tile(freq,(dim,1))
+        freqlist = np.tile(freq,(len(freq),1))
         freqmat = freqlist - freqlist.T
 
-        return freqmat 
+        return freqmat
     
+    def _get_pulse_angles(self, pol : str) -> list :
+        '''
+        Returns a list of different angles for different polarization conditions.
+        E.g. for the <ZZZZ> polarization condition the list is [0,0,0,0].
+        
+        @param pol: polarization condition
+        @type pol: string containing four symbols
+        @example pol: 'ZZZZ'
+        
+        @return: list of angles for given polarization condition
+        @rtype: list of integers
+        
+        '''
+        
+        pol_list = [0,0,0,0]
+        
+        for i, val in enumerate(pol):
+            if val == pol[0]:
+                pol_list[i] = 0
+            if val != pol[0]:
+                pol_list[i] = 90
+        
+        return pol_list
+    
+    def calc_cos(self, vec1 : list, vec2 : list) -> float :
+        '''
+        calculates the cosine between two three-dimensional vectors
+        
+        @param vec1/vec2: two 3D vectors
+        @type vec1/vec2: list of three floats 
+        
+        @return: angle between the vectors
+        @rtype: float
+
+        '''
+
+        mu1 = LA.norm(vec1)
+        mu2 = LA.norm(vec2)
+
+        if mu1.all() != 0 and mu2.all() !=0:
+            cos12 = ( np.dot(vec1,np.conj(vec2)) ) / (mu1*mu2)
+        else:
+            cos12 = 0
+
+        return cos12
+    
+    def _calc_fourpoint_factors(self, pol_lst : list) -> float :
+        '''
+        Needs the list of angles of the polarization condition.
+        Calculating parts of the four-point correlation function:
+        row1 = 4 * cos theta_ab * cos theta_cd - cos theta_ac * cos theta_bd - cos theta_ad * cos theta_bc
+        row2 = 4 * cos theta_ac * cos theta_bd - cos theta_ab * cos theta_cd - cos theta_ad * cos theta_bc
+        row3 = 4 * cos theta_ad * cos theta_bc - cos theta_ab * cos theta_cd - cos theta_ac * cos theta_bd
+        
+        @param pol_lst: list of angles for a given polarization condition
+        @type pol_lst: list of integers
+        
+        @return: three faktors for the four-point correlation function
+        @rtype: three floats
+        
+        '''
+
+        ab = np.deg2rad(pol_lst[0]-pol_lst[1])
+        cd = np.deg2rad(pol_lst[2]-pol_lst[3])
+        ac = np.deg2rad(pol_lst[0]-pol_lst[2])
+        bd = np.deg2rad(pol_lst[1]-pol_lst[3])
+        ad = np.deg2rad(pol_lst[0]-pol_lst[3])
+        bc = np.deg2rad(pol_lst[1]-pol_lst[2])
+        
+        abcd = np.cos(ab) * np.cos(cd)
+        acbd = np.cos(ac) * np.cos(bd)
+        adbc = np.cos(ad) * np.cos(bc)
+
+        row1 = 4 * abcd - acbd - adbc
+        row2 = 4 * acbd - abcd - adbc
+        row3 = 4 * adbc - abcd - acbd
+
+        return row1, row2, row3
+    
+    def calc_fourpointcorr_mat(self, fak1 : float, fak2 : float, fak3 : float, mu_a, mu_b, mu_c, mu_d) -> float:
+        '''
+        pathway : 'jjii', 'jiji', 'jiij', 'jikl'
+
+        S = 1/30 * ( cos theta_alpha_beta  * cos theta_gamma_delta * fak1
+                   - cos theta_alpha_gamma * cos theta_beta_delta  * fak2
+                   - cos theta_alpha_delta * cos theta_beta_gamma  * fak3 )
+
+        @param pathway: feynman pathway of a diagram
+        @type pathway: string
+        
+        @param fak1/fak2/fak3: prefactor of the correlation function
+        @type fak1/fak2/fak3: float
+        
+        @param mus: dipole moments
+        @type mus: list of floats
+        '''
+
+        S1 = fak1 * self.calc_cos(mu_a, mu_b) * self.calc_cos(mu_c, mu_d)
+        S2 = fak2 * self.calc_cos(mu_a, mu_c) * self.calc_cos(mu_b, mu_d)
+        S3 = fak3 * self.calc_cos(mu_a, mu_d) * self.calc_cos(mu_b, mu_c)
+
+        S = (S1 + S2 + S3) / 30
+
+        return S
+    
+    def _get_secexc_dipoles(self) -> np.ndarray : 
+        '''
+        Extracts the matrix for the excited state transition dipole moments.
+        
+        @return: excited state transition dipole moment
+        @rtype: numpy array
+
+        '''
+        exc_trans = []
+
+        for i in range(1,len(self.dipoles)):
+            if i <= self.noscill:
+                transcolumn = []
+                for j in range(len(self.dipoles)):
+                    if j > self.noscill :
+                        transcolumn.append(self.dipoles[i][j])
+                exc_trans.append(transcolumn)
+                
+        return np.asarray(exc_trans)
     
     @staticmethod
     def n2s(number : float) -> str:
@@ -207,7 +335,7 @@ class spectra():
         return np.concatenate((negspace,posspace))
     
     @staticmethod
-    def gauss_func(intensity : float, x : np.ndarray, x0 : float, halfwidth: float) -> np.ndarray :
+    def gauss_func(x : np.ndarray, gamma: float) -> np.ndarray :
         '''
         Computes a single value at position x for a 1D gaussian type function.
         
@@ -220,21 +348,20 @@ class spectra():
         @param x0: Position of a peak
         @type x0: Float
         
-        @param halfwidth: Parameter to control the width of the peaks
-        @type halfwidth: Float
-        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
+        @param gamma: Parameter to control the width of the peaks
+        @type gamma: Float
+        @note gamma: Does not necessarily correlate to actual FWHM of a peak
         
         @return: Corresponding y-values
         @rtype: np.ndarray
         
         '''        
-        gamma = halfwidth / (2.0*math.sqrt(2.0*math.log(2.0)))
-        f = (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - (x - x0)**2 / (2*gamma**2) )
+        f = np.exp( - x**2 / (2*gamma**2) )
         
         return f
     
     @staticmethod
-    def gauss2d_func(intensity : float, x : np.ndarray, x0 : float, y : np.ndarray, y0 : float, halfwidth : float) -> np.ndarray :
+    def gauss2d_func(x : np.ndarray, y : np.ndarray, gamma : float) -> np.ndarray :
         '''
         Computes a single value at position x for a 2D gaussian type function.
         
@@ -247,21 +374,23 @@ class spectra():
         @param x0: Position of a peak
         @type x0: Float
         
-        @param halfwidth: Parameter to control the width of the peaks
-        @type halfwidth: Float
-        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
+        @param gamma: Parameter to control the width of the peaks
+        @type gamma: Float
+        @note gamma: Does not necessarily correlate to actual FWHM of a peak
         
         @return: Corresponding y-values
         @rtype: np.ndarray
         
-        '''        
-        gamma = halfwidth / (2.0*math.sqrt(2.0*math.log(2.0)))
-        f = (intensity/(2.0 * math.pi * gamma**2)) * np.exp( - ((x - x0)**2 + (y - y0)**2) / (2*gamma**2) )
+        '''
+        
+        f1 = spectra.gauss_func(x,gamma)
+        f2 = spectra.gauss_func(y,gamma)
+        f =np.einsum('a,b->ab',f1,f2)
         
         return f
     
     @staticmethod
-    def lorentz_func(intensity : float, x : np.ndarray, x0 : float, halfwidth : float) -> np.ndarray :
+    def lorentz_func(x : np.ndarray, gamma : float) -> np.ndarray :
         '''
         Computes a single value at position x for a 1D lorentzian type function.
         
@@ -274,20 +403,46 @@ class spectra():
         @param x0: Position of a peak
         @type x0: Float
         
-        @param halfwidth: Parameter to control the width of the peaks
-        @type halfwidth: Float
-        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
+        @param gamma: Parameter to control the width of the peaks
+        @type gamma: Float
+        @note gamma: Does not necessarily correlate to actual FWHM of a peak
         
         @return: Corresponding y-values
         @rtype: np.ndarray
         
         '''
-        f = intensity * ( 1 / np.pi ) * ( ( 0.5 * halfwidth ) / ( (x - x0)**2 + (0.5 * halfwidth)**2 ) )
+        f = (( 2 * gamma ) / ( x**2 + gamma**2 ) )
         
         return f
     
     @staticmethod
-    def lorentz2d_func(intensity : float, x : np.ndarray, x0 : float, y : np.ndarray, y0 : float, halfwidth : float) -> np.ndarray:
+    def lorentz_func_imag(x : np.ndarray, gamma : float) -> np.ndarray :
+        '''
+        Computes a single value at position x for a 1D lorentzian type function.
+        
+        @param intensity: Intensity of a peak
+        @type intensity: Float
+        
+        @param x: x-values 
+        @type x: np.ndarray
+        
+        @param x0: Position of a peak
+        @type x0: Float
+        
+        @param gamma: Parameter to control the width of the peaks
+        @type gamma: Float
+        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        
+        @return: Corresponding y-values
+        @rtype: np.ndarray
+        
+        '''
+        f = ( 2 * x ) / ( x**2 + gamma**2 ) 
+        
+        return f
+    
+    @staticmethod
+    def lorentzian2D(x : np.ndarray, y : np.ndarray, gamma : float) -> np.ndarray:
         '''
         Computes a single value at grid x,y for a 2D lorentzian type function.
         
@@ -300,20 +455,52 @@ class spectra():
         @param x0/y0: Position of a peak
         @type x0/y0: Float
         
-        @param halfwidth: Parameter to control the width of the peaks
-        @type halfwidth: Float
-        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
+        @param gamma: Parameter to control the width of the peaks
+        @type gamma: Float
+        @note gamma: Does not necessarily correlate to actual FWHM of a peak
         
         @return: Corresponding y-values
         @rtype: np.ndarray
         
         '''
-        f = ( (intensity*halfwidth) / (2*math.pi) ) / ( (x-x0)**2 + (y-y0)**2 + (halfwidth/2)**2 )
+        
+        f1 = spectra.lorentz_func(x,gamma)
+        f2 = spectra.lorentz_func(y,gamma)
+        f = np.einsum('a,b->ab',f1,f2)
         
         return f
     
     @staticmethod
-    def get_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param) -> np.ndarray :
+    def lorentzian2D_imag(x : np.ndarray, y : np.ndarray, gamma : float) -> np.ndarray:
+        '''
+        Computes a single value at grid x,y for a 2D lorentzian type function.
+        
+        @param intensity: Intensity of a peak
+        @type intensity: Float
+        
+        @param x/y: x-values 
+        @type x/y: np.ndarray
+        
+        @param x0/y0: Position of a peak
+        @type x0/y0: Float
+        
+        @param gamma: Parameter to control the width of the peaks
+        @type gamma: Float
+        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        
+        @return: Corresponding y-values
+        @rtype: np.ndarray
+        
+        '''
+        
+        f1 = spectra.lorentz_func_imag(x,gamma)
+        f2 = spectra.lorentz_func_imag(y,gamma)
+        f = np.einsum('a,b->ab',f1,f2)
+        
+        return f
+    
+    @staticmethod
+    def get_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, gamma=2, ftype='lorentz', **param) -> np.ndarray :
         '''
         Sums up all gauss/lorentz functions for each peak.
         
@@ -326,9 +513,9 @@ class spectra():
         @param steps: number of points for the x-axis
         @type steps: Integer
         
-        @param halfwidth: Parameter to control the width of the peaks
-        @type halfwidth: Float
-        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
+        @param gamma: Parameter to control the width of the peaks
+        @type gamma: Float
+        @note gamma: Does not necessarily correlate to actual FWHM of a peak
         
         @param ftype: Choses between gauss and lorentz function
         @type ftype: String
@@ -342,118 +529,8 @@ class spectra():
         
         for f, i in zip(freqs,ints):
             if ftype.lower() == 'gauss':
-                y += spectra.gauss_func(i,x,f,halfwidth)
+                y += i * spectra.gauss_func(x-f,gamma)
             if ftype.lower() == 'lorentz':
-                y += spectra.lorentz_func(i,x,f,halfwidth)
+                y += i * spectra.lorentz_func(x-f,gamma)
         
         return x, y
-    
-    @staticmethod
-    def get_norm_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, halfwidth=5, ftype='gauss', **param) -> np.ndarray :
-        '''
-        Sums up all gauss/lorentz functions for each peak and sets the highest value to one.
-        
-        @param xmin/xmax: minimum and maximum value of the spectrum
-        @type xmin/xmax: Float
-        
-        @param freqs/ints: frequencies and corresponding intensities
-        @type freqs/ints: Lists of floats
-        
-        @param steps: number of points for the x-axis
-        @type steps: Integer
-        
-        @param halfwidth: Parameter to control the width of the peaks
-        @type halfwidth: Float
-        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
-        
-        @param ftype: Choses between gauss and lorentz function
-        @type ftype: String
-        
-        @return: x and y values of the 1D plot
-        @rtype: Lists of floats
-        
-        '''
-        x = np.linspace(xmin,xmax,steps)
-        y = np.zeros(steps)
-        
-        for freq, inten in zip(freqs,ints):
-            if ftype.lower() == 'gauss':
-                y += spectra.gauss_func(inten,x,freq,halfwidth)
-            if ftype.lower() == 'lorentz':
-                y += spectra.lorentz_func(inten,x,freq,halfwidth)
-            
-        y = y/y.max()
-        
-        return x, y
-    
-    @staticmethod
-    def get_2d_spectrum(xmin : float, xmax : float, exc : np.ndarray, ble : np.ndarray, emi : np.ndarray, steps=2000, halfwidth=15, ftype='gauss') -> np.ndarray :
-        '''
-        Plots the simple 2D IR spectrum automatically.
-        
-        @param xmin/xmax: minimum or maximum value of the spectrum in both axes
-        @type xmin/xmax: Float
-        
-        @param exc/ble/emi: lists of evaluated x- and y-coordinates and associated intensities
-        @type exc/ble/emi: List of lists of floats
-        
-        @param steps: number of points for the x-axis
-        @type steps: Integer
-        
-        @param halfwidth: Parameter to control the width of the peaks
-        @type halfwidth: Float
-        @note halfwidth: Does not necessarily correlate to actual FWHM of a peak
-        
-        @param ftype: Choses between gauss and lorentz function
-        @type ftype: String
-        
-        @return: x, y and z values of the 2D plot
-        @rtype: Lists of floats
-        
-        '''
-        
-        x = np.linspace(xmin, xmax, steps)
-        y = np.linspace(xmin, xmax, steps)
-        xx, yy = np.meshgrid(x, y)
-        
-        z = np.zeros((steps,steps))
-        
-        exc_x,exc_y,exc_i = exc
-        emi_x,emi_y,emi_i = emi
-        ble_x,ble_y,ble_i = ble
-        
-        y_vals = []
-        y_vals.extend([exc_y,emi_y,ble_y])
-        i_vals = []
-        i_vals.extend([exc_i,emi_i,ble_i])
-
-        
-        for freq_x, freq_y, inten in zip(exc_x+emi_x+ble_x, exc_y+emi_y+ble_y, exc_i+emi_i+ble_i):
-            if ftype.lower() == 'gauss':
-                z += spectra.gauss2d_func(inten,xx,freq_x,yy,freq_y,halfwidth=5)
-            if ftype.lower() == 'lorentz':
-                z += spectra.lorentz2d_func(inten,xx,freq_x,yy,freq_y,halfwidth=5)
-            
-        
-        return x, y, z
-    
-    @staticmethod
-    def norm_2d_spectrum(z : np.ndarray, max_z : float) -> np.ndarray :
-        '''
-        Divides a every element in a matrix by a given value.
-        
-        @param z: matrix that is supposed to be normalized
-        @type z: np.ndarray
-        
-        @param max_z: Value that matrix is normalized to.
-        @type max_z: Float
-        
-        @return: Normalized matrix
-        @rtype: np.ndarray
-        
-        '''        
-        for i in range(len(z)):
-            for j in range(len(z)):
-                z[i][j] = z[i][j] / max_z
-        
-        return z

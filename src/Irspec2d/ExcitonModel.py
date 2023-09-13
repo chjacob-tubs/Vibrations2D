@@ -30,7 +30,7 @@ class excitonmodel(Calc2dir_base):
         n_oscill = 2
         We have the ground state (0,0), two first excited states (0,1) and (1,0) and
         three second excited states (0,2), (2,0) and (1,1). 
-        n_oscill = 2
+        n_oscill = 3
         (0,0,0), (0,0,1), (0,1,0), (1,0,0), (0,0,2), (0,2,0), (2,0,0), (0,1,1), (1,0,1), (1,1,0)
         
         @return: a sorted list of the possible states

@@ -1,4 +1,5 @@
 import numpy as np
+import multiprocessing as mp
 from numpy import linalg as LA
 from scipy import fft
 
@@ -99,25 +100,6 @@ class timedomain(Calc2dir_base):
             if self.print_output : print('Set the omega offset value (omega_off) to',self.omega_off,'(calculated default).')
             
         
-    def _get_secexc_dipoles(self) -> np.ndarray : 
-        '''
-        Extracts the matrix for the excited state transition dipole moments.
-        
-        @return: excited state transition dipole moment
-        @rtype: numpy array
-
-        '''
-        exc_trans = []
-
-        for i in range(1,len(self.dipoles)):
-            if i <= self.noscill:
-                transcolumn = []
-                for j in range(len(self.dipoles)):
-                    if j > self.noscill :
-                        transcolumn.append(self.dipoles[i][j])
-                exc_trans.append(transcolumn)
-                
-        return np.asarray(exc_trans)
     
     def _get_omega_off(self) -> int :
         '''
@@ -132,7 +114,7 @@ class timedomain(Calc2dir_base):
         
         return omega_off
     
-    def set_omega(self) -> list :
+    def set_omega(self) -> np.ndarray :
         '''
         In the frequency matrix, the first state is 0. 
         The states 1 to n_oscill are the first excited states.
@@ -155,138 +137,9 @@ class timedomain(Calc2dir_base):
         if self._calc_nmodesexc() != len(omega2):
             print('The number of second excitation frequencies does not equal the number of excited states.')
         
-        return omega, omega2
-    
-    def _get_pulse_angles(self, pol : str) -> list :
-        '''
-        Returns a list of different angles for different polarization conditions.
-        E.g. for the <ZZZZ> polarization condition the list is [0,0,0,0].
-        
-        @param pol: polarization condition
-        @type pol: string containing four symbols
-        @example pol: 'ZZZZ'
-        
-        @return: list of angles for given polarization condition
-        @rtype: list of integers
-        
-        '''
-        
-        pol_list = [0,0,0,0]
-        
-        for i, val in enumerate(pol):
-            if val == pol[0]:
-                pol_list[i] = 0
-            if val != pol[0]:
-                pol_list[i] = 90
-        
-        return pol_list
-        
-    def _calc_nmodesexc(self) -> int :
-        '''
-        n_modesexc = n_oscill + (n_oscill*(n_oscill-1))/2
-        
-        @return: number of excited modes
-        @rtype: integer
-        
-        '''
-        n_modes_exc = int(self.noscill + (self.noscill*(self.noscill-1))/2)
-        
-        return n_modes_exc
-    
-    def calc_cos(self, vec1 : list, vec2 : list) -> float :
-        '''
-        calculates the cosine between two three-dimensional vectors
-        
-        @param vec1/vec2: two 3D vectors
-        @type vec1/vec2: list of three floats 
-        
-        @return: angle between the vectors
-        @rtype: float
-
-        '''
-
-        mu1 = LA.norm(vec1)
-        mu2 = LA.norm(vec2)
-
-        if mu1 != 0 and mu2 !=0:
-            cos12 = ( vec1[0]*np.conj(vec2[0])+vec1[1]*np.conj(vec2[1])+vec1[2]*np.conj(vec2[2]) ) / (mu1*mu2)
-        else:
-            cos12 = 0
-
-        return cos12
-    
-    def _calc_fourpoint_factors(self, pol_lst : list) -> float :
-        '''
-        Needs the list of angles of the polarization condition.
-        Calculating parts of the four-point correlation function:
-        row1 = 4 * cos theta_ab * cos theta_cd - cos theta_ac * cos theta_bd - cos theta_ad * cos theta_bc
-        row2 = 4 * cos theta_ac * cos theta_bd - cos theta_ab * cos theta_cd - cos theta_ad * cos theta_bc
-        row3 = 4 * cos theta_ad * cos theta_bc - cos theta_ab * cos theta_cd - cos theta_ac * cos theta_bd
-        
-        @param pol_lst: list of angles for a given polarization condition
-        @type pol_lst: list of integers
-        
-        @return: three faktors for the four-point correlation function
-        @rtype: three floats
-        
-        '''
-
-        ab = np.deg2rad(pol_lst[0]-pol_lst[1])
-        cd = np.deg2rad(pol_lst[2]-pol_lst[3])
-        ac = np.deg2rad(pol_lst[0]-pol_lst[2])
-        bd = np.deg2rad(pol_lst[1]-pol_lst[3])
-        ad = np.deg2rad(pol_lst[0]-pol_lst[3])
-        bc = np.deg2rad(pol_lst[1]-pol_lst[2])
-
-        row1 = 4 * np.cos(ab) * np.cos(cd) - np.cos(ac) * np.cos(bd) - np.cos(ad) * np.cos(bc)
-        row2 = 4 * np.cos(ac) * np.cos(bd) - np.cos(ab) * np.cos(cd) - np.cos(ad) * np.cos(bc)
-        row3 = 4 * np.cos(ad) * np.cos(bc) - np.cos(ab) * np.cos(cd) - np.cos(ac) * np.cos(bd)
-
-        return row1, row2, row3
+        return np.asarray(omega), np.asarray(omega2)
     
     def calc_fourpointcorr(self, pathway : str, fak1 : float, fak2 : float, fak3 : float, *mus) -> float:
-        '''
-        pathway : 'jjii', 'jiji', 'jiij', 'jikl'
-
-        S = 1/30 * ( cos theta_alpha_beta  * cos theta_gamma_delta * fak1
-                   - cos theta_alpha_gamma * cos theta_beta_delta  * fak2
-                   - cos theta_alpha_delta * cos theta_beta_gamma  * fak3 )
-
-        @param pathway: feynman pathway of a diagram
-        @type pathway: string
-        
-        @param fak1/fak2/fak3: prefactor of the correlation function
-        @type fak1/fak2/fak3: float
-        
-        @param mus: dipole moments
-        @type mus: list of floats
-        '''
-
-        mu = [0,0,0,0]
-
-        for i, val in enumerate(pathway):
-
-            if val == 'j':
-                mu[i] = mus[0]
-
-            if val == 'i':
-                mu[i] = mus[1]
-
-            if val == 'k':
-                mu[i] = mus[2]
-
-            if val == 'l':
-                mu[i] = mus[3]
-
-        S1 = fak1 * self.calc_cos(mu[0],mu[1]) * self.calc_cos(mu[2],mu[3])
-        S2 = fak2 * self.calc_cos(mu[0],mu[2]) * self.calc_cos(mu[1],mu[3])
-        S3 = fak3 * self.calc_cos(mu[0],mu[3]) * self.calc_cos(mu[1],mu[2])
-
-        S = (S1 + S2 + S3) / 30
-
-        return S
-    
-    def calc_fourpointcorr_mat(self, pathway : str, fak1 : float, fak2 : float, fak3 : float, *mus) -> float:
         '''
         pathway : 'jjii', 'jiji', 'jiij', 'jikl'
 
@@ -342,6 +195,76 @@ class timedomain(Calc2dir_base):
         
         return ticks
     
+#     def calc_diagrams(self) -> np.ndarray :
+#         '''
+#         This computes the diagrams R_1 to R_6.
+#         R_1, R_2 and R_3 are rephasing diagrams and R_4, R_5 and R_6 are non-rephasing diagrams.
+#         It also computes angles for different (ZZZZ, ZZXX) polarization functions.
+        
+#         @return: Feynman diagrams 
+#         @rtype: tuple of numpy arrays
+        
+#         '''
+#         n_exc_oscill = self._calc_nmodesexc() # get the number of doubly excited states and combination bands
+#         fak1, fak2, fak3 = self._calc_fourpoint_factors(self.pol_list)
+        
+#         R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_)
+#         R2 = np.zeros_like(R1,dtype=np.complex_)
+#         R3 = np.zeros_like(R1,dtype=np.complex_)
+#         R4 = np.zeros_like(R1,dtype=np.complex_)
+#         R5 = np.zeros_like(R1,dtype=np.complex_)
+#         R6 = np.zeros_like(R1,dtype=np.complex_)
+        
+#         t = np.arange(0,self.n_t*self.dt,self.dt)
+#         mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles()
+        
+#         omega, omega2 = self.set_omega()
+        
+#         for j in range(self.noscill):
+#             for i in range(self.noscill):
+                
+#                 mui = LA.norm(mu[i])
+#                 muj = LA.norm(mu[j])
+                
+#                 dipole = mui**2 * muj**2
+                
+#                 f_jjii = self.calc_fourpointcorr('jjii',fak1,fak2,fak3,mu[j],mu[i]) * dipole
+#                 f_jiji = self.calc_fourpointcorr('jiji',fak1,fak2,fak3,mu[j],mu[i]) * dipole
+#                 f_jiij = self.calc_fourpointcorr('jiij',fak1,fak2,fak3,mu[j],mu[i]) * dipole
+                
+#                 _t = np.tile(t,(self.n_t,1))
+                
+#                 parta    = 1j*omega[j]*self.ucf*_t.T
+#                 partb    = 1j*omega[i]*self.ucf*_t
+#                 partb_R4 = 1j*omega[j]*self.ucf*_t
+#                 partc    = 1j*(omega[j]-omega[i])*self.ucf*self.t2
+#                 partd    = (_t.T+_t)/self.T2 
+                
+#                 R1 -= f_jiji * np.exp(   parta - partb    + partc - partd )
+#                 R2 -= f_jjii * np.exp(   parta - partb            - partd ) # GB
+#                 R4 -= f_jiij * np.exp( - parta - partb_R4 - partc - partd ) 
+#                 R5 -= f_jjii * np.exp( - parta - partb            - partd ) # GB
+
+#                 for k in range(n_exc_oscill):
+
+#                     muik = LA.norm(mu2[i][k])
+#                     mujk = LA.norm(mu2[j][k])
+#                     dipole2 = mui*muj*muik*mujk
+                    
+#                     parta2    = 1j*omega[j]*self.ucf*_t.T
+#                     partb2_R3 = 1j*(omega2[k]-omega[j])*self.ucf*_t
+#                     partb2_R6 = 1j*(omega2[k]-omega[i])*self.ucf*_t
+#                     partc2    = 1j*(omega[j]-omega[i])*self.ucf*self.t2
+#                     partd2    = (_t.T+_t)/self.T2
+
+#                     f_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
+#                     f_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
+                    
+#                     R3 += f_jilk * np.exp(   parta2 - partb2_R3 + partc2 - partd2 ) 
+#                     R6 += f_jikl * np.exp( - parta2 - partb2_R6 - partc2 - partd2 ) 
+        
+#         return R1,R2,R3,R4,R5,R6
+        
     def calc_diagrams(self) -> np.ndarray :
         '''
         This computes the diagrams R_1 to R_6.
@@ -349,67 +272,59 @@ class timedomain(Calc2dir_base):
         It also computes angles for different (ZZZZ, ZZXX) polarization functions.
         
         @return: Feynman diagrams 
-        @rtype: tuple of numpy arrays
+        @rtype: numpy arrays
         
         '''
+        
+        t = np.arange(0,self.n_t*self.dt,self.dt) # define the time axis t 
+        _t = np.tile(t,(self.n_t,1)) # rewrite t as a matrix
+        n_exc_oscill = self._calc_nmodesexc() # get the number of doubly excited states and combination bands
         fak1, fak2, fak3 = self._calc_fourpoint_factors(self.pol_list)
         
-        R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_)
-        R2 = np.zeros_like(R1,dtype=np.complex_)
-        R3 = np.zeros_like(R1,dtype=np.complex_)
-        R4 = np.zeros_like(R1,dtype=np.complex_)
-        R5 = np.zeros_like(R1,dtype=np.complex_)
-        R6 = np.zeros_like(R1,dtype=np.complex_)
         
-        t = np.arange(0,self.n_t*self.dt,self.dt)
-        mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles()
+        omega, omega2 = self.set_omega() # get the fundamental transitions omega and the higher excited states omega2
+        mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles() # get the fundamental transition dipoles mu and the higher excited states mu2
         
-        omega, omega2 = self.set_omega()
+        mu_norm = LA.norm(mu, axis=1)
+        mu2_norm = LA.norm(mu2, axis=2)
         
-        for j in range(self.noscill):
-            for i in range(self.noscill):
-                
-                mui = LA.norm(mu[i])
-                muj = LA.norm(mu[j])
-                
-                dipole = mui**2 * muj**2
-                
-                f_jjii = self.calc_fourpointcorr('jjii',fak1,fak2,fak3,mu[i],mu[j]) * dipole
-                f_jiji = self.calc_fourpointcorr('jiji',fak1,fak2,fak3,mu[i],mu[j]) * dipole
-                f_jiij = self.calc_fourpointcorr('jiij',fak1,fak2,fak3,mu[i],mu[j]) * dipole
-                
-                _t = np.tile(t,(self.n_t,1))
-                
-                parta    = 1j*omega[j]*self.ucf*_t.T
-                partb    = 1j*omega[i]*self.ucf*_t
-                partb_R4 = 1j*omega[j]*self.ucf*_t
-                partc    = 1j*(omega[j]-omega[i])*self.ucf*self.t2
-                partd    = (_t.T+_t)/self.T2 
-                
-                R1 -= f_jiji * np.exp(   parta - partb    + partc - partd )
-                R2 -= f_jjii * np.exp(   parta - partb            - partd )
-                R4 -= f_jiij * np.exp( - parta - partb_R4 + partc - partd ) 
-                R5 -= f_jjii * np.exp( - parta - partb            - partd ) 
-
-                for k in range(self._calc_nmodesexc()):
-
-                    muik = LA.norm(mu2[i][k])
-                    mujk = LA.norm(mu2[j][k])
-                    dipole2 = mui*muj*muik*mujk
-                    
-                    parta2    = 1j*omega[j]*self.ucf*_t.T
-                    partb2_R3 = 1j*(omega2[k]-omega[j])*self.ucf*_t
-                    partb2_R6 = 1j*(omega2[k]-omega[i])*self.ucf*_t
-                    partc2    = 1j*(omega[j]-omega[i])*self.ucf*self.t2
-                    partd2    = (_t.T+_t)/self.T2
-
-                    f_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
-                    f_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
-                    
-                    R3 += f_jilk * np.exp(   parta2 - partb2_R3 + partc2 - partd2 ) 
-                    R6 += f_jikl * np.exp( - parta2 - partb2_R6 - partc2 - partd2 ) 
+        dipole = np.einsum('a,a,b,b->ab',mu_norm,mu_norm,mu_norm,mu_norm)
+        dipole2 = np.einsum('a,b,ac,bc -> abc',mu_norm,mu_norm,mu2_norm,mu2_norm) 
         
-        return R1,R2,R3,R4,R5,R6
+        ## Calculate the exponential parts of the diagrams R1 to R6
+        ## part A/B : 1j * omega[i/j] * ucf * t1/t3
+        AB = np.einsum('a,bc->acb', 1j*omega*self.ucf, _t)
+        ## part C : 1j * ( omega[j] - omega[i] ) * ucf * t2
+        C = np.fromfunction(lambda i,j : 1j*(omega[j]-omega[i])*self.ucf*self.t2, (self.noscill,self.noscill), dtype=int)
+        ## part D : ( t1 + t3 ) / T2
+        D = (_t.T+_t)/self.T2 
+        ## part B2 : 1j * ( omega[k] - omega[i/j] ) * ucf * t3
+        _B2 = np.fromfunction(lambda i,k : 1j*(omega2[k]-omega[i])*self.ucf, (self.noscill,n_exc_oscill), dtype=int)
+        B2 = np.einsum('ab,cd->abcd',_B2,_t)
+        
+        # Vectorize the four-point correlation functions in order to be able to calculate them on a grid using np.fromfunction
+        vfourpoint = np.vectorize(lambda i,j,k,l : self.calc_fourpointcorr_mat(fak1, fak2, fak3, mu[i], mu[j], mu[k], mu[l]),excluded=['fak1','fak2','fak3'])
+        vfourpoint2 = np.vectorize(lambda i,j,k,l,m : self.calc_fourpointcorr_mat(fak1, fak2, fak3, mu[i], mu[j], mu2[l][k], mu2[m][k]),excluded=['fak1','fak2','fak3'])
+        
+        # calculate the prefactors of the diagrams R1, R2 and R4, R5
+        f_jjii = np.fromfunction( lambda i,j : vfourpoint(j,j,i,i), (self.noscill,self.noscill), dtype=int ) * dipole
+        f_jiji = np.fromfunction( lambda i,j : vfourpoint(j,i,j,i), (self.noscill,self.noscill), dtype=int ) * dipole
+        f_jiij = np.fromfunction( lambda i,j : vfourpoint(j,i,i,j), (self.noscill,self.noscill), dtype=int ) * dipole
+        
+        # calculate the prefactors of the diagrams R3 and R6
+        f_ji_kij = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,i,j), (self.noscill,self.noscill,n_exc_oscill), dtype=int ) * dipole2
+        f_ji_kji = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,j,i), (self.noscill,self.noscill,n_exc_oscill), dtype=int ) * dipole2
+        
+        # Calculate the diagrams R
+        R1 = np.einsum('ji,jab,iba,ij,ab -> ab',   f_jiji,   np.exp(+AB), np.exp(-AB), np.exp(+C ), np.exp(-D ))
+        R2 = np.einsum('ji,jab,iba,ab -> ab',      f_jjii,   np.exp(+AB), np.exp(-AB)             , np.exp(-D ))
+        R3 = np.einsum('jik,jab,jkab,ij,ab -> ab', f_ji_kij, np.exp(+AB), np.exp(-B2), np.exp(+C ), np.exp(-D ))
+        
+        R4 = np.einsum('ji,jab,jba,ij,ab -> ab',   f_jiij,   np.exp(-AB), np.exp(-AB), np.exp(-C ), np.exp(-D ))
+        R5 = np.einsum('ji,jab,iba,ab -> ab',      f_jjii,   np.exp(-AB), np.exp(-AB)             , np.exp(-D ))
+        R6 = np.einsum('jik,jab,ikab,ij,ab -> ab', f_ji_kji, np.exp(-AB), np.exp(-B2), np.exp(-C ), np.exp(-D ))
+        
+        return -R1, -R2, R3, -R4, -R5, R6
     
     def calc_sum_diagram(self, R_a : np.ndarray, R_b : np.ndarray, R_c : np.ndarray) -> np.ndarray :
         '''
@@ -514,3 +429,7 @@ class timedomain(Calc2dir_base):
         axes = self.calc_axes()
         
         return R, axes
+    
+    
+    
+    
