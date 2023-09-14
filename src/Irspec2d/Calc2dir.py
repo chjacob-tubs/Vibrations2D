@@ -500,7 +500,7 @@ class spectra():
         return f
     
     @staticmethod
-    def get_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, gamma=2, ftype='lorentz', **param) -> np.ndarray :
+    def get_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, gamma=2, ftype='lorentz') -> np.ndarray :
         '''
         Sums up all gauss/lorentz functions for each peak.
         

@@ -42,7 +42,6 @@ class timedomain(Calc2dir_base):
         '''
         super().__init__(freqs, dipoles)
         
-        
         if 'print_output' in params :
             self.print_output = params.get('print_output')
             if self.print_output : print('Prints all output. To suppress printed output use print_output=False.')

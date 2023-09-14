@@ -41,7 +41,6 @@ class frequencydomain(Calc2dir_base):
         self.freqmat = self.generate_freqmat(self.freqs)
         self.nmodes = self.calc_nmodes()
         
-        
         if 'print_output' in params :
             self.print_output = params.get('print_output')
             if self.print_output : print('Prints all output. To suppress printed output use print_output=False.')
@@ -56,12 +55,12 @@ class frequencydomain(Calc2dir_base):
             self.n_t = 256
             if self.print_output : print('Set the number of time points (n_t) to',self.n_t,'(default value).')
         
-        if 'dt' in params : 
-            self.dt = params.get('dt')
-            if self.print_output : print('Set the time step length (dt) to',self.dt,'ps.')
-        else : 
-            self.dt = 0.25
-            if self.print_output : print('Set the time step length (dt) to',self.dt,'ps (default value).')
+        # if 'dt' in params : 
+        #     self.dt = params.get('dt')
+        #     if self.print_output : print('Set the time step length (dt) to',self.dt,'ps.')
+        # else : 
+        #     self.dt = 0.25
+        #     if self.print_output : print('Set the time step length (dt) to',self.dt,'ps (default value).')
         
         if 'T2' in params : 
             self.T2 = params.get('T2')
@@ -349,8 +348,8 @@ class frequencydomain(Calc2dir_base):
             for j in range(n_osc):
                 ## Ground State Bleach
                 S_GB += -0.5 * f_jjii[i][j] * spectra.lorentzian2D(w-omega[j],w-omega[i],gamma) 
-                if i != j :
-                    S_GB += -0.5 * f_jjii[i][j] * spectra.lorentzian2D_imag(w-omega[j],w-omega[i],gamma) 
+                # if i != j : # this seems to portray the correct behavior for the negative cross-peaks
+                #     S_GB += -0.5 * f_jjii[i][j] * spectra.lorentzian2D_imag(w-omega[j],w-omega[i],gamma) 
 
                 for k in range(n_osc_exc):
                     S3 = 0.5 * ( spectra.lorentzian2D(w-omega[j], w-(omega2[k]-omega[j]), gamma) + spectra.lorentzian2D_imag(w-omega[j], w-(omega2[k]-omega[j]), gamma) )
