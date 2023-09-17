@@ -1,11 +1,15 @@
 import numpy as np
 from numpy import linalg as LA
+from scipy.constants import c
 
 from Irspec2d import *
 
 # FREQUENCY DOMAIN FUNCTIONS
 
 class frequencydomain(Calc2dir_base):
+    
+    ucf = c * 10**-10 * 2 * np.pi # unit conversion factor
+    # speed of light in cm/ps = 0.0299792458 = c * 10^-10
     
     def __init__(self, freqs, dipoles, **params):
         '''
@@ -19,9 +23,6 @@ class frequencydomain(Calc2dir_base):
         
         @param n_t: number of grid points
         @type n_t: integer
-        
-        @param dt: spacing between grid points
-        @type dt: float
         
         @param T2: dephasing time (experimental value)
         @type T2: float
@@ -50,17 +51,10 @@ class frequencydomain(Calc2dir_base):
             
         if 'n_t' in params : 
             self.n_t = params.get('n_t')*2
-            if self.print_output : print('Set the number of time points (n_t) to',str(self.n_t)+'.')
+            if self.print_output : print('Set the number of grid points (n_t) to',str(self.n_t)+'.')
         else : 
             self.n_t = 256
-            if self.print_output : print('Set the number of time points (n_t) to',self.n_t,'(default value).')
-        
-        # if 'dt' in params : 
-        #     self.dt = params.get('dt')
-        #     if self.print_output : print('Set the time step length (dt) to',self.dt,'ps.')
-        # else : 
-        #     self.dt = 0.25
-        #     if self.print_output : print('Set the time step length (dt) to',self.dt,'ps (default value).')
+            if self.print_output : print('Set the number of grid points (n_t) to',self.n_t,'(default value).')
         
         if 'T2' in params : 
             self.T2 = params.get('T2')
@@ -304,7 +298,9 @@ class frequencydomain(Calc2dir_base):
             
         return x, z 
     
-    def calculate_S(self, w):
+    def calculate_S(self, axis):
+        
+        w = axis * self.ucf
         
         S_GB = np.zeros((self.n_t,self.n_t))
         S_SE = np.zeros((self.n_t,self.n_t))
@@ -314,7 +310,7 @@ class frequencydomain(Calc2dir_base):
         
         fak1, fak2, fak3 = self._calc_fourpoint_factors(self.pol_list)
         n_exc_oscill = self._calc_nmodesexc() # get the number of doubly excited states and combination bands
-        omega, omega2 = self.freqs[1:self.noscill+1], self.freqs[self.noscill+1:]
+        omega, omega2 = self.freqs[1:self.noscill+1]*self.ucf, self.freqs[self.noscill+1:]*self.ucf
         mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles() # get the fundamental transition dipoles mu and the higher excited states mu2
         mu_norm = LA.norm(mu, axis=1)
         mu2_norm = LA.norm(mu2, axis=2)
@@ -359,7 +355,7 @@ class frequencydomain(Calc2dir_base):
         return S_GB, S_SE, S_EA
 
     
-    def get_2d_spectrum(self, xmin=None, xmax=None) -> np.ndarray :
+    def get_2d_spectrum(self, wmin=None, wmax=None) -> np.ndarray :
         '''
         Plots the simple 2D IR spectrum automatically.
         
@@ -371,12 +367,13 @@ class frequencydomain(Calc2dir_base):
         
         '''
         margin = 100
-        if not xmin:
-            xmin = self.freqs[1:self.noscill+1].min()-margin
-        if not xmax:
-            xmax = self.freqs[1:self.noscill+1].max()+margin
+        if not wmin:
+            wmin = self.freqs[1:self.noscill+1].min()-margin
+        if not wmax:
+            wmax = self.freqs[1:self.noscill+1].max()+margin
         
-        w = np.linspace(xmin, xmax, self.n_t)
+        # w = np.linspace(wmin*self.ucf, wmax*self.ucf, self.n_t)
+        w = np.linspace(wmin, wmax, self.n_t)
             
         S_GB, S_SE, S_EA = self.calculate_S(w)
         S = S_GB + S_SE + S_EA

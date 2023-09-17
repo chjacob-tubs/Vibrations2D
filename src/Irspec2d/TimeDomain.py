@@ -1,6 +1,7 @@
 import numpy as np
 import multiprocessing as mp
 from numpy import linalg as LA
+from scipy.constants import c
 from scipy import fft
 
 from Irspec2d import *
@@ -9,7 +10,8 @@ from Irspec2d import *
     
 class timedomain(Calc2dir_base):
     
-    ucf = 0.188 # unit conversion factor
+    ucf = c * 10**-10 * 2 * np.pi # unit conversion factor
+    # speed of light in cm/ps = 0.0299792458 = c * 10^-10
     
     def __init__(self, freqs : np.ndarray, dipoles : np.ndarray, **params):
         '''
@@ -234,15 +236,16 @@ class timedomain(Calc2dir_base):
 #                 _t = np.tile(t,(self.n_t,1))
                 
 #                 parta    = 1j*omega[j]*self.ucf*_t.T
+#                 parta_R1 = 1j*omega[i]*self.ucf*_t.T
 #                 partb    = 1j*omega[i]*self.ucf*_t
 #                 partb_R4 = 1j*omega[j]*self.ucf*_t
 #                 partc    = 1j*(omega[j]-omega[i])*self.ucf*self.t2
 #                 partd    = (_t.T+_t)/self.T2 
                 
-#                 R1 -= f_jiji * np.exp(   parta - partb    + partc - partd )
-#                 R2 -= f_jjii * np.exp(   parta - partb            - partd ) # GB
-#                 R4 -= f_jiij * np.exp( - parta - partb_R4 - partc - partd ) 
-#                 R5 -= f_jjii * np.exp( - parta - partb            - partd ) # GB
+#                 R1 -= f_jiji * np.exp(   parta_R1 - partb    + partc - partd )
+#                 R2 -= f_jjii * np.exp(   parta    - partb            - partd ) # GB
+#                 R4 -= f_jiij * np.exp( - parta    - partb_R4 - partc - partd ) 
+#                 R5 -= f_jjii * np.exp( - parta    - partb            - partd ) # GB
 
 #                 for k in range(n_exc_oscill):
 
@@ -315,13 +318,13 @@ class timedomain(Calc2dir_base):
         f_ji_kji = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,j,i), (self.noscill,self.noscill,n_exc_oscill), dtype=int ) * dipole2
         
         # Calculate the diagrams R
-        R1 = np.einsum('ji,jab,iba,ij,ab -> ab',   f_jiji,   np.exp(+AB), np.exp(-AB), np.exp(+C ), np.exp(-D ))
-        R2 = np.einsum('ji,jab,iba,ab -> ab',      f_jjii,   np.exp(+AB), np.exp(-AB)             , np.exp(-D ))
-        R3 = np.einsum('jik,jab,jkab,ij,ab -> ab', f_ji_kij, np.exp(+AB), np.exp(-B2), np.exp(+C ), np.exp(-D ))
+        R1 = np.einsum('ji,iab,iba,ij,ab -> ab',   f_jiji,   np.exp(+AB), np.exp(-AB), np.exp(+C), np.exp(-D))
+        R2 = np.einsum('ji,jab,iba,ab -> ab',      f_jjii,   np.exp(+AB), np.exp(-AB)            , np.exp(-D))
+        R3 = np.einsum('jik,jab,jkab,ij,ab -> ab', f_ji_kij, np.exp(+AB), np.exp(-B2), np.exp(+C), np.exp(-D))
         
-        R4 = np.einsum('ji,jab,jba,ij,ab -> ab',   f_jiij,   np.exp(-AB), np.exp(-AB), np.exp(-C ), np.exp(-D ))
-        R5 = np.einsum('ji,jab,iba,ab -> ab',      f_jjii,   np.exp(-AB), np.exp(-AB)             , np.exp(-D ))
-        R6 = np.einsum('jik,jab,ikab,ij,ab -> ab', f_ji_kji, np.exp(-AB), np.exp(-B2), np.exp(-C ), np.exp(-D ))
+        R4 = np.einsum('ji,jab,jba,ij,ab -> ab',   f_jiij,   np.exp(-AB), np.exp(-AB), np.exp(-C), np.exp(-D))
+        R5 = np.einsum('ji,jab,iba,ab -> ab',      f_jjii,   np.exp(-AB), np.exp(-AB)            , np.exp(-D))
+        R6 = np.einsum('jik,jab,ikab,ij,ab -> ab', f_ji_kji, np.exp(-AB), np.exp(-B2), np.exp(-C), np.exp(-D))
         
         return -R1, -R2, R3, -R4, -R5, R6
     
@@ -356,7 +359,7 @@ class timedomain(Calc2dir_base):
         
         '''
         n_zp = self.n_t * 2
-        R_ft = fft.ifft2(R,s=(n_zp,n_zp))
+        R_ft = self.dt**2 * fft.ifft2(R,s=(n_zp,n_zp),norm='forward')
         
         return R_ft
     
