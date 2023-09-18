@@ -3,7 +3,7 @@ from numpy import linalg as LA
 from scipy.constants import c
 from scipy import fft
 
-from Vibrations2D import *
+from Vibrations2D import Calc2dir_base
 
 # TIME DOMAIN FUNCTIONS
     
