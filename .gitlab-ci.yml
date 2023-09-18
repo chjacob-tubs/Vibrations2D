@@ -15,6 +15,7 @@ before_script:
 ### BUILD IMAGES ###
 ####################
 
+### PIP ###
 build-docker-test-image:
     tags:
        - local
@@ -22,6 +23,15 @@ build-docker-test-image:
     stage: build
     script:
        - docker build --no-cache -t vib2d .
+
+### CONDA ###
+build-docker-conda-test-image:
+    tags:
+       - local
+       - shell
+    stage: build
+    script:
+       - docker build --no-cache -t vib2dconda -f Dockerfile.Conda . 
 
 #################
 ### UNITTESTS ###
@@ -41,7 +51,7 @@ unittest-ExcitonModel:
         - local
         - shell
     stage: test
-    needs: [build-docker-test-image]
+    needs: [build-docker-test-image,unittest-Calc2dir]
     script:
         - docker run --workdir /app/src/Vibrations2D/test vib2d pytest -v test_ExcitonModel.py
 
@@ -50,7 +60,7 @@ unittest-FrequencyDomain:
         - local
         - shell
     stage: test
-    needs: [build-docker-test-image]
+    needs: [build-docker-test-image,unittest-Calc2dir]
     script:
         - docker run --workdir /app/src/Vibrations2D/test vib2d pytest -v test_FrequencyDomain.py
 
@@ -59,7 +69,7 @@ unittest-spectra:
         - local
         - shell
     stage: test
-    needs: [build-docker-test-image]
+    needs: [build-docker-test-image,unittest-Calc2dir]
     script:
         - docker run --workdir /app/src/Vibrations2D/test vib2d pytest -v test_spectra.py
 
@@ -68,9 +78,18 @@ unittest-TimeDomain:
         - local
         - shell
     stage: test
-    needs: [build-docker-test-image]
+    needs: [build-docker-test-image,unittest-Calc2dir]
     script:
         - docker run --workdir /app/src/Vibrations2D/test vib2d pytest -v test_TimeDomain.py
+
+unittest-all-Conda:
+    tags:
+        - local
+        - shell
+    stage: test
+    needs: [build-docker-conda-test-image]
+    script:
+        - docker run --workdir /app/src/Vibrations2D/test vib2dconda conda run -n Vib2DCondaENV pytest -v
 
 ##################
 #### CLEAN UP ####
@@ -81,13 +100,16 @@ cleanup-docker:
     tags: [local, shell]
     needs:
         - build-docker-test-image
+        - build-docker-conda-test-image
         - unittest-Calc2dir
         - unittest-ExcitonModel
         - unittest-FrequencyDomain
         - unittest-spectra
         - unittest-TimeDomain
+        - unittest-all-Conda
     script:
         - docker rm $(docker ps --filter status=exited -q)
-        - docker rmi -f vib2d:latest
+        - docker rmi -f vib2d:latest      
+        - docker rmi -f vib2dconda:latest
         - docker system df
     when: always
