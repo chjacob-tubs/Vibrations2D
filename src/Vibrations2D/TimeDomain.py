@@ -1,5 +1,4 @@
 import numpy as np
-import multiprocessing as mp
 from numpy import linalg as LA
 from scipy.constants import c
 from scipy import fft
