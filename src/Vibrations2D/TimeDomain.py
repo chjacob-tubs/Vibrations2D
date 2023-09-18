@@ -243,7 +243,8 @@ class timedomain(Calc2dir_base):
         @rtype: tuple of numpy arrays
         
         '''
-        n_exc_oscill = self._calc_nmodesexc() # get the number of doubly excited states and combination bands
+        # get the number of doubly excited states and combination bands
+        n_exc_oscill = self._calc_nmodesexc() 
         fak1, fak2, fak3 = self._calc_fourpoint_factors(self.pol_list)
         
         R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_)
@@ -257,7 +258,7 @@ class timedomain(Calc2dir_base):
         _t = np.tile(t,(self.n_t,1))
         partd    = (_t.T+_t)/self.T2
         
-        mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles()
+        mu, mu2 = self.dipoles[0][1:self.noscill+1], self._get_secexc_dipoles()
         omega, omega2 = self.set_omega()
         
         for j in range(self.noscill):
@@ -271,18 +272,23 @@ class timedomain(Calc2dir_base):
                 mui = LA.norm(mu[i])
                 dipole = mui**2 * muj**2
                 
-                f_jjii = self.calc_fourpointcorr('jjii',fak1,fak2,fak3,mu[j],mu[i]) * dipole
-                f_jiji = self.calc_fourpointcorr('jiji',fak1,fak2,fak3,mu[j],mu[i]) * dipole
-                f_jiij = self.calc_fourpointcorr('jiij',fak1,fak2,fak3,mu[j],mu[i]) * dipole
+                f_jjii = self.calc_fourpointcorr('jjii',fak1,fak2,fak3,
+                                                 mu[j],mu[i]) * dipole
+                f_jiji = self.calc_fourpointcorr('jiji',fak1,fak2,fak3,
+                                                 mu[j],mu[i]) * dipole
+                f_jiij = self.calc_fourpointcorr('jiij',fak1,fak2,fak3,
+                                                 mu[j],mu[i]) * dipole
                 
                 parta_R1 = 1j*omega[i]*self.ucf*_t.T
                 partb    = 1j*omega[i]*self.ucf*_t
                 partc    = 1j*(omega[j]-omega[i])*self.ucf*self.t2
-                 
-                R1 -= f_jiji * np.exp(   parta_R1 - partb    + partc - partd ) # SE
-                R4 -= f_jiij * np.exp( - parta    - partb_R4 - partc - partd ) # SE
-                R2 -= f_jjii * np.exp(   parta    - partb            - partd ) # GB
-                R5 -= f_jjii * np.exp( - parta    - partb            - partd ) # GB
+                
+                # Stimulated Emission
+                R1 -= f_jiji * np.exp(   parta_R1 - partb    + partc - partd )
+                R4 -= f_jiij * np.exp( - parta    - partb_R4 - partc - partd )
+                # Ground State Bleach
+                R2 -= f_jjii * np.exp(   parta    - partb            - partd )
+                R5 -= f_jjii * np.exp( - parta    - partb            - partd )
 
                 for k in range(n_exc_oscill):
 
@@ -293,9 +299,14 @@ class timedomain(Calc2dir_base):
                     partb2_R3 = 1j*(omega2[k]-omega[j])*self.ucf*_t
                     partb2_R6 = 1j*(omega2[k]-omega[i])*self.ucf*_t
 
-                    f_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2 # EA
-                    f_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2 # EA
+                    f_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,
+                                                     mu[i],mu[j],mu2[i][k],
+                                                     mu2[j][k]) * dipole2
+                    f_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,
+                                                     mu[i],mu[j],mu2[i][k],
+                                                     mu2[j][k]) * dipole2
                     
+                    # Excited State Absorption
                     R3 += f_jilk * np.exp(   parta - partb2_R3 + partc - partd ) 
                     R6 += f_jikl * np.exp( - parta - partb2_R6 - partc - partd ) 
         
