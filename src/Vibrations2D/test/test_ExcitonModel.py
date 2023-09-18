@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from numpy import linalg as LA
 
-import Irspec2d.Calc2dir as Calc2dir
+import Vibrations2D.Calc2dir as Calc2dir
 
 def test_generate_sorted_states():
     pass

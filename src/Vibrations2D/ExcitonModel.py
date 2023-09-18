@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import linalg as LA
 
-from Irspec2d import *
+from Vibrations2D import *
 
 # EXCITON MODEL FUNCTIONS
 

@@ -2,7 +2,7 @@ import numpy as np
 from numpy import linalg as LA
 from scipy.constants import c
 
-from Irspec2d import *
+from Vibrations2D import *
 
 # FREQUENCY DOMAIN FUNCTIONS
 

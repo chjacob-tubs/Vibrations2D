@@ -3,7 +3,7 @@ import numpy as np
 import math
 from numpy import linalg as LA
 
-import Irspec2d.Calc2dir as Calc2dir
+import Vibrations2D.Calc2dir as Calc2dir
 
 
 def test_test():

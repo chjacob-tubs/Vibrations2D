@@ -4,7 +4,7 @@ from numpy import linalg as LA
 from scipy.constants import c
 from scipy import fft
 
-from Irspec2d import *
+from Vibrations2D import *
 
 # TIME DOMAIN FUNCTIONS
     
