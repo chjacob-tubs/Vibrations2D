@@ -13,7 +13,8 @@ class frequencydomain(Calc2dir_base):
     
     def __init__(self, freqs, dipoles, **params):
         '''
-        Setting all parameters needed for the time domain 2D IR spectra calculations.
+        Setting all parameters needed for the 
+        frequency domain 2D IR spectra calculations.
         
         @param dipoles: Matrix of transition dipole moments
         @type dipoles: list of lists of floats
@@ -21,17 +22,19 @@ class frequencydomain(Calc2dir_base):
         @param freqmat: Matrix of frequencies
         @type freqmat: list of lists of floats
         
-        @param n_t: number of grid points
-        @type n_t: integer
+        @param n_grid: number of grid points
+        @type n_grid: integer
         
         @param T2: dephasing time (experimental value)
         @type T2: float
         
         @param t2: time between two laser pulses
         @type t2: float
+        @note t2: NOT YET IMPLEMENTED
         
         @param pol: polarization condition
         @type pol: string
+        @note pol: Only works for <ZZZZ> and <ZZXX> so far
         
         @param pol_list: list of angles of polarization condition
         @type pol_list: list of integers
@@ -44,24 +47,33 @@ class frequencydomain(Calc2dir_base):
         
         if 'print_output' in params :
             self.print_output = params.get('print_output')
-            if self.print_output : print('Prints all output. To suppress printed output use print_output=False.')
+            if self.print_output : print('Prints all output. '
+                                         'To suppress printed output use '
+                                         'print_output=False.')
         else : 
             self.print_output = True
-            if self.print_output : print('Prints all output (default). To suppress printed output use frequencydomain(freqs,dipoles,print_output=False).')
+            if self.print_output : print('Prints all output (default). '
+                                         'To suppress printed output use '
+                                         'frequencydomain(freqs,dipoles,'
+                                         'print_output=False).')
             
-        if 'n_t' in params : 
-            self.n_t = params.get('n_t')*2
-            if self.print_output : print('Set the number of grid points (n_t) to',str(self.n_t)+'.')
+        if 'n_grid' in params : 
+            self.n_grid = params.get('n_grid')*2
+            if self.print_output : print('Set the number of grid points '
+                                         '(n_grid) to',str(self.n_grid)+'.')
         else : 
-            self.n_t = 256
-            if self.print_output : print('Set the number of grid points (n_t) to',self.n_t,'(default value).')
+            self.n_grid = 256
+            if self.print_output : print('Set the number of grid points '
+                                         '(n_grid) to',self.n_grid,'(default value).')
         
         if 'T2' in params : 
             self.T2 = params.get('T2')
-            if self.print_output : print('Set the dephasing time (T2) to',self.T2,'ps.')
+            if self.print_output : print('Set the dephasing time (T2) '
+                                         'to',self.T2,'ps.')
         else : 
             self.T2 = 2
-            if self.print_output : print('Set the dephasing time (T2) to',self.T2,'ps (default value).')
+            if self.print_output : print('Set the dephasing time (T2) '
+                                         'to',self.T2,'ps (default value).')
         
         # if 't2' in params : 
         #     self.t2 = params.get('t2')
@@ -72,17 +84,22 @@ class frequencydomain(Calc2dir_base):
         
         if 'pol' in params :
             self.polarization = params.get('pol')
-            if self.print_output : print('Set the polarization (pol) to',self.polarization,'.')
+            if self.print_output : print('Set the polarization (pol) '
+                                         'to',self.polarization,'.')
         else : 
             self.polarization = 'ZZZZ'
-            if self.print_output : print('Set the polarization (pol) to',self.polarization,'(default).')
+            if self.print_output : print('Set the polarization (pol) '
+                                         'to',self.polarization,'(default).')
         
         if 'pol_list' in params :
             self.pol_list = params.get('pol_list')
-            if self.print_output : print('Set the polarization angles (pol_list) to',self.pol_list,'.')
+            if self.print_output : print('Set the polarization angles '
+                                         '(pol_list) to',self.pol_list,'.')
         else : 
             self.pol_list = self._get_pulse_angles(self.polarization)
-            if self.print_output : print('Set the polarization angles (pol_list) to',self.pol_list,'(calculated default).')
+            if self.print_output : print('Set the polarization angles '
+                                         '(pol_list) to',self.pol_list,
+                                         '(calculated default).')
             
     
     def calc_excitation(self, intmat : np.ndarray) -> list :
@@ -98,10 +115,11 @@ class frequencydomain(Calc2dir_base):
         @rtype: tuple of lists
 
         '''
-        
-        exc_x = [] # excitation coords
+        # excitation coords
+        exc_x = [] 
         exc_y = [] 
-        exc_i = [] # intensity
+        # excitation intensities
+        exc_i = []
 
         for i in range(1,self.noscill+1):
             for j in range(self.noscill,len(intmat)):
@@ -114,7 +132,10 @@ class frequencydomain(Calc2dir_base):
                 exc_x.append(x_coor)
                 exc_i.append(exc_inten)
 
-                # print('Excitation from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(exc_inten,2))
+                if self.print_output: print('Excitation from energy level',i,
+                                            'to',j,'at (',np.around(x_coor,2),
+                                            ',',np.around(y_coor,2),') rcm and '
+                                            'intensity: ',np.around(exc_inten,2))
                         
         return (exc_x, exc_y, exc_i)
     
@@ -132,9 +153,11 @@ class frequencydomain(Calc2dir_base):
         @rtype: tuple of lists
 
         '''
-        emi_x = [] # stimulated emission coords
+        # stimulated emission coords
+        emi_x = [] 
         emi_y = [] 
-        emi_i = [] # intensity
+        # intensity
+        emi_i = [] 
 
         for i in range(self.noscill+1):
             for j in range(len(intmat)):
@@ -148,25 +171,33 @@ class frequencydomain(Calc2dir_base):
                     emi_x.append(x_coor)
                     emi_i.append(emi_inten)
 
-                    # print('Stim. emission from energy level',i,'to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(emi_inten,2))
+                    if self.print_output: print('Stim. emission from energy '
+                                                'level',i,'to',j,'at (',
+                                                np.around(x_coor,2),',',
+                                                np.around(y_coor,2),') rcm and '
+                                                'intensity: ',
+                                                np.around(emi_inten,2))
         return (emi_x, emi_y, emi_i)
 
     def calc_bleaching(self, intmat : np.ndarray) -> list :
         '''
-        Takes the energy levels and the intensity matrix in order to find
-        the bleaching processes that occur in an 2D IR experiment.
+        Takes the energy levels and the intensity matrix in 
+        order to find the bleaching processes that occur in 
+        an 2D IR experiment.
         
         @param intmat: matrix of intensities
         @type intmat: numpy array or list of lists of numbers
         
-        @return: x-coordinates, y-coordinates and intensities of transition
+        @return: x-coordinates, y-coordinates and intensities 
+                 of transition
         @rtype: tuple of lists
 
         '''
-
-        ble_x = [] # bleaching coords
+        # bleaching coords
+        ble_x = [] 
         ble_y = [] 
-        ble_i = [] # intensity
+        # intensity
+        ble_i = [] 
 
         for i in range(self.noscill+1):
             for j in range(len(intmat)):
@@ -181,7 +212,12 @@ class frequencydomain(Calc2dir_base):
                         ble_y.append(y_coor)
                         ble_i.append(ble_inten)
 
-                        # print('Bleaching from energy level 0 to',j,'at (',np.around(x_coor,2),',',np.around(y_coor,2),') rcm and intensity: ',np.around(ble_inten,2))
+                        if self.print_output: print('Bleaching from energy '
+                                                    'level 0 to',j,'at (',
+                                                    np.around(x_coor,2),',',
+                                                    np.around(y_coor,2),') rcm '
+                                                    'and intensity: ',
+                                                    np.around(ble_inten,2))
 
         return (ble_x, ble_y, ble_i)
                       
@@ -191,7 +227,8 @@ class frequencydomain(Calc2dir_base):
         2D IR experiment from the energy levels and the
         intensity matrix. 
         
-        @return: x- and y-coordinates and intensities of all processes
+        @return: x- and y-coordinates and intensities of 
+                 all processes
         @rtype: three tuples of lists
 
         '''
@@ -220,7 +257,8 @@ class frequencydomain(Calc2dir_base):
                 emi_y.append(s_xy)
                 emi_i.append(s_i)
 
-                # print('emission',i,0,'  ( '+str(s_xy)+' | '+str(s_xy)+' )',' :',s_i)
+                if self.print_output: print('emission',i,0,'  ( '+str(s_xy)
+                                            +' | '+str(s_xy)+' )',' :',s_i)
                 
                 
             for j in range(len(intmat)):
@@ -235,7 +273,8 @@ class frequencydomain(Calc2dir_base):
                     exc_y.append(e_y)
                     exc_i.append(e_i)
                     
-                    # print('excitation',i,j,'  ( '+str(e_x)+' | '+str(e_y)+' )',' :',e_i)
+                    if self.print_output: print('excitation',i,j,'  ( '+str(e_x)
+                                                +' | '+str(e_y)+' )',' :',e_i)
 
                 # look for bleaching
                 if i==0 and j>0 and j<=self.noscill:
@@ -248,7 +287,9 @@ class frequencydomain(Calc2dir_base):
                         ble_y.append(b_y)
                         ble_i.append(b_i)
                         
-                        # print('bleaching',i,j,'  ( '+str(b_x)+' | '+str(b_y)+' )',' :',b_i)
+                        if self.print_output: print('bleaching',i,j,'  ( '
+                                                    +str(b_x)+' | '+str(b_y)
+                                                    +' )',' :',b_i)
 
         exc = (exc_x,exc_y,exc_i)
         ste = (emi_x,emi_y,emi_i)
@@ -260,10 +301,12 @@ class frequencydomain(Calc2dir_base):
         '''
         Plots the simple 2D IR spectrum automatically.
         
-        @param xmin/xmax: minimum or maximum value of the spectrum in both axes
+        @param xmin/xmax: minimum or maximum value of the spectrum 
+                          in both axes
         @type xmin/xmax: Float
         
-        @param exc/ble/emi: lists of evaluated x- and y-coordinates and associated intensities
+        @param exc/ble/emi: lists of evaluated x- and y-coordinates and 
+                            associated intensities
         @type exc/ble/emi: List of lists of floats
         
         @param steps: number of points for the x-axis
@@ -290,7 +333,9 @@ class frequencydomain(Calc2dir_base):
         emi_x,emi_y,emi_i = ste
         ble_x,ble_y,ble_i = ble
 
-        for freq_x, freq_y, inten in zip(exc_x+emi_x+ble_x, exc_y+emi_y+ble_y, exc_i+emi_i+ble_i):
+        for freq_x, freq_y, inten in zip(exc_x+emi_x+ble_x, 
+                                         exc_y+emi_y+ble_y, 
+                                         exc_i+emi_i+ble_i):
             if ftype.lower() == 'gauss':
                 z += inten * spectra.gauss2d_func(x-freq_x,x-freq_y,gamma)
             if ftype.lower() == 'lorentz':
@@ -299,38 +344,65 @@ class frequencydomain(Calc2dir_base):
         return x, z 
     
     def calculate_S(self, axis):
+        '''
+        Calculates the signal functions of the 
+        ground state bleach, stimulated emission and excited state
+        absorption processes. 
         
+        '''
+        # Get the axis in the correct units
         w = axis * self.ucf
         
-        S_GB = np.zeros((self.n_t,self.n_t))
-        S_SE = np.zeros((self.n_t,self.n_t))
-        S_EA = np.zeros((self.n_t,self.n_t))
+        S_GB = np.zeros((self.n_grid,self.n_grid))
+        S_SE = np.zeros((self.n_grid,self.n_grid))
+        S_EA = np.zeros((self.n_grid,self.n_grid))
         
         gamma = 1/self.T2
         
         fak1, fak2, fak3 = self._calc_fourpoint_factors(self.pol_list)
-        n_exc_oscill = self._calc_nmodesexc() # get the number of doubly excited states and combination bands
-        omega, omega2 = self.freqs[1:self.noscill+1]*self.ucf, self.freqs[self.noscill+1:]*self.ucf
-        mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles() # get the fundamental transition dipoles mu and the higher excited states mu2
+        # get the number of doubly excited states and combination bands
+        n_exc_oscill = self._calc_nmodesexc() 
+        omega, omega2 = self.freqs[1:self.noscill+1]*self.ucf, \
+                        self.freqs[self.noscill+1:]*self.ucf
+        # get the fundamental transition dipoles mu and the higher excited states mu2
+        mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles() 
         mu_norm = LA.norm(mu, axis=1)
         mu2_norm = LA.norm(mu2, axis=2)
         dipole = np.einsum('a,a,b,b->ab',mu_norm,mu_norm,mu_norm,mu_norm)
-        dipole2 = np.einsum('a,b,ac,bc -> abc',mu_norm,mu_norm,mu2_norm,mu2_norm) 
+        dipole2 = np.einsum('a,b,ac,bc -> abc',mu_norm,mu_norm,
+                                               mu2_norm,mu2_norm) 
 
-        # Vectorize the four-point correlation functions in order to be able to calculate them on a grid using np.fromfunction
-        vfourpoint = np.vectorize(lambda i,j,k,l : self.calc_fourpointcorr_mat(fak1, fak2, fak3, mu[i], mu[j], mu[k], mu[l]),excluded=['fak1','fak2','fak3'])
-        vfourpoint2 = np.vectorize(lambda i,j,k,l,m : self.calc_fourpointcorr_mat(fak1, fak2, fak3, mu[i], mu[j], mu2[l][k], mu2[m][k]),excluded=['fak1','fak2','fak3'])
+        # Vectorize the four-point correlation functions in order to be able to 
+        # calculate them on a grid using np.fromfunction
+        vfourpoint = np.vectorize(lambda i,j,k,l : 
+                                  self.calc_fourpointcorr_mat(fak1, fak2, fak3, 
+                                                              mu[i], mu[j], 
+                                                              mu[k], mu[l]),
+                                  excluded=['fak1','fak2','fak3'])
+        vfourpoint2 = np.vectorize(lambda i,j,k,l,m : 
+                                   self.calc_fourpointcorr_mat(fak1, fak2, fak3, 
+                                                               mu[i], mu[j], 
+                                                               mu2[l][k], 
+                                                               mu2[m][k]),
+                                   excluded=['fak1','fak2','fak3'])
 
         # calculate the prefactors of the diagrams R1, R2 and R4, R5
-        f_jjii = np.fromfunction( lambda i,j : vfourpoint(j,j,i,i), (self.noscill,self.noscill), dtype=int ) * dipole
-        f_jiji = np.fromfunction( lambda i,j : vfourpoint(j,i,j,i), (self.noscill,self.noscill), dtype=int ) * dipole
-        f_jiij = np.fromfunction( lambda i,j : vfourpoint(j,i,i,j), (self.noscill,self.noscill), dtype=int ) * dipole
+        f_jjii = np.fromfunction(lambda i,j : vfourpoint(j,j,i,i),
+                                 (self.noscill,self.noscill),dtype=int) * dipole
+        f_jiji = np.fromfunction(lambda i,j : vfourpoint(j,i,j,i),
+                                 (self.noscill,self.noscill),dtype=int) * dipole
+        f_jiij = np.fromfunction(lambda i,j : vfourpoint(j,i,i,j),
+                                 (self.noscill,self.noscill),dtype=int) * dipole
 
         np.testing.assert_almost_equal(f_jiji,f_jiij)
 
         # calculate the prefactors of the diagrams R3 and R6
-        f_ji_kij = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,i,j), (self.noscill,self.noscill,n_exc_oscill), dtype=int ) * dipole2
-        f_ji_kji = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,j,i), (self.noscill,self.noscill,n_exc_oscill), dtype=int ) * dipole2
+        f_ji_kij = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,i,j), 
+                                   (self.noscill,self.noscill,n_exc_oscill), 
+                                   dtype=int ) * dipole2
+        f_ji_kji = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,j,i), 
+                                   (self.noscill,self.noscill,n_exc_oscill), 
+                                   dtype=int ) * dipole2
 
         np.testing.assert_almost_equal(f_ji_kij,f_ji_kji)
 
@@ -339,16 +411,30 @@ class frequencydomain(Calc2dir_base):
 
         for i in range(n_osc):
             ## Stimulated Emission
-            S_SE += -0.5 * np.einsum('ij->i',f_jiji)[i] * spectra.lorentzian2D(w-omega[i],w-omega[i],gamma)
+            S_SE += -0.5 * np.einsum('ij->i',f_jiji)[i] \
+                         * spectra.lorentzian2D(w-omega[i],w-omega[i],gamma)
 
             for j in range(n_osc):
                 ## Ground State Bleach
-                S_GB += -0.5 * f_jjii[i][j] * spectra.lorentzian2D(w-omega[j],w-omega[i],gamma) 
+                S_GB += -0.5 * f_jjii[i][j] \
+                             * spectra.lorentzian2D(w-omega[j],w-omega[i],gamma) 
 
                 for k in range(n_osc_exc):
                     # Excited State Absorption
-                    S3 = 0.5 * ( spectra.lorentzian2D(w-omega[j], w-(omega2[k]-omega[j]), gamma) + spectra.lorentzian2D_imag(w-omega[j], w-(omega2[k]-omega[j]), gamma) )
-                    S6 = 0.5 * ( spectra.lorentzian2D(w-omega[j], w-(omega2[k]-omega[i]), gamma) - spectra.lorentzian2D_imag(w-omega[j], w-(omega2[k]-omega[i]), gamma) )
+                    S3 = 0.5 * ( spectra.lorentzian2D(w-omega[j], 
+                                                      w-(omega2[k]-omega[j]), 
+                                                      gamma) 
+                                + spectra.lorentzian2D_imag(w-omega[j], 
+                                                            w-(omega2[k]
+                                                               -omega[j]), 
+                                                            gamma) )
+                    S6 = 0.5 * ( spectra.lorentzian2D(w-omega[j], 
+                                                      w-(omega2[k]-omega[i]), 
+                                                      gamma) 
+                                - spectra.lorentzian2D_imag(w-omega[j], 
+                                                            w-(omega2[k]
+                                                               -omega[i]), 
+                                                            gamma) )
                     S_EA += 0.5*f_ji_kij[i][j][k] * (S3+S6)
                     
         return S_GB, S_SE, S_EA
@@ -358,7 +444,8 @@ class frequencydomain(Calc2dir_base):
         '''
         Plots the simple 2D IR spectrum automatically.
         
-        @param xmin/xmax: minimum or maximum value of the spectrum in both axes
+        @param xmin/xmax: minimum or maximum value of the 
+                          spectrum in both axes
         @type xmin/xmax: Float
         
         @return: x, y and z values of the 2D plot
@@ -371,8 +458,8 @@ class frequencydomain(Calc2dir_base):
         if not wmax:
             wmax = self.freqs[1:self.noscill+1].max()+margin
         
-        # w = np.linspace(wmin*self.ucf, wmax*self.ucf, self.n_t)
-        w = np.linspace(wmin, wmax, self.n_t)
+        # w = np.linspace(wmin*self.ucf, wmax*self.ucf, self.n_grid)
+        w = np.linspace(wmin, wmax, self.n_grid)
             
         S_GB, S_SE, S_EA = self.calculate_S(w)
         S = S_GB + S_SE + S_EA

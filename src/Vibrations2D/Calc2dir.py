@@ -12,7 +12,8 @@ class Calc2dir_base():
         '''
         Create settings for object to calculate 2D IR spectra.
         Checks if input data is a (skew-)symmetrical matrix.
-        Calculates the number of fundamental frequencies = number of oscillators.
+        Calculates the number of 
+        fundamental frequencies = number of oscillators.
         
         @param dipoles: Matrix of transition dipole moments
         @type dipoles: list of lists of numbers
@@ -29,8 +30,11 @@ class Calc2dir_base():
         if len(freqs.shape) == 1:
             self.freqs = freqs
         
-        assert self.freqs.shape[0] == self.dipoles.shape[0], 'Frequency list and first axis of transition dipole moment matrix do not have the same length.'
-        assert self.check_symmetry(self.dipoles) == True, 'Given matrix is not (skew-)symmetrical. Please check!'
+        assert self.freqs.shape[0] == self.dipoles.shape[0], ('Frequency list ' 
+            'and first axis of transition dipole moment matrix do not have the ' 
+            'same length.')
+        assert self.check_symmetry(self.dipoles) == True, ('Given matrix is not '
+            '(skew-)symmetrical. Please check!')
         
         self.noscill = self.calc_num_oscill(self.calc_nmodes())
         
@@ -58,14 +62,17 @@ class Calc2dir_base():
             val = np.all(np.abs(abs(a)-np.transpose(abs(a),(1,0,2))) < tol)
             
         else:
-            raise ValueError('The shape',a.shape,'of the given matrix is not implemented in the check_symmetry function.')
+            raise ValueError('The shape',a.shape,
+                             'of the given matrix is not implemented in the '
+                             'check_symmetry function.')
         
         return val 
         
         
     def calc_nmodes(self) -> int:
         '''
-        The number of modes equals the length of the frequency matrix in one direction.
+        The number of modes equals the length of the 
+        frequency matrix in one direction.
         
         @return: number of modes
         @rtype: integer
@@ -74,7 +81,9 @@ class Calc2dir_base():
         if len(self.dipoles) == len(self.freqs):
             n = int(len(self.freqs))
         else:
-            raise ValueError('The matrices containing the frequencies and the transition dipole moments do not have the same length.')
+            raise ValueError('The matrices containing the frequencies and the '
+                             'transition dipole moments do not have the same '
+                             'length.')
             
         return n
         
@@ -97,8 +106,8 @@ class Calc2dir_base():
         that there are 
            n_modes = 1 + 2n_oscill + (n_oscill*(n_oscill-1))/2 
         modes. There is one ground state (0) plus n first excited states 
-        plus n second excited states plus (n_oscill*(n_oscill-1))/2 combination 
-        states. 
+        plus n second excited states plus (n_oscill*(n_oscill-1))/2 
+        combination states. 
         This leads to 
            n_oscill = 1/2 * (-3 + sqrt(8*n - 1)).
         
@@ -125,20 +134,22 @@ class Calc2dir_base():
             if new_noscill-int(new_noscill)==0:
                 n_osc = int(new_noscill)
             else:
-                raise ValueError("Number of Oscillators couldn't be evaluated.")
+                raise ValueError('Number of Oscillators could not be evaluated.')
                 
         return n_osc
     
     def calc_trans2int(self) -> np.ndarray :
         '''
-        Calculates the intensity matrix from the given transition dipole moment matrix 
-        and the given frequeny matrix.
+        Calculates the intensity matrix from the given 
+        transition dipole moment matrix and the given frequeny matrix.
         
         @return: intensity matrix
         @rtype: numpy.ndarray
         
         '''
-        intfactor = 2.5066413842056297 # factor to calculate integral absorption coefficient having  [cm-1]  and  [Debye] ; see Vibrations/Misc.py code
+        # factor to calculate integral absorption coefficient 
+        # having [cm-1] and [Debye] ; see Vibrations/Misc.py code
+        intfactor = 2.5066413842056297 
         dim = self.calc_nmodes()
         freqmat = np.tile(self.freqs,(dim,1))
         intenmat = np.linalg.norm(self.dipoles,axis=2)**2 * intfactor * (freqmat - freqmat.T)
@@ -163,7 +174,8 @@ class Calc2dir_base():
     
     def _get_pulse_angles(self, pol : str) -> list :
         '''
-        Returns a list of different angles for different polarization conditions.
+        Returns a list of different angles for 
+        different polarization conditions.
         E.g. for the <ZZZZ> polarization condition the list is [0,0,0,0].
         
         @param pol: polarization condition
@@ -211,9 +223,15 @@ class Calc2dir_base():
         '''
         Needs the list of angles of the polarization condition.
         Calculating parts of the four-point correlation function:
-        row1 = 4 * cos theta_ab * cos theta_cd - cos theta_ac * cos theta_bd - cos theta_ad * cos theta_bc
-        row2 = 4 * cos theta_ac * cos theta_bd - cos theta_ab * cos theta_cd - cos theta_ad * cos theta_bc
-        row3 = 4 * cos theta_ad * cos theta_bc - cos theta_ab * cos theta_cd - cos theta_ac * cos theta_bd
+        row1 = 4 * cos theta_ab * cos theta_cd 
+               - cos theta_ac * cos theta_bd 
+               - cos theta_ad * cos theta_bc
+        row2 = 4 * cos theta_ac * cos theta_bd 
+               - cos theta_ab * cos theta_cd 
+               - cos theta_ad * cos theta_bc
+        row3 = 4 * cos theta_ad * cos theta_bc 
+               - cos theta_ab * cos theta_cd 
+               - cos theta_ac * cos theta_bd
         
         @param pol_lst: list of angles for a given polarization condition
         @type pol_lst: list of integers
@@ -321,7 +339,8 @@ class spectra():
         @param maximum: maximum value of the plotted array
         @type maximum: float
         
-        @param number: number of plotted contour lines for the positive/negative values
+        @param number: number of plotted contour lines for 
+                       the positive/negative values
         @type number: int
         
         @return: new values at which the lines are plotted
