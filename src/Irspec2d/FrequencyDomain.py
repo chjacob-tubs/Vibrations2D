@@ -344,10 +344,9 @@ class frequencydomain(Calc2dir_base):
             for j in range(n_osc):
                 ## Ground State Bleach
                 S_GB += -0.5 * f_jjii[i][j] * spectra.lorentzian2D(w-omega[j],w-omega[i],gamma) 
-                # if i != j : # this seems to portray the correct behavior for the negative cross-peaks
-                #     S_GB += -0.5 * f_jjii[i][j] * spectra.lorentzian2D_imag(w-omega[j],w-omega[i],gamma) 
 
                 for k in range(n_osc_exc):
+                    # Excited State Absorption
                     S3 = 0.5 * ( spectra.lorentzian2D(w-omega[j], w-(omega2[k]-omega[j]), gamma) + spectra.lorentzian2D_imag(w-omega[j], w-(omega2[k]-omega[j]), gamma) )
                     S6 = 0.5 * ( spectra.lorentzian2D(w-omega[j], w-(omega2[k]-omega[i]), gamma) - spectra.lorentzian2D_imag(w-omega[j], w-(omega2[k]-omega[i]), gamma) )
                     S_EA += 0.5*f_ji_kij[i][j][k] * (S3+S6)

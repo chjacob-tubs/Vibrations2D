@@ -12,6 +12,7 @@ class timedomain(Calc2dir_base):
     
     ucf = c * 10**-10 * 2 * np.pi # unit conversion factor
     # speed of light in cm/ps = 0.0299792458 = c * 10^-10
+    # accounts for the conversion of frequency axis from Hz to cm^-1.
     
     def __init__(self, freqs : np.ndarray, dipoles : np.ndarray, **params):
         '''
@@ -217,34 +218,34 @@ class timedomain(Calc2dir_base):
 #         R6 = np.zeros_like(R1,dtype=np.complex_)
         
 #         t = np.arange(0,self.n_t*self.dt,self.dt)
-#         mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles()
+#         _t = np.tile(t,(self.n_t,1))
+#         partd    = (_t.T+_t)/self.T2
         
+#         mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles()
 #         omega, omega2 = self.set_omega()
         
 #         for j in range(self.noscill):
+            
+#             muj = LA.norm(mu[j])
+#             parta    = 1j*omega[j]*self.ucf*_t.T
+#             partb_R4 = 1j*omega[j]*self.ucf*_t
+            
 #             for i in range(self.noscill):
                 
 #                 mui = LA.norm(mu[i])
-#                 muj = LA.norm(mu[j])
-                
 #                 dipole = mui**2 * muj**2
                 
 #                 f_jjii = self.calc_fourpointcorr('jjii',fak1,fak2,fak3,mu[j],mu[i]) * dipole
 #                 f_jiji = self.calc_fourpointcorr('jiji',fak1,fak2,fak3,mu[j],mu[i]) * dipole
 #                 f_jiij = self.calc_fourpointcorr('jiij',fak1,fak2,fak3,mu[j],mu[i]) * dipole
                 
-#                 _t = np.tile(t,(self.n_t,1))
-                
-#                 parta    = 1j*omega[j]*self.ucf*_t.T
 #                 parta_R1 = 1j*omega[i]*self.ucf*_t.T
 #                 partb    = 1j*omega[i]*self.ucf*_t
-#                 partb_R4 = 1j*omega[j]*self.ucf*_t
 #                 partc    = 1j*(omega[j]-omega[i])*self.ucf*self.t2
-#                 partd    = (_t.T+_t)/self.T2 
-                
-#                 R1 -= f_jiji * np.exp(   parta_R1 - partb    + partc - partd )
+                 
+#                 R1 -= f_jiji * np.exp(   parta_R1 - partb    + partc - partd ) # SE
+#                 R4 -= f_jiij * np.exp( - parta    - partb_R4 - partc - partd ) # SE
 #                 R2 -= f_jjii * np.exp(   parta    - partb            - partd ) # GB
-#                 R4 -= f_jiij * np.exp( - parta    - partb_R4 - partc - partd ) 
 #                 R5 -= f_jjii * np.exp( - parta    - partb            - partd ) # GB
 
 #                 for k in range(n_exc_oscill):
@@ -253,21 +254,18 @@ class timedomain(Calc2dir_base):
 #                     mujk = LA.norm(mu2[j][k])
 #                     dipole2 = mui*muj*muik*mujk
                     
-#                     parta2    = 1j*omega[j]*self.ucf*_t.T
 #                     partb2_R3 = 1j*(omega2[k]-omega[j])*self.ucf*_t
 #                     partb2_R6 = 1j*(omega2[k]-omega[i])*self.ucf*_t
-#                     partc2    = 1j*(omega[j]-omega[i])*self.ucf*self.t2
-#                     partd2    = (_t.T+_t)/self.T2
 
-#                     f_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
-#                     f_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2
+#                     f_jilk = self.calc_fourpointcorr('jilk',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2 # EA
+#                     f_jikl = self.calc_fourpointcorr('jikl',fak1,fak2,fak3,mu[i],mu[j],mu2[i][k],mu2[j][k]) * dipole2 # EA
                     
-#                     R3 += f_jilk * np.exp(   parta2 - partb2_R3 + partc2 - partd2 ) 
-#                     R6 += f_jikl * np.exp( - parta2 - partb2_R6 - partc2 - partd2 ) 
+#                     R3 += f_jilk * np.exp(   parta - partb2_R3 + partc - partd ) 
+#                     R6 += f_jikl * np.exp( - parta - partb2_R6 - partc - partd ) 
         
-#         return R1,R2,R3,R4,R5,R6
-        
-    def calc_diagrams(self) -> np.ndarray :
+#         return R1, R2, R3, R4, R5, R6
+    
+    def calc_diagrams(self):
         '''
         This computes the diagrams R_1 to R_6.
         R_1, R_2 and R_3 are rephasing diagrams and R_4, R_5 and R_6 are non-rephasing diagrams.
@@ -276,13 +274,11 @@ class timedomain(Calc2dir_base):
         @return: Feynman diagrams 
         @rtype: numpy arrays
         
-        '''
-        
+        '''        
         t = np.arange(0,self.n_t*self.dt,self.dt) # define the time axis t 
         _t = np.tile(t,(self.n_t,1)) # rewrite t as a matrix
         n_exc_oscill = self._calc_nmodesexc() # get the number of doubly excited states and combination bands
         fak1, fak2, fak3 = self._calc_fourpoint_factors(self.pol_list)
-        
         
         omega, omega2 = self.set_omega() # get the fundamental transitions omega and the higher excited states omega2
         mu, mu2 = self.dipoles[0][1:self.noscill+1] , self._get_secexc_dipoles() # get the fundamental transition dipoles mu and the higher excited states mu2
@@ -296,6 +292,7 @@ class timedomain(Calc2dir_base):
         ## Calculate the exponential parts of the diagrams R1 to R6
         ## part A/B : 1j * omega[i/j] * ucf * t1/t3
         AB = np.einsum('a,bc->acb', 1j*omega*self.ucf, _t)
+        BA = np.einsum('a,bc->abc', 1j*omega*self.ucf, _t)
         ## part C : 1j * ( omega[j] - omega[i] ) * ucf * t2
         C = np.fromfunction(lambda i,j : 1j*(omega[j]-omega[i])*self.ucf*self.t2, (self.noscill,self.noscill), dtype=int)
         ## part D : ( t1 + t3 ) / T2
@@ -316,17 +313,39 @@ class timedomain(Calc2dir_base):
         # calculate the prefactors of the diagrams R3 and R6
         f_ji_kij = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,i,j), (self.noscill,self.noscill,n_exc_oscill), dtype=int ) * dipole2
         f_ji_kji = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,j,i), (self.noscill,self.noscill,n_exc_oscill), dtype=int ) * dipole2
-        
+
         # Calculate the diagrams R
-        R1 = np.einsum('ji,iab,iba,ij,ab -> ab',   f_jiji,   np.exp(+AB), np.exp(-AB), np.exp(+C), np.exp(-D))
-        R2 = np.einsum('ji,jab,iba,ab -> ab',      f_jjii,   np.exp(+AB), np.exp(-AB)            , np.exp(-D))
-        R3 = np.einsum('jik,jab,jkab,ij,ab -> ab', f_ji_kij, np.exp(+AB), np.exp(-B2), np.exp(+C), np.exp(-D))
+        R1 = np.einsum('ji,iab,iba,ij,ab -> ab',   -f_jiji,   np.exp(+AB), np.exp(-AB), np.exp(+C), np.exp(-D))
+        R2 = np.einsum('ji,jab,iba,ab -> ab',      -f_jjii,   np.exp(+AB), np.exp(-AB)            , np.exp(-D))
+        R3 = np.einsum('jik,jab,jkab,ij,ab -> ab',  f_ji_kij, np.exp(+AB), np.exp(-B2), np.exp(+C), np.exp(-D))
         
-        R4 = np.einsum('ji,jab,jba,ij,ab -> ab',   f_jiij,   np.exp(-AB), np.exp(-AB), np.exp(-C), np.exp(-D))
-        R5 = np.einsum('ji,jab,iba,ab -> ab',      f_jjii,   np.exp(-AB), np.exp(-AB)            , np.exp(-D))
-        R6 = np.einsum('jik,jab,ikab,ij,ab -> ab', f_ji_kji, np.exp(-AB), np.exp(-B2), np.exp(-C), np.exp(-D))
+        R4 = np.einsum('ji,jab,jba,ij,ab -> ab',   -f_jiij,   np.exp(-AB), np.exp(-AB), np.exp(-C), np.exp(-D))
+        R5 = np.einsum('ji,jab,iba,ab -> ab',      -f_jjii,   np.exp(-AB), np.exp(-AB)            , np.exp(-D))
+        R6 = np.einsum('jik,jab,ikab,ij,ab -> ab',  f_ji_kji, np.exp(-AB), np.exp(-B2), np.exp(-C), np.exp(-D))
+
+#         R1 = np.zeros((self.n_t,self.n_t),dtype=np.complex_) # SE
+#         R2 = np.zeros_like(R1,dtype=np.complex_) # GB
+#         R3 = np.zeros_like(R1,dtype=np.complex_) # EA
+#         R4 = np.zeros_like(R1,dtype=np.complex_) # SE
+#         R5 = np.zeros_like(R1,dtype=np.complex_) # GB
+#         R6 = np.zeros_like(R1,dtype=np.complex_) # EA
         
-        return -R1, -R2, R3, -R4, -R5, R6
+#         for i in range(self.noscill):
+#             ## Stimulated Emission
+#             R1 -= np.einsum('ij->i',f_jiji)[i] * np.exp(+AB[i]) * np.exp(-BA[i]) * np.exp(+np.einsum('ij->i',C)[i]) * np.exp(-D)
+#             R4 -= np.einsum('ij->i',f_jiji)[i] * np.exp(-AB[i]) * np.exp(-BA[i]) * np.exp(-np.einsum('ij->i',C)[i]) * np.exp(-D)
+#             for j in range(self.noscill):
+                
+#                 ## Ground State Bleach
+#                 R2 -= f_jjii[j][i] * np.exp(+AB[j]) * np.exp(-BA[i]) * np.exp(-D)
+#                 R5 -= f_jjii[j][i] * np.exp(-AB[j]) * np.exp(-BA[i]) * np.exp(-D)
+
+#                 for k in range(n_exc_oscill):
+#                     ## Excited State Absorption
+#                     R3 += f_ji_kij[i][j][k] * np.exp(+AB[j]) * np.exp(-B2[j][k]) * np.exp(+C[i][j]) * np.exp(-D)
+#                     R6 += f_ji_kji[i][j][k] * np.exp(-AB[j]) * np.exp(-B2[i][k]) * np.exp(-C[i][j]) * np.exp(-D)
+                    
+        return R1, R2, R3, R4, R5, R6
     
     def calc_sum_diagram(self, R_a : np.ndarray, R_b : np.ndarray, R_c : np.ndarray) -> np.ndarray :
         '''
@@ -359,7 +378,7 @@ class timedomain(Calc2dir_base):
         
         '''
         n_zp = self.n_t * 2
-        R_ft = self.dt**2 * fft.ifft2(R,s=(n_zp,n_zp),norm='forward')
+        R_ft = self.dt**2 * fft.ifft2(R,s=(n_zp,n_zp),norm='forward') # prefactor dt^2 due to norm of the ifft2 function
         
         return R_ft
     
