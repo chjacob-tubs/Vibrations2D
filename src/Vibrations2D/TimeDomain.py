@@ -439,7 +439,7 @@ class timedomain(Calc2dir_base):
         
         return R_ft
     
-    def get_absorptive_spectrum(self, speed='fast') -> np.ndarray :
+    def get_absorptive_spectrum(self, speed=None) -> np.ndarray :
         '''
         Automatically calculates a fully absorption 2D IR spectrum.
         R(w3,t2,w1) = FFT2D ( Real ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
@@ -453,7 +453,7 @@ class timedomain(Calc2dir_base):
 
         '''
         # Calculate all diagrams
-        if speed.lower() == 'fast':
+        if speed:
             R1,R2,R3,R4,R5,R6 = self.calc_diagrams()
         else:
             R1,R2,R3,R4,R5,R6 = self.calc_diagrams_slow()
