@@ -2,40 +2,39 @@ import math
 import numpy as np
 from numpy import linalg as LA
 
+
 class Calc2dir_base():
     '''
     This is supposed to calculate all kinds of different 2D IR spectra.
-    
     '''
-    
+
     def __init__(self, freqs : np.ndarray, dipoles : np.ndarray):
         '''
         Create settings for object to calculate 2D IR spectra.
         Checks if input data is a (skew-)symmetrical matrix.
-        Calculates the number of 
+        Calculates the number of
         fundamental frequencies = number of oscillators.
-        
+
         @param dipoles: Matrix of transition dipole moments
         @type dipoles: list of lists of numbers
-        
+
         @param freqmat: Matrix of frequencies
         @type freqmat: list of lists of numbers
-        
         '''
-        
+
         self.dipoles = np.squeeze(dipoles)
-        
+
         if len(freqs.shape) == 2:
             self.freqs = freqs[0]
         if len(freqs.shape) == 1:
             self.freqs = freqs
-        
-        assert self.freqs.shape[0] == self.dipoles.shape[0], ('Frequency list ' 
-            'and first axis of transition dipole moment matrix do not have the ' 
+
+        assert self.freqs.shape[0] == self.dipoles.shape[0], ('Frequency list '
+            'and first axis of transition dipole moment matrix do not have the '
             'same length.')
         assert self.check_symmetry(self.dipoles) == True, ('Given matrix is not '
             '(skew-)symmetrical. Please check!')
-        
+
         self.noscill = self.calc_num_oscill(self.calc_nmodes())
         
             
@@ -273,7 +272,7 @@ class Calc2dir_base():
         @type fak1/fak2/fak3: float
         
         @param mus: dipole moments
-        @type mus: list of floats
+        @type mus: list of floats, [x, y, z]
         '''
 
         S1 = fak1 * self.calc_cos(mu_a, mu_b) * self.calc_cos(mu_c, mu_d)
@@ -482,15 +481,15 @@ class spectra():
         @rtype: np.ndarray
         
         '''
-        
-        f1 = spectra.lorentz_func(x,gamma)
-        f2 = spectra.lorentz_func(y,gamma)
-        f = np.einsum('a,b->ab',f1,f2)
-        
+        f1 = spectra.lorentz_func(x, gamma)
+        f2 = spectra.lorentz_func(y, gamma)
+        f = np.einsum('a,b->ab', f1, f2)
+
         return f
     
     @staticmethod
-    def lorentzian2D_imag(x : np.ndarray, y : np.ndarray, gamma : float) -> np.ndarray:
+    def lorentzian2D_imag(x : np.ndarray, y : np.ndarray,
+                          gamma : float) -> np.ndarray:
         '''
         Computes a single value at grid x,y for a 2D lorentzian type function.
         
@@ -502,24 +501,24 @@ class spectra():
         
         @param x0/y0: Position of a peak
         @type x0/y0: Float
-        
+
         @param gamma: Parameter to control the width of the peaks
         @type gamma: Float
         @note gamma: Does not necessarily correlate to actual FWHM of a peak
-        
+
         @return: Corresponding y-values
         @rtype: np.ndarray
-        
         '''
-        
-        f1 = spectra.lorentz_func_imag(x,gamma)
-        f2 = spectra.lorentz_func_imag(y,gamma)
-        f = np.einsum('a,b->ab',f1,f2)
-        
+        f1 = spectra.lorentz_func_imag(x, gamma)
+        f2 = spectra.lorentz_func_imag(y, gamma)
+        f = np.einsum('a,b->ab', f1, f2)
+
         return f
-    
+
     @staticmethod
-    def get_1d_spectrum(xmin : float, xmax : float, freqs : list, ints : list, steps=5000, gamma=2, ftype='lorentz') -> np.ndarray :
+    def get_1d_spectrum(xmin : float, xmax : float,
+                        freqs : list, ints : list,
+                        steps=5000, gamma=2, ftype='lorentz') -> np.ndarray:
         '''
         Sums up all gauss/lorentz functions for each peak.
         
@@ -535,21 +534,20 @@ class spectra():
         @param gamma: Parameter to control the width of the peaks
         @type gamma: Float
         @note gamma: Does not necessarily correlate to actual FWHM of a peak
-        
+
         @param ftype: Choses between gauss and lorentz function
         @type ftype: String
-        
+
         @return: x and y values of the 1D plot
         @rtype: Lists of floats
-        
         '''
-        x = np.linspace(xmin,xmax,steps)
+        x = np.linspace(xmin, xmax, steps)
         y = np.zeros(steps)
         
         for f, i in zip(freqs,ints):
             if ftype.lower() == 'gauss':
-                y += i * spectra.gauss_func(x-f,gamma)
+                y += i * spectra.gauss_func(x-f, gamma)
             if ftype.lower() == 'lorentz':
-                y += i * spectra.lorentz_func(x-f,gamma)
-        
+                y += i * spectra.lorentz_func(x-f, gamma)
+
         return x, y

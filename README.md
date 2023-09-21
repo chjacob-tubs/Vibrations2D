@@ -1,10 +1,10 @@
-# Vibrations
+# Vibrations2D
 
-Vibrations is a Python code for vibrational 2D spectroscopy.
+Vibrations2D is a Python code for vibrational 2D spectroscopy.
 
 ## Requirements
 
-Vibrations is an independent code that for running needs only Python standard
+Vibrations2D is an independent code that for running needs only Python standard
 packages, extended with NumPy and SciPy.
 
 ## Installation
