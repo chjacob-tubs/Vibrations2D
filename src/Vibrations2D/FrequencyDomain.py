@@ -3,6 +3,7 @@ from numpy import linalg as LA
 from scipy.constants import c
 
 from Vibrations2D import Calc2dir_base
+from Vibrations2D import spectra
 
 # FREQUENCY DOMAIN FUNCTIONS
 
@@ -102,7 +103,7 @@ class frequencydomain(Calc2dir_base):
                                          '(calculated default).')
             
     
-    def calc_excitation(self, intmat : np.ndarray) -> list :
+    def calc_excitation(self) -> list :
         '''
         Takes the energy levels and the intensity matrix in order to find 
         the excited state absorption processes that occur in an 2D IR
@@ -115,6 +116,7 @@ class frequencydomain(Calc2dir_base):
         @rtype: tuple of lists
 
         '''
+        intmat = self.calc_trans2int()
         # excitation coords
         exc_x = [] 
         exc_y = [] 
@@ -139,7 +141,7 @@ class frequencydomain(Calc2dir_base):
                         
         return (exc_x, exc_y, exc_i)
     
-    def calc_stimulatedemission(self, intmat : np.ndarray) -> list :
+    def calc_stimulatedemission(self) -> list :
         '''
         Takes the energy levels and the intensity matrix in order to find
         the stimulated emission processes that occur in an 2D IR experiment.
@@ -153,6 +155,7 @@ class frequencydomain(Calc2dir_base):
         @rtype: tuple of lists
 
         '''
+        intmat = self.calc_trans2int()
         # stimulated emission coords
         emi_x = [] 
         emi_y = [] 
@@ -179,7 +182,7 @@ class frequencydomain(Calc2dir_base):
                                                 np.around(emi_inten,2))
         return (emi_x, emi_y, emi_i)
 
-    def calc_bleaching(self, intmat : np.ndarray) -> list :
+    def calc_bleaching(self) -> list :
         '''
         Takes the energy levels and the intensity matrix in 
         order to find the bleaching processes that occur in 
@@ -193,6 +196,7 @@ class frequencydomain(Calc2dir_base):
         @rtype: tuple of lists
 
         '''
+        intmat = self.calc_trans2int()
         # bleaching coords
         ble_x = [] 
         ble_y = [] 
@@ -394,8 +398,6 @@ class frequencydomain(Calc2dir_base):
         f_jiij = np.fromfunction(lambda i,j : vfourpoint(j,i,i,j),
                                  (self.noscill,self.noscill),dtype=int) * dipole
 
-        np.testing.assert_almost_equal(f_jiji,f_jiij)
-
         # calculate the prefactors of the diagrams R3 and R6
         f_ji_kij = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,i,j), 
                                    (self.noscill,self.noscill,n_exc_oscill), 
@@ -404,38 +406,41 @@ class frequencydomain(Calc2dir_base):
                                    (self.noscill,self.noscill,n_exc_oscill), 
                                    dtype=int ) * dipole2
 
-        np.testing.assert_almost_equal(f_ji_kij,f_ji_kji)
-
         n_osc = self.noscill
         n_osc_exc = n_exc_oscill
 
         for i in range(n_osc):
-            ## Stimulated Emission
-            S_SE += -0.5 * np.einsum('ij->i',f_jiji)[i] \
+            # Stimulated Emission, R1+R4
+            S_SE += -0.25 * np.einsum('ji->i',f_jiji)[i] \
+                         * spectra.lorentzian2D(w-omega[i],w-omega[i],gamma)
+            S_SE += -0.25 * np.einsum('ji->i',f_jiij)[i] \
                          * spectra.lorentzian2D(w-omega[i],w-omega[i],gamma)
 
             for j in range(n_osc):
-                ## Ground State Bleach
+            
+                # Ground State Bleach, R2+R5
                 S_GB += -0.5 * f_jjii[i][j] \
                              * spectra.lorentzian2D(w-omega[j],w-omega[i],gamma) 
 
                 for k in range(n_osc_exc):
-                    # Excited State Absorption
-                    S3 = 0.5 * ( spectra.lorentzian2D(w-omega[j], 
-                                                      w-(omega2[k]-omega[j]), 
-                                                      gamma) 
-                                + spectra.lorentzian2D_imag(w-omega[j], 
-                                                            w-(omega2[k]
-                                                               -omega[j]), 
-                                                            gamma) )
-                    S6 = 0.5 * ( spectra.lorentzian2D(w-omega[j], 
-                                                      w-(omega2[k]-omega[i]), 
-                                                      gamma) 
-                                - spectra.lorentzian2D_imag(w-omega[j], 
-                                                            w-(omega2[k]
-                                                               -omega[i]), 
-                                                            gamma) )
-                    S_EA += 0.5*f_ji_kij[i][j][k] * (S3+S6)
+                    # Excited State Absorption, R3+R6
+                    S3 = 0.5 * f_ji_kji[i][j][k] \
+                         * ( spectra.lorentzian2D(w-omega[j],
+                                                  w-(omega2[k]-omega[j]), 
+                                                  gamma) 
+                            + spectra.lorentzian2D_imag(w-omega[j], 
+                                                        w-(omega2[k]-omega[j]),
+                                                        gamma) 
+                           )
+                    S6 = 0.5 * f_ji_kij[i][j][k] \
+                         * ( spectra.lorentzian2D(w-omega[j],
+                                                  w-(omega2[k]-omega[i]),
+                                                  gamma) 
+                            - spectra.lorentzian2D_imag(w-omega[j], 
+                                                        w-(omega2[k]-omega[i]), 
+                                                        gamma) 
+                           )
+                    S_EA += 0.5 * (S3+S6)
                     
         return S_GB, S_SE, S_EA
 
