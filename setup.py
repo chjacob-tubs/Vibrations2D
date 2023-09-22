@@ -6,7 +6,7 @@ setuptools.setup(
       version      = '1.0',
       description  = 'Python tools for 2d IR spectroscopy',
       author       = 'Christoph Jacob, Julia Brueggemann, Mario Wolter, Michael Welzel,\
-                      Chekmeneva, Anna Maria van Bodegraven and others',
+                      Maria Chekmeneva, Anna Maria van Bodegraven and others',
       url          = 'https://www.tu-braunschweig.de/pci/agjacob/software',
       license      = 'GPLv3',
       package_dir  = {'': 'src/'},
