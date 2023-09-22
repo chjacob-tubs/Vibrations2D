@@ -379,7 +379,7 @@ class timedomain(Calc2dir_base):
                                    excluded=['fak1','fak2','fak3'])
         
         # calculate the prefactors of the diagrams R1, R2 and R4, R5
-        f_jjii = np.fromfunction(lambda i,j : vfourpoint(j,j,i,i),
+        f_jjii = np.fromfunction( lambda i,j : vfourpoint(j,j,i,i),
                                  (self.noscill,self.noscill),dtype=int) * dipole
         f_jiji = np.fromfunction( lambda i,j : vfourpoint(j,i,j,i), 
                                  (self.noscill,self.noscill),dtype=int) * dipole
@@ -387,10 +387,10 @@ class timedomain(Calc2dir_base):
                                  (self.noscill,self.noscill),dtype=int) * dipole
         
         # calculate the prefactors of the diagrams R3 and R6
-        f_ji_kij = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,i,j), 
+        f_ji_kij = np.fromfunction( lambda i,j,k : vfourpoint2(j,i,k,i,j), 
                                    (self.noscill,self.noscill,n_exc_oscill), 
                                    dtype=int ) * dipole2
-        f_ji_kji = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,j,i), 
+        f_ji_kji = np.fromfunction( lambda i,j,k : vfourpoint2(j,i,k,j,i), 
                                    (self.noscill,self.noscill,n_exc_oscill), 
                                    dtype=int ) * dipole2
 
