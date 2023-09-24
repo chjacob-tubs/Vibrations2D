@@ -356,10 +356,14 @@ class frequencydomain(Calc2dir_base):
         '''
         # Get the axis in the correct units
         w = axis * self.ucf
+        _w = np.tile(w,(self.n_grid,1))
         
-        S_GB = np.zeros((self.n_grid,self.n_grid))
-        S_SE = np.zeros((self.n_grid,self.n_grid))
-        S_EA = np.zeros((self.n_grid,self.n_grid))
+        S1 = np.zeros((self.n_grid,self.n_grid),dtype=np.complex_)
+        S2 = np.zeros((self.n_grid,self.n_grid),dtype=np.complex_)
+        S3 = np.zeros((self.n_grid,self.n_grid),dtype=np.complex_)
+        S4 = np.zeros((self.n_grid,self.n_grid),dtype=np.complex_)
+        S5 = np.zeros((self.n_grid,self.n_grid),dtype=np.complex_)
+        S6 = np.zeros((self.n_grid,self.n_grid),dtype=np.complex_)
         
         gamma = 1/self.T2
         
@@ -391,11 +395,11 @@ class frequencydomain(Calc2dir_base):
                                    excluded=['fak1','fak2','fak3'])
 
         # calculate the prefactors of the diagrams R1, R2 and R4, R5
-        f_jjii = np.fromfunction(lambda i,j : vfourpoint(j,j,i,i),
+        f_jjii = np.fromfunction( lambda i,j : vfourpoint(j,j,i,i),
                                  (self.noscill,self.noscill),dtype=int) * dipole
-        f_jiji = np.fromfunction(lambda i,j : vfourpoint(j,i,j,i),
+        f_jiji = np.fromfunction( lambda i,j : vfourpoint(j,i,j,i),
                                  (self.noscill,self.noscill),dtype=int) * dipole
-        f_jiij = np.fromfunction(lambda i,j : vfourpoint(j,i,i,j),
+        f_jiij = np.fromfunction( lambda i,j : vfourpoint(j,i,i,j),
                                  (self.noscill,self.noscill),dtype=int) * dipole
 
         # calculate the prefactors of the diagrams R3 and R6
@@ -405,44 +409,38 @@ class frequencydomain(Calc2dir_base):
         f_ji_kji = np.fromfunction( lambda i,j,k : vfourpoint2(i,j,k,j,i), 
                                    (self.noscill,self.noscill,n_exc_oscill), 
                                    dtype=int ) * dipole2
+        
+        frac1 = lambda v,i : gamma / ( (v+i)**2 + gamma**2 )
+        frac2 = lambda v,i : (v+i) / ( (v+i)**2 + gamma**2 )
+        
+        # Stimulated Emission
+        S1_func = lambda w1,w3,i : ( frac1(w1,+i) + 1j*frac2(w1,+i) ) * ( frac1(w3,-i) + 1j*frac2(w3,-i) )
+        S4_func = lambda w1,w3,i : ( frac1(w1,-i) + 1j*frac2(w1,-i) ) * ( frac1(w3,-i) + 1j*frac2(w3,-i) )
+        # Ground State Bleaching
+        S2_func = lambda w1,w3,i,j : ( frac1(w1,+j) + 1j*frac2(w1,+j) ) * ( frac1(w3,-i) + 1j*frac2(w3,-i) )
+        S5_func = lambda w1,w3,i,j : ( frac1(w1,-j) + 1j*frac2(w1,-j) ) * ( frac1(w3,-i) + 1j*frac2(w3,-i) )
+        # Excited State Absorption
+        S3_func = lambda w1,w3,i,j : ( frac1(w1,+i) + 1j*frac2(w1,+i) ) * ( frac1(w3,-j) + 1j*frac2(w3,-j) )
+        S6_func = lambda w1,w3,i,j : ( frac1(w1,-i) + 1j*frac2(w1,-i) ) * ( frac1(w3,-j) + 1j*frac2(w3,-j) )
 
-        n_osc = self.noscill
-        n_osc_exc = n_exc_oscill
-
-        for i in range(n_osc):
-            # Stimulated Emission, R1+R4
-            S_SE += -0.25 * np.einsum('ji->i',f_jiji)[i] \
-                         * spectra.lorentzian2D(w-omega[i],w-omega[i],gamma)
-            S_SE += -0.25 * np.einsum('ji->i',f_jiij)[i] \
-                         * spectra.lorentzian2D(w-omega[i],w-omega[i],gamma)
-
-            for j in range(n_osc):
+        for i in range(self.noscill):
             
+            # Stimulated Emission R1+R4
+            S1 += -np.einsum('ji->i',f_jiji)[i] * S1_func(-_w,_w.T,omega[i])
+            S4 += -np.einsum('ji->i',f_jiij)[i] * S4_func(_w,_w.T,omega[i])
+            
+            for j in range(self.noscill):
+                
                 # Ground State Bleach, R2+R5
-                S_GB += -0.5 * f_jjii[i][j] \
-                             * spectra.lorentzian2D(w-omega[j],w-omega[i],gamma) 
-
-                for k in range(n_osc_exc):
+                S2 += -f_jjii[i][j] * S2_func(-_w,_w.T,omega[i],omega[j])
+                S5 += -f_jjii[i][j] * S5_func( _w,_w.T,omega[i],omega[j])
+                
+                for k in range(n_exc_oscill):
                     # Excited State Absorption, R3+R6
-                    S3 = 0.5 * f_ji_kji[i][j][k] \
-                         * ( spectra.lorentzian2D(w-omega[j],
-                                                  w-(omega2[k]-omega[j]), 
-                                                  gamma) 
-                            + spectra.lorentzian2D_imag(w-omega[j], 
-                                                        w-(omega2[k]-omega[j]),
-                                                        gamma) 
-                           )
-                    S6 = 0.5 * f_ji_kij[i][j][k] \
-                         * ( spectra.lorentzian2D(w-omega[j],
-                                                  w-(omega2[k]-omega[i]),
-                                                  gamma) 
-                            - spectra.lorentzian2D_imag(w-omega[j], 
-                                                        w-(omega2[k]-omega[i]), 
-                                                        gamma) 
-                           )
-                    S_EA += 0.5 * (S3+S6)
+                    S3 += f_ji_kji[i][j][k] * S3_func(-_w.T,_w,omega[j],(omega2[k]-omega[j]))
+                    S6 += f_ji_kij[i][j][k] * S6_func( _w.T,_w,omega[j],(omega2[k]-omega[i]))
                     
-        return S_GB, S_SE, S_EA
+        return S1, S2, S3, S4, S5, S6
 
     
     def get_2d_spectrum(self, wmin=None, wmax=None) -> np.ndarray :
@@ -466,7 +464,8 @@ class frequencydomain(Calc2dir_base):
         # w = np.linspace(wmin*self.ucf, wmax*self.ucf, self.n_grid)
         w = np.linspace(wmin, wmax, self.n_grid)
             
-        S_GB, S_SE, S_EA = self.calculate_S(w)
-        S = S_GB + S_SE + S_EA
+        S1, S2, S3, S4, S5, S6 = self.calculate_S(w)
+        S = S1.real + S2.real + S3.real \
+           +S4.real + S5.real + S6.real
         
         return w, S
