@@ -76,12 +76,12 @@ class frequencydomain(Calc2dir_base):
             if self.print_output : print('Set the dephasing time (T2) '
                                          'to',self.T2,'ps (default value).')
         
-        # if 't2' in params : 
-        #     self.t2 = params.get('t2')
-        #     if self.print_output : print('Set the population time (t2) to',self.t2,'ps.')
-        # else : 
-        #     self.t2 = 0
-        #     if self.print_output : print('Set the population time (t2) to',self.t2,'ps (default value).')
+        if 't2' in params : 
+            self.t2 = params.get('t2')
+            if self.print_output : print('Set the population time (t2) to',self.t2,'ps.')
+        else : 
+            self.t2 = 0
+            if self.print_output : print('Set the population time (t2) to',self.t2,'ps (default value).')
         
         if 'pol' in params :
             self.polarization = params.get('pol')
@@ -422,37 +422,39 @@ class frequencydomain(Calc2dir_base):
         # Excited State Absorption
         S3_func = lambda w1,w3,i,j : ( frac1(w1,+i) + 1j*frac2(w1,+i) ) * ( frac1(w3,-j) + 1j*frac2(w3,-j) )
         S6_func = lambda w1,w3,i,j : ( frac1(w1,-i) + 1j*frac2(w1,-i) ) * ( frac1(w3,-j) + 1j*frac2(w3,-j) )
+        
+        t2_param = lambda i,j : np.exp(1j * (j-i) * self.t2)
 
-        for i in range(self.noscill):
-            
-            # Stimulated Emission R1+R4
-            S1 += -np.einsum('ji->i',f_jiji)[i] * S1_func(-_w,_w.T,omega[i])
-            S4 += -np.einsum('ji->i',f_jiij)[i] * S4_func(_w,_w.T,omega[i])
-            
+        for i in range(self.noscill): 
             for j in range(self.noscill):
+            
+                # Stimulated Emission R1+R4
+                S1 += -f_jiji[i][j] * S1_func(-_w.T,_w,omega[i]) * t2_param(omega[i],omega[j])
+                S4 += -f_jiij[i][j] * S4_func( _w.T,_w,omega[i]) * t2_param(omega[i],omega[j])
                 
                 # Ground State Bleach, R2+R5
-                S2 += -f_jjii[i][j] * S2_func(-_w,_w.T,omega[i],omega[j])
-                S5 += -f_jjii[i][j] * S5_func( _w,_w.T,omega[i],omega[j])
+                S2 += -f_jjii[i][j] * S2_func(-_w.T,_w,omega[i],omega[j])
+                S5 += -f_jjii[i][j] * S5_func( _w.T,_w,omega[i],omega[j])
                 
                 for k in range(n_exc_oscill):
                     # Excited State Absorption, R3+R6
-                    S3 += f_ji_kji[i][j][k] * S3_func(-_w.T,_w,omega[j],(omega2[k]-omega[j]))
-                    S6 += f_ji_kij[i][j][k] * S6_func( _w.T,_w,omega[j],(omega2[k]-omega[i]))
+                    S3 += f_ji_kji[i][j][k] * S3_func(-_w.T,_w,omega[j],(omega2[k]-omega[j])) * t2_param(omega[i],omega[j])
+                    S6 += f_ji_kij[i][j][k] * S6_func( _w.T,_w,omega[j],(omega2[k]-omega[i])) * t2_param(omega[j],omega[i])
                     
         return S1, S2, S3, S4, S5, S6
 
     
     def get_2d_spectrum(self, wmin=None, wmax=None) -> np.ndarray :
         '''
-        Plots the simple 2D IR spectrum automatically.
+        Calculates the axis and the signal of the frequency
+        domain 2D-IR spectrum.
         
         @param xmin/xmax: minimum or maximum value of the 
                           spectrum in both axes
         @type xmin/xmax: Float
         
-        @return: x, y and z values of the 2D plot
-        @rtype: Lists of floats
+        @return: w, S
+        @rtype: np.ndarray
         
         '''
         margin = 100
@@ -461,7 +463,6 @@ class frequencydomain(Calc2dir_base):
         if not wmax:
             wmax = self.freqs[1:self.noscill+1].max()+margin
         
-        # w = np.linspace(wmin*self.ucf, wmax*self.ucf, self.n_grid)
         w = np.linspace(wmin, wmax, self.n_grid)
             
         S1, S2, S3, S4, S5, S6 = self.calculate_S(w)
