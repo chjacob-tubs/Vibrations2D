@@ -65,7 +65,8 @@ class frequencydomain(Calc2dir_base):
         else : 
             self.n_grid = 256
             if self.print_output : print('Set the number of grid points '
-                                         '(n_grid) to',self.n_grid,'(default value).')
+                                         '(n_grid) to',
+                                         self.n_grid,'(default value).')
         
         if 'T2' in params : 
             self.T2 = params.get('T2')
@@ -78,10 +79,12 @@ class frequencydomain(Calc2dir_base):
         
         if 't2' in params : 
             self.t2 = params.get('t2')
-            if self.print_output : print('Set the population time (t2) to',self.t2,'ps.')
+            if self.print_output : print('Set the population time (t2) to',
+                                         self.t2,'ps.')
         else : 
             self.t2 = 0
-            if self.print_output : print('Set the population time (t2) to',self.t2,'ps (default value).')
+            if self.print_output : print('Set the population time (t2) to',
+                                         self.t2,'ps (default value).')
         
         if 'pol' in params :
             self.polarization = params.get('pol')
@@ -414,14 +417,20 @@ class frequencydomain(Calc2dir_base):
         frac2 = lambda v,i : (v+i) / ( (v+i)**2 + gamma**2 )
         
         # Stimulated Emission
-        S1_func = lambda w1,w3,i : ( frac1(w1,+i) + 1j*frac2(w1,+i) ) * ( frac1(w3,-i) + 1j*frac2(w3,-i) )
-        S4_func = lambda w1,w3,i : ( frac1(w1,-i) + 1j*frac2(w1,-i) ) * ( frac1(w3,-i) + 1j*frac2(w3,-i) )
+        S1_func = lambda w1,w3,i : (( frac1(w1,+i) + 1j*frac2(w1,+i) ) 
+                                    * ( frac1(w3,-i) + 1j*frac2(w3,-i) ))
+        S4_func = lambda w1,w3,i : (( frac1(w1,-i) + 1j*frac2(w1,-i) ) 
+                                    * ( frac1(w3,-i) + 1j*frac2(w3,-i) ))
         # Ground State Bleaching
-        S2_func = lambda w1,w3,i,j : ( frac1(w1,+j) + 1j*frac2(w1,+j) ) * ( frac1(w3,-i) + 1j*frac2(w3,-i) )
-        S5_func = lambda w1,w3,i,j : ( frac1(w1,-j) + 1j*frac2(w1,-j) ) * ( frac1(w3,-i) + 1j*frac2(w3,-i) )
+        S2_func = lambda w1,w3,i,j : (( frac1(w1,+j) + 1j*frac2(w1,+j) ) 
+                                      * ( frac1(w3,-i) + 1j*frac2(w3,-i) ))
+        S5_func = lambda w1,w3,i,j : (( frac1(w1,-j) + 1j*frac2(w1,-j) ) 
+                                      * ( frac1(w3,-i) + 1j*frac2(w3,-i) ))
         # Excited State Absorption
-        S3_func = lambda w1,w3,i,j : ( frac1(w1,+i) + 1j*frac2(w1,+i) ) * ( frac1(w3,-j) + 1j*frac2(w3,-j) )
-        S6_func = lambda w1,w3,i,j : ( frac1(w1,-i) + 1j*frac2(w1,-i) ) * ( frac1(w3,-j) + 1j*frac2(w3,-j) )
+        S3_func = lambda w1,w3,i,j : (( frac1(w1,+i) + 1j*frac2(w1,+i) ) 
+                                      * ( frac1(w3,-j) + 1j*frac2(w3,-j) ))
+        S6_func = lambda w1,w3,i,j : (( frac1(w1,-i) + 1j*frac2(w1,-i) ) 
+                                    * ( frac1(w3,-j) + 1j*frac2(w3,-j) ))
         
         t2_param = lambda i,j : np.exp(1j * (j-i) * self.t2)
 
@@ -429,8 +438,10 @@ class frequencydomain(Calc2dir_base):
             for j in range(self.noscill):
             
                 # Stimulated Emission R1+R4
-                S1 += -f_jiji[i][j] * S1_func(-_w.T,_w,omega[i]) * t2_param(omega[i],omega[j])
-                S4 += -f_jiij[i][j] * S4_func( _w.T,_w,omega[i]) * t2_param(omega[i],omega[j])
+                S1 += -f_jiji[i][j] * S1_func(-_w.T,_w,omega[i]) \
+                                    * t2_param(omega[i],omega[j])
+                S4 += -f_jiij[i][j] * S4_func( _w.T,_w,omega[i]) \
+                                    * t2_param(omega[i],omega[j])
                 
                 # Ground State Bleach, R2+R5
                 S2 += -f_jjii[i][j] * S2_func(-_w.T,_w,omega[i],omega[j])
@@ -438,8 +449,12 @@ class frequencydomain(Calc2dir_base):
                 
                 for k in range(n_exc_oscill):
                     # Excited State Absorption, R3+R6
-                    S3 += f_ji_kji[i][j][k] * S3_func(-_w.T,_w,omega[j],(omega2[k]-omega[j])) * t2_param(omega[i],omega[j])
-                    S6 += f_ji_kij[i][j][k] * S6_func( _w.T,_w,omega[j],(omega2[k]-omega[i])) * t2_param(omega[j],omega[i])
+                    S3 += f_ji_kji[i][j][k] \
+                          * S3_func(-_w.T,_w,omega[j],(omega2[k]-omega[j])) \
+                          * t2_param(omega[i],omega[j])
+                    S6 += f_ji_kij[i][j][k] \
+                          * S6_func( _w.T,_w,omega[j],(omega2[k]-omega[i])) \
+                          * t2_param(omega[j],omega[i])
                     
         return S1, S2, S3, S4, S5, S6
 
@@ -466,7 +481,6 @@ class frequencydomain(Calc2dir_base):
         w = np.linspace(wmin, wmax, self.n_grid)
             
         S1, S2, S3, S4, S5, S6 = self.calculate_S(w)
-        S = S1.real + S2.real + S3.real \
-           +S4.real + S5.real + S6.real
+        S = S1.real + S2.real + S3.real + S4.real + S5.real + S6.real
         
         return w, S
