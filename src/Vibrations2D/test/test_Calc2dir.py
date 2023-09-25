@@ -308,7 +308,7 @@ def test_calc_fourpointcorr_mat(Calc2dir_base_2modes):
     # Act
     S = Calc.calc_fourpointcorr_mat(fak1, fak2, fak3, mu_a, mu_b, mu_c, mu_d)
     # Assert
-    assert S == 0.1 
+    assert S == 0.1
     attribute_assert_Calc2dir_base(Calc.freqs,
                                    Calc.dipoles,
                                    Calc.noscill)
