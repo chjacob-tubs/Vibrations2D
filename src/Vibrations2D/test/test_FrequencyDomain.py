@@ -222,14 +222,14 @@ def test_calculate_S(FreqDom):
                              FD.pol_list)
 
 
-def test_get_2d_spectrum(FreqDom):
+def test_get_absorptive_spectrum(FreqDom):
     # Arrange
     Ref = np.load(pathref+'FrequencyDomain_get_2d_spectrum_ref.npz')
     w_ref = Ref['w']
     S_ref = Ref['S']
     FD = FreqDom
     # Act
-    w, S = FD.get_2d_spectrum()
+    S, w = FD.get_absorptive_spectrum()
     # Assert
     np.testing.assert_almost_equal(w, w_ref)
     np.testing.assert_almost_equal(S, S_ref)
