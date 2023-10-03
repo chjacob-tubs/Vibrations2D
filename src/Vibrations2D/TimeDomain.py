@@ -467,7 +467,7 @@ class timedomain(Calc2dir_base):
 
     def get_absorptive_spectrum(self, speed=None) -> np.ndarray:
         '''
-        Automatically calculates a fully absorption 2D IR spectrum.
+        Automatically calculates a fully absorptive 2D IR spectrum.
         R(w3,t2,w1) = FFT2D ( Real ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
 
         @return R: Resulting signal from fourier-transformed sum

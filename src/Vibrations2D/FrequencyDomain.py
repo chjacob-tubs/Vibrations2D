@@ -459,10 +459,9 @@ class frequencydomain(Calc2dir_base):
         return S1, S2, S3, S4, S5, S6
 
     
-    def get_2d_spectrum(self, wmin=None, wmax=None) -> np.ndarray :
+    def get_absorptive_spectrum(self, wmin=None, wmax=None) -> np.ndarray :
         '''
-        Calculates the axis and the signal of the frequency
-        domain 2D-IR spectrum.
+        Automatically calculates a fully absorptive 2D IR spectrum.
         
         @param xmin/xmax: minimum or maximum value of the 
                           spectrum in both axes
@@ -483,4 +482,29 @@ class frequencydomain(Calc2dir_base):
         S1, S2, S3, S4, S5, S6 = self.calculate_S(w)
         S = S1.real + S2.real + S3.real + S4.real + S5.real + S6.real
         
-        return w, S
+        return S, w
+
+    def get_photon_echo_spectrum(self) -> np.ndarray:
+        '''
+        Automatically calculates a photon echo 2D IR spectrum.
+        S(w3,t2,w1) = abs( Real ( S_r(w3,t2,w1) ) 
+
+        @return R: Resulting signal from fourier-transformed sum
+        of Feynman diagrams
+        @rtype R: numpy array
+
+        @return axes: frequency axis
+        @rtype axes: list of floats
+        '''
+        margin = 100
+        if not wmin:
+            wmin = self.freqs[1:self.noscill+1].min()-margin
+        if not wmax:
+            wmax = self.freqs[1:self.noscill+1].max()+margin
+        
+        w = np.linspace(wmin, wmax, self.n_grid)
+            
+        S1, S2, S3, S4, S5, S6 = self.calculate_S(w)
+        S = S1.real + S2.real + S3.real 
+        
+        return abs(S), w
