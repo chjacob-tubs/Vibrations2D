@@ -508,7 +508,7 @@ class frequencydomain(Calc2dir_base):
         
         return S, w
 
-    def get_photon_echo_spectrum(self) -> np.ndarray:
+    def get_photon_echo_spectrum(self, wmin=None, wmax=None) -> np.ndarray:
         '''
         Calculates the axis and the signal of the photon 
         echo frequency domain 2D-IR spectrum.
@@ -529,6 +529,32 @@ class frequencydomain(Calc2dir_base):
         w = np.linspace(wmin, wmax, self.n_grid)
             
         S1, S2, S3, S4, S5, S6 = self.calculate_S(w)
-        S = S1.real + S2.real + S3.real 
+        # S = abs(S1.real) + abs(S2.real) + abs(S3.real)
+        S = abs(S1 + S2 + S3).real
         
-        return abs(S), w
+        return S, w
+
+    def get_absolute_spectrum(self, wmin=None, wmax=None) -> np.ndarray:
+        '''
+        Calculates the axis and the signal of the absolute 
+        value frequency domain 2D-IR spectrum.
+
+        @param xmin/xmax: minimum or maximum value of the
+                          spectrum in both axes
+        @type xmin/xmax: Float
+
+        @return: w, S
+        @rtype: np.ndarray
+        '''
+        margin = 100
+        if not wmin:
+            wmin = self.freqs[1:self.noscill+1].min()-margin
+        if not wmax:
+            wmax = self.freqs[1:self.noscill+1].max()+margin
+        
+        w = np.linspace(wmin, wmax, self.n_grid)
+            
+        S1, S2, S3, S4, S5, S6 = self.calculate_S(w)
+        S = (abs(S1 + S2 + S3) + abs(S4 + S5 + S6)).real
+        
+        return S, w

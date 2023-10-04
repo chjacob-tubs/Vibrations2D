@@ -498,7 +498,7 @@ class timedomain(Calc2dir_base):
 
         return R, axes
 
-    def get_photon_echo_spectrum(self) -> np.ndarray:
+    def get_photon_echo_spectrum(self, speed=None) -> np.ndarray:
         '''
         Automatically calculates a photon echo 2D IR spectrum.
         R(w3,t2,w1) = abs( FFT2D ( Real ( R_r(t3,t2,t1)) ) )
@@ -511,7 +511,10 @@ class timedomain(Calc2dir_base):
         @rtype axes: list of floats
         '''
         # Calculate all diagrams
-        R1, R2, R3, R4, R5, R6 = self.calc_diagrams()
+        if speed:
+            R1, R2, R3, R4, R5, R6 = self.calc_diagrams()
+        else:
+            R1, R2, R3, R4, R5, R6 = self.calc_diagrams_slow()
 
         # Fourier-transform the sum of the rephasing diagrams
         R_r_ft = self.calc_2d_fft(self.calc_sum_diagram(R1, R2, R3))
@@ -527,7 +530,7 @@ class timedomain(Calc2dir_base):
 
         return R, axes
 
-    def get_correlation_spectrum(self) -> np.ndarray:
+    def get_correlation_spectrum(self, speed=None) -> np.ndarray:
         '''
         Automatically calculates a correlation 2D IR spectrum.
         R(w3,t2,w1) = FFT2D ( Imag ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
@@ -540,7 +543,10 @@ class timedomain(Calc2dir_base):
         @rtype axes: list of floats
         '''
         # Calculate all diagrams
-        R1, R2, R3, R4, R5, R6 = self.calc_diagrams()
+        if speed:
+            R1, R2, R3, R4, R5, R6 = self.calc_diagrams()
+        else:
+            R1, R2, R3, R4, R5, R6 = self.calc_diagrams_slow()
 
         # Fourier-transform the sum of the rephasing diagrams
         R_r_ft = self.calc_2d_fft(self.calc_sum_diagram(R1, R2, R3))
@@ -551,6 +557,37 @@ class timedomain(Calc2dir_base):
         R_r_flip = np.flipud(np.roll(R_r_ft, -1, axis=0))
 
         R = np.fft.fftshift((R_r_flip+R_nr_ft).imag, axes=(0, 1))
+
+        axes = self.calc_axes()
+
+        return R, axes
+
+    def get_absolute_spectrum(self, speed=None) -> np.ndarray:
+        '''
+        Automatically calculates a absolute value 2D IR spectrum.
+
+        @return R: Resulting signal from fourier-transformed sum
+        of Feynman diagrams
+        @rtype R: numpy array
+
+        @return axes: frequency axis
+        @rtype axes: list of floats
+        '''
+        # Calculate all diagrams
+        if speed:
+            R1, R2, R3, R4, R5, R6 = self.calc_diagrams()
+        else:
+            R1, R2, R3, R4, R5, R6 = self.calc_diagrams_slow()
+
+        # Fourier-transform the sum of the rephasing diagrams
+        R_r_ft = self.calc_2d_fft(self.calc_sum_diagram(R1, R2, R3))
+        # Fourier-transform the sum of the non-rephasing diagrams
+        R_nr_ft = self.calc_2d_fft(self.calc_sum_diagram(R4, R5, R6))
+
+        # Flip the axis of the rephasing diagrams
+        R_r_flip = np.flipud(np.roll(R_r_ft, -1, axis=0))
+
+        R = np.fft.fftshift((abs(R_r_flip)+abs(R_nr_ft)).real, axes=(0, 1))
 
         axes = self.calc_axes()
 
