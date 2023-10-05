@@ -6,6 +6,8 @@ variables:
 stages:
     - build
     - test
+    - autodoc
+    - deploy
     - cleanup
 
 before_script:
@@ -91,6 +93,41 @@ unittest-all-Conda:
     script:
         - docker run --workdir /app/src/Vibrations2D/test vib2dconda conda run -n Vib2DCondaENV pytest -v
 
+
+#######################
+#### DOCUMENTATION ####
+#######################
+
+build-docker-sphinx-autodoc-image:
+    tags:
+       - local
+       - shell
+    stage: build
+    script:
+       - docker build -t vib2d_sphinxdoc -f doc/Dockerfile .
+
+build-sphinx-doc:
+    tags:
+        - local
+        - shell
+    stage: autodoc
+    needs: [build-docker-sphinx-autodoc-image]
+    script:
+        - docker run --workdir /app/doc --name vib2d_sphinxdoc_cont vib2d_sphinxdoc sphinx-build source build
+
+
+pages:
+    tags:
+        - local
+        - shell
+    stage: deploy
+    needs: [build-sphinx-doc]
+    script:
+        - docker cp vib2d_sphinxdoc_cont:/app/doc/build/. public/
+    artifacts:
+        paths:
+         - public
+
 ##################
 #### CLEAN UP ####
 ##################
@@ -107,9 +144,12 @@ cleanup-docker:
         - unittest-spectra
         - unittest-TimeDomain
         - unittest-all-Conda
+        - build-docker-sphinx-autodoc-image
+        - build-sphinx-doc
     script:
         - docker rm $(docker ps --filter status=exited -q)
         - docker rmi -f vib2d:latest      
         - docker rmi -f vib2dconda:latest
+        - docker rmi -f vib2d_sphinxdoc:latest
         - docker system df
     when: always

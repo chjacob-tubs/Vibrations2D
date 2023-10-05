@@ -6,41 +6,42 @@ from Vibrations2D import Calc2dir_base
 from Vibrations2D import spectra
 
 # FREQUENCY DOMAIN FUNCTIONS
-
+#"""Frequency domain functions."""
 
 class frequencydomain(Calc2dir_base):
+    '''
+    Setting all parameters needed for the
+    frequency domain 2D IR spectra calculations.
+
+    :param dipoles: Matrix of transition dipole moments
+    :type dipoles: list of lists of floats
+
+    :param freqmat: Matrix of frequencies
+    :type freqmat: list of lists of floats
+
+    :param n_grid: number of grid points
+    :type n_grid: integer
+
+    :param T2: dephasing time (experimental value)
+    :type T2: float
+
+    :param t2: time between two laser pulses
+    :type t2: float
+    :note t2: NOT YET IMPLEMENTED
+
+    :param pol: polarization condition
+    :type pol: string
+    :note pol: Only works for <ZZZZ> and <ZZXX> so far
+
+    :param pol_list: list of angles of polarization condition
+    :type pol_list: list of integers
+    '''
 
     ucf = c * 10**-10 * 2 * np.pi  # unit conversion factor
     # speed of light in cm/ps = 0.0299792458 = c * 10^-10
 
     def __init__(self, freqs, dipoles, **params):
-        '''
-        Setting all parameters needed for the
-        frequency domain 2D IR spectra calculations.
-
-        @param dipoles: Matrix of transition dipole moments
-        @type dipoles: list of lists of floats
-
-        @param freqmat: Matrix of frequencies
-        @type freqmat: list of lists of floats
-
-        @param n_grid: number of grid points
-        @type n_grid: integer
-
-        @param T2: dephasing time (experimental value)
-        @type T2: float
-
-        @param t2: time between two laser pulses
-        @type t2: float
-        @note t2: NOT YET IMPLEMENTED
-
-        @param pol: polarization condition
-        @type pol: string
-        @note pol: Only works for <ZZZZ> and <ZZXX> so far
-
-        @param pol_list: list of angles of polarization condition
-        @type pol_list: list of integers
-        '''
+        '''Class Constructor.'''
         super().__init__(freqs, dipoles)
 
         self.freqmat = self.generate_freqmat(self.freqs)
@@ -123,11 +124,11 @@ class frequencydomain(Calc2dir_base):
         the excited state absorption processes that occur in an 2D IR
         experiment.
 
-        @param intmat: matrix of intensities
-        @type intmat: numpy array or list of lists of numbers
+        :param intmat: matrix of intensities
+        :type intmat: numpy array or list of lists of numbers
 
-        @return: x-coordinates, y-coordinates and intensities of transition
-        @rtype: tuple of lists
+        :return: x-coordinates, y-coordinates and intensities of transition
+        :rtype: tuple of lists
         '''
         intmat = self.calc_trans2int()
         # excitation coords
@@ -165,11 +166,11 @@ class frequencydomain(Calc2dir_base):
         In order to match the experiment the stimulated emission can only
         happen in transition to the ground state energy level!
 
-        @param intmat: matrix of intensities
-        @type intmat: numpy array or list of lists of numbers
+        :param intmat: matrix of intensities
+        :type intmat: numpy array or list of lists of numbers
 
-        @return: x-coordinates, y-coordinates and intensities of transition
-        @rtype: tuple of lists
+        :return: x-coordinates, y-coordinates and intensities of transition
+        :rtype: tuple of lists
         '''
         intmat = self.calc_trans2int()
         # stimulated emission coords
@@ -206,12 +207,12 @@ class frequencydomain(Calc2dir_base):
         order to find the bleaching processes that occur in
         an 2D IR experiment.
 
-        @param intmat: matrix of intensities
-        @type intmat: numpy array or list of lists of numbers
+        :param intmat: matrix of intensities
+        :type intmat: numpy array or list of lists of numbers
 
-        @return: x-coordinates, y-coordinates and intensities
+        :return: x-coordinates, y-coordinates and intensities
                  of transition
-        @rtype: tuple of lists
+        :rtype: tuple of lists
         '''
         intmat = self.calc_trans2int()
         # bleaching coords
@@ -250,9 +251,9 @@ class frequencydomain(Calc2dir_base):
         2D IR experiment from the energy levels and the
         intensity matrix.
 
-        @return: x- and y-coordinates and intensities of
+        :return: x- and y-coordinates and intensities of
                  all processes
-        @rtype: three tuples of lists
+        :rtype: three tuples of lists
         '''
         intmat = self.calc_trans2int()
 
@@ -326,26 +327,26 @@ class frequencydomain(Calc2dir_base):
         '''
         Plots the simple 2D IR spectrum automatically.
 
-        @param xmin/xmax: minimum or maximum value of the spectrum
+        :param xmin/xmax: minimum or maximum value of the spectrum
                           in both axes
-        @type xmin/xmax: Float
+        :type xmin/xmax: Float
 
-        @param exc/ble/emi: lists of evaluated x- and y-coordinates and
+        :param exc/ble/emi: lists of evaluated x- and y-coordinates and
                             associated intensities
-        @type exc/ble/emi: List of lists of floats
+        :type exc/ble/emi: List of lists of floats
 
-        @param steps: number of points for the x-axis
-        @type steps: Integer
+        :param steps: number of points for the x-axis
+        :type steps: Integer
 
-        @param gamma: Parameter to control the width of the peaks
-        @type gamma: Float
-        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        :param gamma: Parameter to control the width of the peaks
+        :type gamma: Float
+        :note gamma: Does not necessarily correlate to actual FWHM of a peak
 
-        @param ftype: Choses between gauss and lorentz function
-        @type ftype: String
+        :param ftype: Choses between gauss and lorentz function
+        :type ftype: String
 
-        @return: x, y and z values of the 2D plot
-        @rtype: Lists of floats
+        :return: x, y and z values of the 2D plot
+        :rtype: Lists of floats
         '''
 
         x = np.linspace(xmin, xmax, steps)
@@ -489,12 +490,12 @@ class frequencydomain(Calc2dir_base):
         Calculates the axis and the signal of the fully 
         absorptive frequency domain 2D-IR spectrum.
 
-        @param xmin/xmax: minimum or maximum value of the
+        :param xmin/xmax: minimum or maximum value of the
                           spectrum in both axes
-        @type xmin/xmax: Float
+        :type xmin/xmax: Float
 
-        @return: w, S
-        @rtype: np.ndarray
+        :return: w, S
+        :rtype: np.ndarray
         '''
         margin = 100
         if not wmin:
