@@ -4,18 +4,26 @@ from numpy import linalg as LA
 from Vibrations2D import Calc2dir_base
 
 # EXCITON MODEL FUNCTIONS
-
+"""Exciton model functions."""
 
 class excitonmodel(Calc2dir_base):
+    '''
+    :param cmat: Coupling matrix,
+        which is in the shape of the one-exciton hamiltonian
+    :type cmat: List of lists of floats
+
+    :param dipoles: Matrix of dipole moments
+    :type dipoles: List of lists of lists
+    '''
 
     def __init__(self, cmat: np.ndarray, dipoles: np.ndarray):
         '''
-        @param cmat: Coupling matrix,
+        :param cmat: Coupling matrix,
             which is in the shape of the one-exciton hamiltonian
-        @type cmat: List of lists of floats
+        :type cmat: List of lists of floats
 
-        @param dipoles: Matrix of dipole moments
-        @type dipoles: List of lists of lists
+        :param dipoles: Matrix of dipole moments
+        :type dipoles: List of lists of lists
         '''
         self.cmat = cmat
         self.dipoles = dipoles
@@ -30,17 +38,21 @@ class excitonmodel(Calc2dir_base):
         first and second excited states.
 
         Example:
+
         n_oscill = 2
+
         We have the ground state (0,0),
         two first excited states (0,1) and (1,0) and
         three second excited states (0,2), (2,0) and (1,1).
+
         n_oscill = 3
+
         (0,0,0),
         (0,0,1), (0,1,0), (1,0,0),
         (0,0,2), (0,2,0), (2,0,0), (0,1,1), (1,0,1), (1,1,0)
 
-        @return: a sorted list of the possible states
-        @rtype: list of tuples of ints
+        :return: a sorted list of the possible states
+        :rtype: list of tuples of ints
         '''
         states = []
 
@@ -93,11 +105,11 @@ class excitonmodel(Calc2dir_base):
         from the local mode coupling matrix.
         This does not yet include the anharmonicity.
 
-        @param states: Sorted list of possible states
-        @type states: List of tuples of ints
+        :param states: Sorted list of possible states
+        :type states: List of tuples of ints
 
-        @return: Exciton Model Hamiltonian
-        @rtype: List of lists of floats
+        :return: Exciton Model Hamiltonian
+        :rtype: List of lists of floats
         '''
         lenstates = len(states)  # the number of states
         hamiltonian = np.zeros((lenstates, lenstates))
@@ -152,11 +164,11 @@ class excitonmodel(Calc2dir_base):
         for the Exciton Model
         from the local mode transition dipole moments.
 
-        @param states: Sorted list of possible states
-        @type states: List of tuples of ints
+        :param states: Sorted list of possible states
+        :type states: List of tuples of ints
 
-        @return: Exciton Model Hamiltonian
-        @rtype: List of lists of floats
+        :return: Exciton Model Hamiltonian
+        :rtype: List of lists of floats
         '''
         lenstates = len(states)  # the number of states
         dipmatrix = [[[0, 0, 0] for i in range(lenstates)]
@@ -207,15 +219,15 @@ class excitonmodel(Calc2dir_base):
         elements, exept for the combination bands.
         For a two oscillator system, the diagonal elements are:
         (0), (hbar omega1), (hbar omega2),
-            (2 hbar omega1 - Delta),
-            (2 hbar omega2 - Delta),
-            (hbar omega1 + hbar omega2).
+        (2 hbar omega1 - Delta),
+        (2 hbar omega2 - Delta),
+        (hbar omega1 + hbar omega2).
 
-        @param hamiltonian: Hamiltonian Matrix
-        @type hamiltonian: List of lists of floats
+        :param hamiltonian: Hamiltonian Matrix
+        :type hamiltonian: List of lists of floats
 
-        @return: Hamiltonian including anharmoncity
-        @rtype: List of lists of floats
+        :return: Hamiltonian including anharmoncity
+        :rtype: List of lists of floats
         '''
         for i in range(self.noscill+1, 2*self.noscill+1):
 
@@ -230,16 +242,16 @@ class excitonmodel(Calc2dir_base):
         addition to the second excitation elements.
         For a two oscillator system, the diagonal elements are:
         (0), (hbar omega1 - Delta), (hbar omega2 - Delta),
-            (2 hbar omega1 - 3 Delta),
-            (2 hbar omega2 - 3 Delta),
-            (hbar omega1 + hbar omega2 - 2 Delta).
+        (2 hbar omega1 - 3 Delta),
+        (2 hbar omega2 - 3 Delta),
+        (hbar omega1 + hbar omega2 - 2 Delta).
 
 
-        @param hamiltonian: Hamiltonian Matrix
-        @type hamiltonian: List of lists of floats
+        :param hamiltonian: Hamiltonian Matrix
+        :type hamiltonian: List of lists of floats
 
-        @return: Hamiltonian including anharmoncity (Delta = anharm)
-        @rtype: List of lists of floats
+        :return: Hamiltonian including anharmoncity (Delta = anharm)
+        :rtype: List of lists of floats
         '''
         # loop leaves out the first state, which is 0.
         for i in range(1, len(hamiltonian)):
@@ -263,15 +275,14 @@ class excitonmodel(Calc2dir_base):
         moment matrix.
         Can also calculate the normal mode hamiltonian.
 
-        @param anharm: anharmonic shift added onto the exciton hamiltonian
-        @type anharm: Integer or float
+        :param anharm: anharmonic shift added onto the exciton hamiltonian
+        :type anharm: Integer or float
 
-        @param shift: determines how the anharmonicities are added
-        @type shift: String
+        :param shift: determines how the anharmonicities are added
+        :type shift: String
 
-        @return: Frequencies and transition dipole moment matrix
-        @rtype: Two lists of lists of float
-
+        :return: Frequencies and transition dipole moment matrix
+        :rtype: Two lists of lists of float
         '''
         states = self.generate_sorted_states()
         if shift == 'all':
@@ -310,11 +321,11 @@ class excitonmodel(Calc2dir_base):
         as it puts L-VSCF frequencies instead of harmonic frequencies into
         the calculation.
 
-        @param VSCF_freqs: frequencies obtained from L-VSCF calculation
-        @type shift: List of float
+        :param VSCF_freqs: frequencies obtained from L-VSCF calculation
+        :type shift: List of float
 
-        @return: Frequencies and transition dipole moment matrix
-        @rtype: Two lists of lists of float
+        :return: Frequencies and transition dipole moment matrix
+        :rtype: Two lists of lists of float
         '''
         states = self.generate_sorted_states()
 

@@ -10,20 +10,21 @@ from numpy import linalg as LA
 class Calc2dir_base():
     '''
     This is supposed to calculate all kinds of different 2D IR spectra.
+    Create settings for object to calculate 2D IR spectra.
+    Checks if input data is a (skew-)symmetrical matrix.
+    Calculates the number of
+    fundamental frequencies = number of oscillators.
+
+    :param dipoles: Matrix of transition dipole moments
+    :type dipoles: list of lists of numbers
+
+    :param freqmat: Matrix of frequencies
+    :type freqmat: list of lists of numbers
     '''
 
     def __init__(self, freqs: np.ndarray, dipoles: np.ndarray):
         '''
-        Create settings for object to calculate 2D IR spectra.
-        Checks if input data is a (skew-)symmetrical matrix.
-        Calculates the number of
-        fundamental frequencies = number of oscillators.
-
-        @param dipoles: Matrix of transition dipole moments
-        @type dipoles: list of lists of numbers
-
-        @param freqmat: Matrix of frequencies
-        @type freqmat: list of lists of numbers
+        Class constructor.
         '''
 
         self.dipoles = np.squeeze(dipoles)
@@ -54,8 +55,8 @@ class Calc2dir_base():
         the matrix with respect to the axes. This leads to
         leaving the single vectors as vectors.
 
-        @param a: two- or three-dimensional matrix
-        @type a: list of lists of numbers
+        :param a: two- or three-dimensional matrix
+        :type a: list of lists of numbers
         '''
         a = np.asarray(a)
 
@@ -77,8 +78,8 @@ class Calc2dir_base():
         The number of modes equals the length of the
         frequency matrix in one direction.
 
-        @return: number of modes
-        @rtype: integer
+        :return: number of modes
+        :rtype: integer
         '''
         if len(self.dipoles) == len(self.freqs):
             n = int(len(self.freqs))
@@ -93,8 +94,8 @@ class Calc2dir_base():
         '''
         n_modesexc = n_oscill + (n_oscill*(n_oscill-1))/2
 
-        @return: number of excited modes
-        @rtype: integer
+        :return: number of excited modes
+        :rtype: integer
         '''
         n_modes_exc = int(self.noscill + (self.noscill*(self.noscill-1))/2)
 
@@ -105,23 +106,29 @@ class Calc2dir_base():
         Calculates the number of oscillators n_oscill based on a
         given number of modes n. This is based on the assumption
         that there are
-           n_modes = 1 + 2n_oscill + (n_oscill*(n_oscill-1))/2
+
+        n_modes = 1 + 2n_oscill + (n_oscill*(n_oscill-1))/2
+
         modes. There is one ground state (0) plus n first excited states
         plus n second excited states plus (n_oscill*(n_oscill-1))/2
         combination states.
         This leads to
-           n_oscill = 1/2 * (-3 + sqrt(8*n - 1)).
+
+        n_oscill = 1/2 * (-3 + sqrt(8*n - 1)).
 
         If there are
-           n = 2n_oscill + (n_oscill*(n_oscill-1))/2
+
+        n = 2n_oscill + (n_oscill*(n_oscill-1))/2
+
         modes, then
-           n_oscill = 1/2 * (-3 + sqrt(8*n + 9)).
 
-        @param n: number of modes
-        @type n: integer
+        n_oscill = 1/2 * (-3 + sqrt(8*n + 9)).
 
-        @return: number of oscillators
-        @rtype: integer
+        :param n: number of modes
+        :type n: integer
+
+        :return: number of oscillators
+        :rtype: integer
         '''
         noscill = (-3. + np.sqrt(8. * n + 1.)) / 2.
 
@@ -144,8 +151,8 @@ class Calc2dir_base():
         Calculates the intensity matrix from the given
         transition dipole moment matrix and the given frequeny matrix.
 
-        @return: intensity matrix
-        @rtype: numpy.ndarray
+        :return: intensity matrix
+        :rtype: numpy.ndarray
         '''
         # factor to calculate integral absorption coefficient
         # having [cm-1] and [Debye] ; see Vibrations/Misc.py code
@@ -162,11 +169,11 @@ class Calc2dir_base():
         '''
         Generates a frequency matrix from given frequency list
 
-        @param freq: list of frequencies
-        @type freq: list
+        :param freq: list of frequencies
+        :type freq: list
 
-        @return: matrix of frequencies
-        @rtype: np.array
+        :return: matrix of frequencies
+        :rtype: np.array
         '''
         freqlist = np.tile(freq, (len(freq), 1))
         freqmat = freqlist - freqlist.T
@@ -179,12 +186,12 @@ class Calc2dir_base():
         different polarization conditions.
         E.g. for the <ZZZZ> polarization condition the list is [0,0,0,0].
 
-        @param pol: polarization condition
-        @type pol: string containing four symbols
+        :param pol: polarization condition
+        :type pol: string containing four symbols
         @example pol: 'ZZZZ'
 
-        @return: list of angles for given polarization condition
-        @rtype: list of integers
+        :return: list of angles for given polarization condition
+        :rtype: list of integers
         '''
 
         pol_list = [0, 0, 0, 0]
@@ -201,11 +208,11 @@ class Calc2dir_base():
         '''
         calculates the cosine between two three-dimensional vectors
 
-        @param vec1/vec2: two 3D vectors
-        @type vec1/vec2: list of three floats
+        :param vec1/vec2: two 3D vectors
+        :type vec1/vec2: list of three floats
 
-        @return: angle between the vectors
-        @rtype: float
+        :return: angle between the vectors
+        :rtype: float
         '''
 
         mu1 = LA.norm(vec1)
@@ -232,11 +239,11 @@ class Calc2dir_base():
                - cos theta_ab * cos theta_cd
                - cos theta_ac * cos theta_bd
 
-        @param pol_lst: list of angles for a given polarization condition
-        @type pol_lst: list of integers
+        :param pol_lst: list of angles for a given polarization condition
+        :type pol_lst: list of integers
 
-        @return: three faktors for the four-point correlation function
-        @rtype: three floats
+        :return: three faktors for the four-point correlation function
+        :rtype: three floats
         '''
 
         ab = np.deg2rad(pol_lst[0]-pol_lst[1])
@@ -262,17 +269,17 @@ class Calc2dir_base():
         pathway : 'jjii', 'jiji', 'jiij', 'jikl'
 
         S = 1/30 * ( cos theta_alpha_beta  * cos theta_gamma_delta * fak1
-                   - cos theta_alpha_gamma * cos theta_beta_delta  * fak2
-                   - cos theta_alpha_delta * cos theta_beta_gamma  * fak3 )
+        - cos theta_alpha_gamma * cos theta_beta_delta  * fak2
+        - cos theta_alpha_delta * cos theta_beta_gamma  * fak3)
 
-        @param pathway: feynman pathway of a diagram
-        @type pathway: string
+        :param pathway: feynman pathway of a diagram
+        :type pathway: string
 
-        @param fak1/fak2/fak3: prefactor of the correlation function
-        @type fak1/fak2/fak3: float
+        :param fak1/fak2/fak3: prefactor of the correlation function
+        :type fak1/fak2/fak3: float
 
-        @param mus: dipole moments
-        @type mus: list of floats, [x, y, z]
+        :param mus: dipole moments
+        :type mus: list of floats, [x, y, z]
         '''
 
         S1 = fak1 * self.calc_cos(mu_a, mu_b) * self.calc_cos(mu_c, mu_d)
@@ -287,8 +294,8 @@ class Calc2dir_base():
         '''
         Extracts the matrix for the excited state transition dipole moments.
 
-        @return: excited state transition dipole moment
-        @rtype: numpy array
+        :return: excited state transition dipole moment
+        :rtype: numpy array
         '''
         exc_trans = []
 
@@ -307,11 +314,11 @@ class Calc2dir_base():
         '''
         Takes a number with a decimal point and changes it to an underscore.
 
-        @param number: any number
-        @type number: float
+        :param number: any number
+        :type number: float
 
-        @return: number without decimal point
-        @rtype: string
+        :return: number without decimal point
+        :rtype: string
         '''
         if str(number).find('.') != -1:
             val = (str(number)[0:str(number).find('.')]
@@ -335,15 +342,15 @@ class spectra():
         number of displayed lines.
         Example: plt.contour(x,y,z,set_line_spacing(abs(z.max()),20))
 
-        @param maximum: maximum value of the plotted array
-        @type maximum: float
+        :param maximum: maximum value of the plotted array
+        :type maximum: float
 
-        @param number: number of plotted contour lines for
+        :param number: number of plotted contour lines for
                        the positive/negative values
-        @type number: int
+        :type number: int
 
-        @return: new values at which the lines are plotted
-        @rtype: np.ndarray
+        :return: new values at which the lines are plotted
+        :rtype: np.ndarray
 
         '''
         firstvalue = maximum/number
@@ -357,21 +364,21 @@ class spectra():
         '''
         Computes a single value at position x for a 1D gaussian type function.
 
-        @param intensity: Intensity of a peak
-        @type intensity: Float
+        :param intensity: Intensity of a peak
+        :type intensity: Float
 
-        @param x: x-values
-        @type x: np.ndarray
+        :param x: x-values
+        :type x: np.ndarray
 
-        @param x0: Position of a peak
-        @type x0: Float
+        :param x0: Position of a peak
+        :type x0: Float
 
-        @param gamma: Parameter to control the width of the peaks
-        @type gamma: Float
-        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        :param gamma: Parameter to control the width of the peaks
+        :type gamma: Float
+        :note gamma: Does not necessarily correlate to actual FWHM of a peak
 
-        @return: Corresponding y-values
-        @rtype: np.ndarray
+        :return: Corresponding y-values
+        :rtype: np.ndarray
         '''
         f = np.exp(- x**2 / (2*gamma**2))
 
@@ -382,21 +389,21 @@ class spectra():
         '''
         Computes a single value at position x for a 2D gaussian type function.
 
-        @param intensity: Intensity of a peak
-        @type intensity: Float
+        :param intensity: Intensity of a peak
+        :type intensity: Float
 
-        @param x: x-values
-        @type x: np.ndarray
+        :param x: x-values
+        :type x: np.ndarray
 
-        @param x0: Position of a peak
-        @type x0: Float
+        :param x0: Position of a peak
+        :type x0: Float
 
-        @param gamma: Parameter to control the width of the peaks
-        @type gamma: Float
-        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        :param gamma: Parameter to control the width of the peaks
+        :type gamma: Float
+        :note gamma: Does not necessarily correlate to actual FWHM of a peak
 
-        @return: Corresponding y-values
-        @rtype: np.ndarray
+        :return: Corresponding y-values
+        :rtype: np.ndarray
         '''
         f1 = spectra.gauss_func(x, gamma)
         f2 = spectra.gauss_func(y, gamma)
@@ -410,21 +417,21 @@ class spectra():
         Computes a single value at position x
         for a 1D lorentzian type function.
 
-        @param intensity: Intensity of a peak
-        @type intensity: Float
+        :param intensity: Intensity of a peak
+        :type intensity: Float
 
-        @param x: x-values
-        @type x: np.ndarray
+        :param x: x-values
+        :type x: np.ndarray
 
-        @param x0: Position of a peak
-        @type x0: Float
+        :param x0: Position of a peak
+        :type x0: Float
 
-        @param gamma: Parameter to control the width of the peaks
-        @type gamma: Float
-        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        :param gamma: Parameter to control the width of the peaks
+        :type gamma: Float
+        :note gamma: Does not necessarily correlate to actual FWHM of a peak
 
-        @return: Corresponding y-values
-        @rtype: np.ndarray
+        :return: Corresponding y-values
+        :rtype: np.ndarray
         '''
         f = ((2 * gamma) / (x**2 + gamma**2))
 
@@ -436,21 +443,21 @@ class spectra():
         Computes a single value at position x
         for a 1D lorentzian type function.
 
-        @param intensity: Intensity of a peak
-        @type intensity: Float
+        :param intensity: Intensity of a peak
+        :type intensity: Float
 
-        @param x: x-values
-        @type x: np.ndarray
+        :param x: x-values
+        :type x: np.ndarray
 
-        @param x0: Position of a peak
-        @type x0: Float
+        :param x0: Position of a peak
+        :type x0: Float
 
-        @param gamma: Parameter to control the width of the peaks
-        @type gamma: Float
-        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        :param gamma: Parameter to control the width of the peaks
+        :type gamma: Float
+        :note gamma: Does not necessarily correlate to actual FWHM of a peak
 
-        @return: Corresponding y-values
-        @rtype: np.ndarray
+        :return: Corresponding y-values
+        :rtype: np.ndarray
 
         '''
         f = (2 * x) / (x**2 + gamma**2)
@@ -463,22 +470,21 @@ class spectra():
         '''
         Computes a single value at grid x,y for a 2D lorentzian type function.
 
-        @param intensity: Intensity of a peak
-        @type intensity: Float
+        :param intensity: Intensity of a peak
+        :type intensity: Float
 
-        @param x/y: x-values
-        @type x/y: np.ndarray
+        :param x/y: x-values
+        :type x/y: np.ndarray
 
-        @param x0/y0: Position of a peak
-        @type x0/y0: Float
+        :param x0/y0: Position of a peak
+        :type x0/y0: Float
 
-        @param gamma: Parameter to control the width of the peaks
-        @type gamma: Float
-        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        :param gamma: Parameter to control the width of the peaks
+        :type gamma: Float
+        :note gamma: Does not necessarily correlate to actual FWHM of a peak
 
-        @return: Corresponding y-values
-        @rtype: np.ndarray
-
+        :return: Corresponding y-values
+        :rtype: np.ndarray
         '''
         f1 = spectra.lorentz_func(x, gamma)
         f2 = spectra.lorentz_func(y, gamma)
@@ -492,21 +498,21 @@ class spectra():
         '''
         Computes a single value at grid x,y for a 2D lorentzian type function.
 
-        @param intensity: Intensity of a peak
-        @type intensity: Float
+        :param intensity: Intensity of a peak
+        :type intensity: Float
 
-        @param x/y: x-values
-        @type x/y: np.ndarray
+        :param x/y: x-values
+        :type x/y: np.ndarray
 
-        @param x0/y0: Position of a peak
-        @type x0/y0: Float
+        :param x0/y0: Position of a peak
+        :type x0/y0: Float
 
-        @param gamma: Parameter to control the width of the peaks
-        @type gamma: Float
-        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        :param gamma: Parameter to control the width of the peaks
+        :type gamma: Float
+        :note gamma: Does not necessarily correlate to actual FWHM of a peak
 
-        @return: Corresponding y-values
-        @rtype: np.ndarray
+        :return: Corresponding y-values
+        :rtype: np.ndarray
         '''
         f1 = spectra.lorentz_func_imag(x, gamma)
         f2 = spectra.lorentz_func_imag(y, gamma)
@@ -521,24 +527,24 @@ class spectra():
         '''
         Sums up all gauss/lorentz functions for each peak.
 
-        @param xmin/xmax: minimum and maximum value of the spectrum
-        @type xmin/xmax: Float
+        :param xmin/xmax: minimum and maximum value of the spectrum
+        :type xmin/xmax: Float
 
-        @param freqs/ints: frequencies and corresponding intensities
-        @type freqs/ints: Lists of floats
+        :param freqs/ints: frequencies and corresponding intensities
+        :type freqs/ints: Lists of floats
 
-        @param steps: number of points for the x-axis
-        @type steps: Integer
+        :param steps: number of points for the x-axis
+        :type steps: Integer
 
-        @param gamma: Parameter to control the width of the peaks
-        @type gamma: Float
-        @note gamma: Does not necessarily correlate to actual FWHM of a peak
+        :param gamma: Parameter to control the width of the peaks
+        :type gamma: Float
+        :note gamma: Does not necessarily correlate to actual FWHM of a peak
 
-        @param ftype: Choses between gauss and lorentz function
-        @type ftype: String
+        :param ftype: Choses between gauss and lorentz function
+        :type ftype: String
 
-        @return: x and y values of the 1D plot
-        @rtype: Lists of floats
+        :return: x and y values of the 1D plot
+        :rtype: Lists of floats
         '''
         x = np.linspace(xmin, xmax, steps)
         y = np.zeros(steps)

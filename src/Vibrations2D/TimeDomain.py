@@ -9,40 +9,40 @@ from Vibrations2D import Calc2dir_base
 
 
 class timedomain(Calc2dir_base):
+    '''
+    Setting all parameters needed for the
+    time domain 2D IR spectra calculations.
 
+    :param dipoles: Matrix of transition dipole moments
+    :type dipoles: list of lists of floats
+
+    :param freqmat: Matrix of frequencies
+    :type freqmat: list of lists of floats
+
+    :param n_t: number of grid points
+    :type n_t: integer
+
+    :param dt: spacing between grid points
+    :type dt: float
+
+    :param T2: dephasing time (experimental value)
+    :type T2: float
+
+    :param t2: time between two laser pulses
+    :type t2: float
+
+    :param pol: polarization condition
+    :type pol: string
+
+    :param pol_list: list of angles of polarization condition
+    :type pol_list: list of integers
+    '''
     ucf = c * 10**-10 * 2 * np.pi  # unit conversion factor
     # speed of light in cm/ps = 0.0299792458 = c * 10^-10
     # accounts for the conversion of frequency axis from Hz to cm^-1.
 
     def __init__(self, freqs: np.ndarray, dipoles: np.ndarray, **params):
-        '''
-        Setting all parameters needed for the
-        time domain 2D IR spectra calculations.
-
-        @param dipoles: Matrix of transition dipole moments
-        @type dipoles: list of lists of floats
-
-        @param freqmat: Matrix of frequencies
-        @type freqmat: list of lists of floats
-
-        @param n_t: number of grid points
-        @type n_t: integer
-
-        @param dt: spacing between grid points
-        @type dt: float
-
-        @param T2: dephasing time (experimental value)
-        @type T2: float
-
-        @param t2: time between two laser pulses
-        @type t2: float
-
-        @param pol: polarization condition
-        @type pol: string
-
-        @param pol_list: list of angles of polarization condition
-        @type pol_list: list of integers
-        '''
+        '''Class constructor.'''
         super().__init__(freqs, dipoles)
 
         if 'print_output' in params:
@@ -143,8 +143,8 @@ class timedomain(Calc2dir_base):
         Sets the omega_off value that is used to center the peaks,
         in order for better computation of the fourier transforms.
 
-        @return: median of the first n_oscill (ground state) frequencies
-        @rtype: integer
+        :return: median of the first n_oscill (ground state) frequencies
+        :rtype: integer
         '''
         # only consider ground state frequencies
         freqlist = self.freqs[1:self.noscill+1]
@@ -164,8 +164,8 @@ class timedomain(Calc2dir_base):
         The states 1 to n_oscill are the first excited states.
         The states after state n_oscill are the second excited states.
 
-        @return: lists of first and second excited states
-        @rtype: lists of floats
+        :return: lists of first and second excited states
+        :rtype: lists of floats
         '''
         omega_init = self.freqs[1:self.noscill+1]
         omega2_init = self.freqs[self.noscill+1:]
@@ -190,18 +190,18 @@ class timedomain(Calc2dir_base):
         '''
         pathway : 'jjii', 'jiji', 'jiij', 'jikl'
 
-        S = 1/30 * ( cos theta_alpha_beta  * cos theta_gamma_delta * fak1
-                   - cos theta_alpha_gamma * cos theta_beta_delta  * fak2
-                   - cos theta_alpha_delta * cos theta_beta_gamma  * fak3 )
+        S =  1/30 * (cos theta_alpha_beta  * cos theta_gamma_delta * fak1
+        - cos theta_alpha_gamma * cos theta_beta_delta  * fak2
+        - cos theta_alpha_delta * cos theta_beta_gamma  * fak3)
 
-        @param pathway: feynman pathway of a diagram
-        @type pathway: string
+        :param pathway: feynman pathway of a diagram
+        :type pathway: string
 
-        @param fak1/fak2/fak3: prefactor of the correlation function
-        @type fak1/fak2/fak3: float
+        :param fak1/fak2/fak3: prefactor of the correlation function
+        :type fak1/fak2/fak3: float
 
-        @param mus: dipole moments
-        @type mus: list of floats
+        :param mus: dipole moments
+        :type mus: list of floats
         '''
 
         mu = [0, 0, 0, 0]
@@ -232,8 +232,8 @@ class timedomain(Calc2dir_base):
         '''
         Calculates the time axis into a frequency axis.
 
-        @return: frequency axis
-        @rtype: list of floats
+        :return: frequency axis
+        :rtype: list of floats
         '''
         n_zp = self.n_t * 2
         tks = np.linspace(0, n_zp-1, n_zp)
@@ -253,8 +253,8 @@ class timedomain(Calc2dir_base):
         It also computes angles for different (ZZZZ, ZZXX)
         polarization functions.
 
-        @return: Feynman diagrams
-        @rtype: tuple of numpy arrays
+        :return: Feynman diagrams
+        :rtype: tuple of numpy arrays
         '''
         # get the number of doubly excited states and combination bands
         n_exc_oscill = self._calc_nmodesexc()
@@ -333,8 +333,8 @@ class timedomain(Calc2dir_base):
         It also computes angles for different polarization conditions.
         (i.e. <ZZZZ>, <ZZXX>, <ZXZX>, <ZXXZ>)
 
-        @return: Feynman diagrams
-        @rtype: numpy arrays
+        :return: Feynman diagrams
+        :rtype: numpy arrays
         '''
         # define the time axis t
         t = np.arange(0, self.n_t*self.dt, self.dt)
@@ -435,11 +435,11 @@ class timedomain(Calc2dir_base):
         Calculates the sum of diagrams and divides the
         first row and column by two.
 
-        @param R_i, i=a,b,c: Feynman diagrams
-        @type R_i, i=a,b,c: numpy arrays
+        :param R_i, i=a,b,c: Feynman diagrams
+        :type R_i, i=a,b,c: numpy arrays
 
-        @return: Sum of Feynman diagrams
-        @rtype: numpy array
+        :return: Sum of Feynman diagrams
+        :rtype: numpy array
         '''
         R = R_a + R_b + R_c
         for i in range(len(R)):
@@ -453,11 +453,11 @@ class timedomain(Calc2dir_base):
         Calculates a two-dimensional Fourier transformation
         of a given array
 
-        @param R: sum of Feynman diagrams
-        @type R: numpy array
+        :param R: sum of Feynman diagrams
+        :type R: numpy array
 
-        @return: Fourier transformed sum of Feynman diagrams
-        @rtype: numpy array
+        :return: Fourier transformed sum of Feynman diagrams
+        :rtype: numpy array
         '''
         n_zp = self.n_t * 2
         # prefactor dt^2 due to norm of the ifft2 function
@@ -470,12 +470,12 @@ class timedomain(Calc2dir_base):
         Automatically calculates a fully absorptive 2D IR spectrum.
         R(w3,t2,w1) = FFT2D ( Real ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
 
-        @return R: Resulting signal from fourier-transformed sum
-        of Feynman diagrams
-        @rtype R: numpy array
+        :return R: Resulting signal from fourier-transformed sum
+            of Feynman diagrams
+        :rtype R: numpy array
 
-        @return axes: frequency axis
-        @rtype axes: list of floats
+        :return axes: frequency axis
+        :rtype axes: list of floats
 
         '''
         # Calculate all diagrams
@@ -503,12 +503,12 @@ class timedomain(Calc2dir_base):
         Automatically calculates a photon echo 2D IR spectrum.
         R(w3,t2,w1) = abs( FFT2D ( Real ( R_r(t3,t2,t1)) ) )
 
-        @return R: Resulting signal from fourier-transformed sum
-        of Feynman diagrams
-        @rtype R: numpy array
+        :return R: Resulting signal from fourier-transformed sum
+            of Feynman diagrams
+        :rtype R: numpy array
 
-        @return axes: frequency axis
-        @rtype axes: list of floats
+        :return axes: frequency axis
+        :rtype axes: list of floats
         '''
         # Calculate all diagrams
         if speed:
@@ -535,12 +535,12 @@ class timedomain(Calc2dir_base):
         Automatically calculates a correlation 2D IR spectrum.
         R(w3,t2,w1) = FFT2D ( Imag ( R_r(t3,t2,t1)+R_nr(t3,t2,t1) ) )
 
-        @return R: Resulting signal from fourier-transformed
-        sum of Feynman diagrams
-        @rtype R: numpy array
+        :return R: Resulting signal from fourier-transformed
+            sum of Feynman diagrams
+        :rtype R: numpy array
 
-        @return axes: frequency axis
-        @rtype axes: list of floats
+        :return axes: frequency axis
+        :rtype axes: list of floats
         '''
         # Calculate all diagrams
         if speed:
