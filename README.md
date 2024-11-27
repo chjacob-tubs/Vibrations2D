@@ -13,21 +13,21 @@ After clone or download the 2d-ir-spectroscopy repository:
  
 Use the pip package manager:
 
-    2d-ir-spectroscopy/% pip install .
+    vibrations2d% pip install .
 
 Or use the conda environment manager:
 
 Installation of requirements:
 
-     2d-ir-spectroscopy% conda env create -f environment.yml
-     2d-ir-spectroscopy% conda activate Vib2DCondaENV
-     (Vib2DCondaENV)2d-ir-spectroscopy% conda develop src/
+     vibrations2d% conda env create -f environment.yml
+     vibrations2d% conda activate Vib2DCondaENV
+     (Vib2DCondaENV)vibrations2d% conda develop src/
 
 Within the conda environment the pip installation can of course also be performed. 
 
 Verify the installation with pytest (install pytest before): 
 
-     2d-ir-spectroscopy/src/Vibrations2D/test% pytest -v
+     vibrations2d/src/Vibrations2D/test% pytest -v
 
 If all tests pass then the installation has been successful.
 
