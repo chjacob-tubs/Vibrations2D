@@ -260,12 +260,12 @@ class timedomain(Calc2dir_base):
         n_exc_oscill = self._calc_nmodesexc()
         fak1, fak2, fak3 = self._calc_fourpoint_factors(self.pol_list)
 
-        R1 = np.zeros((self.n_t, self.n_t), dtype=np.complex_)
-        R2 = np.zeros_like(R1, dtype=np.complex_)
-        R3 = np.zeros_like(R1, dtype=np.complex_)
-        R4 = np.zeros_like(R1, dtype=np.complex_)
-        R5 = np.zeros_like(R1, dtype=np.complex_)
-        R6 = np.zeros_like(R1, dtype=np.complex_)
+        R1 = np.zeros((self.n_t, self.n_t), dtype=np.complex128)
+        R2 = np.zeros_like(R1, dtype=np.complex128)
+        R3 = np.zeros_like(R1, dtype=np.complex128)
+        R4 = np.zeros_like(R1, dtype=np.complex128)
+        R5 = np.zeros_like(R1, dtype=np.complex128)
+        R6 = np.zeros_like(R1, dtype=np.complex128)
 
         t = np.arange(0, self.n_t*self.dt, self.dt)
         _t = np.tile(t, (self.n_t, 1))

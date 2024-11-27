@@ -1,8 +1,7 @@
 name: Vib2DCondaENV
 channels:
-  - defaults
   - conda-forge
 dependencies:
-  - python~=3.11.4
-  - numpy~=1.23.4
-  - scipy~=1.9.3
+  - python>=3.11.4
+  - numpy>=1.23.4
+  - scipy>=1.9.3

@@ -1,5 +1,5 @@
 # Load basic Docker image:
-FROM python:3.11.4
+FROM python:3
 
 # Create a "work folder"
 WORKDIR /app
@@ -11,4 +11,4 @@ COPY . /app
 # Installation of dependencies(setup.py) and local package
 # Installation of pytest
 RUN pip install . \
-    && pip install pytest~=7.2.0
+    && pip install pytest>=7.2.0

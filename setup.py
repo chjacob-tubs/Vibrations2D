@@ -10,8 +10,8 @@ setuptools.setup(
       url          = 'https://www.tu-braunschweig.de/pci/agjacob/software',
       license      = 'GPLv3',
       package_dir  = {'': 'src/'},
-      python_requires = '~=3.11.4',
-      install_requires = ['numpy~=1.23.4','scipy~=1.9.3'],
+      python_requires = '>=3.11.4',
+      install_requires = ['numpy>=1.23.4','scipy>=1.9.3'],
       classifiers  = ["Programming Language :: Python :: 3",
                       "Operating System :: OS Independent"],
      )

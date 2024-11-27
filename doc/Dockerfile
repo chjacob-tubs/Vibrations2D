@@ -17,9 +17,9 @@ RUN jupyter nbconvert --to rst How_to_2DIR_spectra.ipynb
 
 # Installation of local package and sphinx + add ons
 RUN pip install . \
-    && pip install sphinx~=5.3.0 \
-    && pip install sphinx_rtd_theme~=0.4.3 \
-    && pip install sphinx_mdinclude~=0.5.3
+    && pip install sphinx>=5.3.0 \
+    && pip install sphinx_rtd_theme>=0.4.3 \
+    && pip install sphinx_mdinclude>=0.5.3
 
 # Copy converted Notebook-rst's to doc/
 RUN cp How_to_2DIR_spectra.rst doc/source/ \
