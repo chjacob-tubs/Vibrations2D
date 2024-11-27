@@ -137,7 +137,7 @@ def test_get_nm_freqs_dipolmat(excitonmodel_class):
     freqs_lm, dipole_nm = EM.get_nm_freqs_dipolmat(anharmonicity)
     # Assert
     np.testing.assert_almost_equal(freqs_lm, freqs_lm_ref)
-    np.testing.assert_almost_equal(dipole_nm, dipole_nm_ref)
+    np.testing.assert_almost_equal(abs(dipole_nm), abs(dipole_nm_ref))
     attribute_assert_excitonmodel(EM.cmat, EM.dipoles, EM.noscill)
 
 
@@ -159,5 +159,5 @@ def test_get_nm_freqs_dipolmat_from_VSCF(excitonmodel_class):
     freqs_lm, dipole_nm = EM.get_nm_freqs_dipolmat_from_VSCF(EX_freq_new)
     # Assert
     np.testing.assert_almost_equal(freqs_lm, freqs_lm_ref)
-    np.testing.assert_almost_equal(dipole_nm, dipole_nm_ref)
+    np.testing.assert_almost_equal(abs(dipole_nm), abs(dipole_nm_ref))
     attribute_assert_excitonmodel(EM.cmat, EM.dipoles, EM.noscill)

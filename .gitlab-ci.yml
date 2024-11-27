@@ -2,7 +2,6 @@ variables:
   SCHEDULER_PARAMETERS: "-n 1 -p nitrogen"
   USER: legit
 
-
 stages:
     - build
     - test
@@ -24,7 +23,7 @@ build-docker-test-image:
        - shell
     stage: build
     script:
-       - docker build --no-cache -t vib2d .
+       - docker build --no-cache -t vib2d:$CI_PIPELINE_ID .
 
 ### CONDA ###
 build-docker-conda-test-image:
@@ -33,7 +32,7 @@ build-docker-conda-test-image:
        - shell
     stage: build
     script:
-       - docker build --no-cache -t vib2dconda -f Dockerfile.Conda . 
+       - docker build --no-cache -t vib2dconda:$CI_PIPELINE_ID -f Dockerfile.Conda . 
 
 #################
 ### UNITTESTS ###
@@ -46,7 +45,7 @@ unittest-Calc2dir:
     stage: test
     needs: [build-docker-test-image]
     script:
-        - docker run --workdir /app/src/Vibrations2D/test vib2d pytest -v test_Calc2dir.py
+        - docker run --workdir /app/src/Vibrations2D/test vib2d:$CI_PIPELINE_ID pytest -v test_Calc2dir.py
 
 unittest-ExcitonModel:
     tags:
@@ -55,7 +54,7 @@ unittest-ExcitonModel:
     stage: test
     needs: [build-docker-test-image,unittest-Calc2dir]
     script:
-        - docker run --workdir /app/src/Vibrations2D/test vib2d pytest -v test_ExcitonModel.py
+        - docker run --workdir /app/src/Vibrations2D/test vib2d:$CI_PIPELINE_ID pytest -v test_ExcitonModel.py
 
 unittest-FrequencyDomain:
     tags:
@@ -64,7 +63,7 @@ unittest-FrequencyDomain:
     stage: test
     needs: [build-docker-test-image,unittest-Calc2dir]
     script:
-        - docker run --workdir /app/src/Vibrations2D/test vib2d pytest -v test_FrequencyDomain.py
+        - docker run --workdir /app/src/Vibrations2D/test vib2d:$CI_PIPELINE_ID pytest -v test_FrequencyDomain.py
 
 unittest-spectra:
     tags:
@@ -73,7 +72,7 @@ unittest-spectra:
     stage: test
     needs: [build-docker-test-image,unittest-Calc2dir]
     script:
-        - docker run --workdir /app/src/Vibrations2D/test vib2d pytest -v test_spectra.py
+        - docker run --workdir /app/src/Vibrations2D/test vib2d:$CI_PIPELINE_ID pytest -v test_spectra.py
 
 unittest-TimeDomain:
     tags:
@@ -82,7 +81,7 @@ unittest-TimeDomain:
     stage: test
     needs: [build-docker-test-image,unittest-Calc2dir]
     script:
-        - docker run --workdir /app/src/Vibrations2D/test vib2d pytest -v test_TimeDomain.py
+        - docker run --workdir /app/src/Vibrations2D/test vib2d:$CI_PIPELINE_ID pytest -v test_TimeDomain.py
 
 unittest-all-Conda:
     tags:
@@ -91,7 +90,7 @@ unittest-all-Conda:
     stage: test
     needs: [build-docker-conda-test-image]
     script:
-        - docker run --workdir /app/src/Vibrations2D/test vib2dconda conda run -n Vib2DCondaENV pytest -v
+        - docker run --workdir /app/src/Vibrations2D/test vib2dconda:$CI_PIPELINE_ID conda run -n Vib2DCondaENV pytest -v
 
 
 #######################
@@ -104,7 +103,7 @@ build-docker-sphinx-autodoc-image:
        - shell
     stage: build
     script:
-       - docker build -t vib2d_sphinxdoc -f doc/Dockerfile .
+       - docker build -t vib2d_sphinxdoc:$CI_PIPELINE_ID -f doc/Dockerfile .
 
 build-sphinx-doc:
     tags:
@@ -113,7 +112,7 @@ build-sphinx-doc:
     stage: autodoc
     needs: [build-docker-sphinx-autodoc-image]
     script:
-        - docker run --workdir /app/doc --name vib2d_sphinxdoc_cont vib2d_sphinxdoc sphinx-build source build
+        - docker run --workdir /app/doc --name vib2d_sphinxdoc_cont vib2d_sphinxdoc:$CI_PIPELINE_ID sphinx-build source build
 
 
 pages:
@@ -148,8 +147,8 @@ cleanup-docker:
         - build-sphinx-doc
     script:
         - docker rm $(docker ps --filter status=exited -q)
-        - docker rmi -f vib2d:latest      
-        - docker rmi -f vib2dconda:latest
-        - docker rmi -f vib2d_sphinxdoc:latest
+        - docker rmi -f vib2d:$CI_PIPELINE_ID
+        - docker rmi -f vib2dconda:$CI_PIPELINE_ID
+        - docker rmi -f vib2d_sphinxdoc:$CI_PIPELINE_ID
         - docker system df
     when: always

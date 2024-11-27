@@ -378,12 +378,12 @@ class frequencydomain(Calc2dir_base):
         w = axis * self.ucf
         _w = np.tile(w, (self.n_grid, 1))
 
-        S1 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex_)
-        S2 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex_)
-        S3 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex_)
-        S4 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex_)
-        S5 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex_)
-        S6 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex_)
+        S1 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex128)
+        S2 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex128)
+        S3 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex128)
+        S4 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex128)
+        S5 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex128)
+        S6 = np.zeros((self.n_grid, self.n_grid), dtype=np.complex128)
 
         gamma = 1/self.T2
 
